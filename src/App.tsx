@@ -1,0 +1,380 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import Lenis from 'lenis';
+import gsap from 'gsap';
+import { SkyCanvas } from './components/SkyCanvas';
+import { EntityVoice } from './components/EntityVoice';
+import { ConstellationLayer } from './components/ConstellationLayer';
+import { PangilatanModal } from './components/PangilatanModal';
+import { WorldDetailModal } from './components/WorldDetailModal';
+import { AudioPlayerWidget } from './components/AudioPlayerWidget';
+import { MeteorWishModal } from './components/MeteorWishModal';
+import { WorldStar } from './types';
+import { readState, recordVisitStart, resetVisitState } from './utils/storage';
+import { audioEngine } from './utils/audioEngine';
+import { Sparkles, RotateCcw, Heart } from 'lucide-react';
+
+export default function App() {
+  const [hasEntered, setHasEntered] = useState(false);
+  const [isReturnVisit, setIsReturnVisit] = useState(false);
+  const [currentLine, setCurrentLine] = useState<string | null>(null);
+  const [isAcheLine, setIsAcheLine] = useState(false);
+  const [selectedWorld, setSelectedWorld] = useState<WorldStar | null>(null);
+  const [isPangilatanOpen, setIsPangilatanOpen] = useState(false);
+  const [pangilatanSpokenLine, setPangilatanSpokenLine] = useState('');
+  const [isWishModalOpen, setIsWishModalOpen] = useState(false);
+  const [previewedIds, setPreviewedIds] = useState<Set<string>>(new Set());
+  const [zoneShift, setZoneShift] = useState(0.2);
+  const [visitCount, setVisitCount] = useState(1);
+  const [floatingHearts, setFloatingHearts] = useState<Array<{
+    id: number;
+    x: number;
+    y: number;
+    scale: number;
+    rotate: number;
+    delay: number;
+    duration: number;
+    color: string;
+    opacity: number;
+  }>>([]);
+  const [isTaraPressed, setIsTaraPressed] = useState(false);
+  const voiceTimeoutRef = useRef<number | null>(null);
+  const lenisRef = useRef<Lenis | null>(null);
+
+  // Initialize Lenis + GSAP smooth scroll
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      wheelMultiplier: 1,
+      touchMultiplier: 1.5,
+      infinite: false,
+    });
+    lenisRef.current = lenis;
+
+    // Track scroll position to update zoneShift (cooler at top, warmer at bottom)
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      if (maxScroll > 0) {
+        const progress = Math.min(1, Math.max(0, scrollY / maxScroll));
+        setZoneShift(progress);
+      }
+    };
+
+    lenis.on('scroll', handleScroll);
+
+    // Sync Lenis with GSAP high performance RAF ticker
+    const updateRaf = (time: number) => {
+      lenis.raf(time * 1000);
+    };
+
+    gsap.ticker.add(updateRaf);
+    gsap.ticker.lagSmoothing(0);
+
+    return () => {
+      lenis.destroy();
+      gsap.ticker.remove(updateRaf);
+      lenisRef.current = null;
+    };
+  }, []);
+
+  // Pause / resume smooth scroll when modals open/close
+  useEffect(() => {
+    if (isPangilatanOpen || selectedWorld !== null || isWishModalOpen || !hasEntered) {
+      lenisRef.current?.stop();
+    } else {
+      lenisRef.current?.start();
+    }
+  }, [isPangilatanOpen, selectedWorld, isWishModalOpen, hasEntered]);
+
+  // Initialize audio and visit state on load
+  useEffect(() => {
+    audioEngine.init();
+    const state = readState();
+
+    if (state.hasVisitedBefore) {
+      setIsReturnVisit(true);
+      setHasEntered(true);
+      setVisitCount(state.visitCount + 1);
+      recordVisitStart();
+
+      // Return greeting line
+      setTimeout(() => {
+        speak("Uyy, nandito ka ulit, heheh.");
+      }, 1200);
+    } else {
+      setIsReturnVisit(false);
+      setHasEntered(false);
+    }
+  }, []);
+
+  // Voice speech coordinator with queue/auto-clear
+  const speak = (line: string, isAche = false, duration = 4800) => {
+    if (voiceTimeoutRef.current) {
+      window.clearTimeout(voiceTimeoutRef.current);
+    }
+    setCurrentLine(line);
+    setIsAcheLine(isAche);
+
+    voiceTimeoutRef.current = window.setTimeout(() => {
+      setCurrentLine(null);
+    }, duration);
+  };
+
+  // Spawn floating heart particles on interaction
+  const triggerFloatingHearts = (count = 14) => {
+    const newHearts = Array.from({ length: count }).map((_, i) => ({
+      id: Date.now() + i + Math.random(),
+      x: (Math.random() - 0.5) * 180, // spread horizontally
+      y: -100 - Math.random() * 120, // float upwards
+      scale: 0.7 + Math.random() * 0.7,
+      rotate: (Math.random() - 0.5) * 60,
+      delay: i * 0.035,
+      duration: 1.4 + Math.random() * 0.6,
+      color: ['#f43f5e', '#fb7185', '#fda4af', '#fcd34d', '#f59e0b', '#fbbf24', '#f472b6'][i % 7],
+      opacity: 0.85 + Math.random() * 0.15,
+    }));
+    setFloatingHearts((prev) => [...prev, ...newHearts]);
+
+    // Clean up heart items after animation finishes
+    setTimeout(() => {
+      setFloatingHearts([]);
+    }, 2400);
+  };
+
+  // Handle first-visit Tara tap
+  const handleTaraClick = () => {
+    if (isTaraPressed) return;
+    setIsTaraPressed(true);
+    triggerFloatingHearts(18);
+
+    audioEngine.unlock();
+    audioEngine.play();
+    recordVisitStart();
+
+    // After brief warm heart animation, transition into the sky view
+    setTimeout(() => {
+      setHasEntered(true);
+      setIsTaraPressed(false);
+    }, 700);
+
+    // After 2.8s when sky has built in, speak the sky reveal line
+    setTimeout(() => {
+      speak("Ito Lovey, ang Ating Universe, heheh.");
+    }, 3000);
+  };
+
+  // Handle star preview click
+  const handleSpeakWorld = (text: string, isAche = false) => {
+    speak(text, isAche);
+  };
+
+  // Open Pangilatan Mountain Memory
+  const handleOpenPangilatan = (line: string) => {
+    setPangilatanSpokenLine(line);
+    setIsPangilatanOpen(true);
+    speak(line);
+  };
+
+  // Handle World Modal Open
+  const handleSelectWorld = (world: WorldStar) => {
+    setSelectedWorld(world);
+    setPreviewedIds((prev) => new Set([...prev, world.id]));
+  };
+
+  // Replay entrance from start
+  const handleReplayEntrance = () => {
+    resetVisitState();
+    setHasEntered(false);
+    setIsReturnVisit(false);
+    setPreviewedIds(new Set());
+    setCurrentLine(null);
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo(0, { immediate: false, duration: 1 });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  return (
+    <div className="relative min-h-screen w-full bg-slate-950 text-slate-100 font-sans selection:bg-amber-400 selection:text-slate-950">
+      {/* 1. Pitch Black First-Time Entrance Screen */}
+      <AnimatePresence>
+        {!hasEntered && (
+          <motion.div
+            id="entrance-stage"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center p-6 text-center select-none"
+          >
+            {/* Luminous Light Form */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 2, delay: 0.4 }}
+              className="relative flex items-center justify-center mb-8"
+            >
+              <div className="w-16 h-16 rounded-full bg-radial from-amber-200/40 via-purple-400/20 to-transparent blur-lg animate-pulse" />
+              <div className="absolute w-5 h-5 rounded-full bg-white shadow-[0_0_25px_rgba(244,213,141,1)]" />
+            </motion.div>
+
+            {/* Opening Taglish Dialogue */}
+            <motion.p
+              id="entity-line"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.6, delay: 0.8 }}
+              className="text-xl sm:text-2xl font-serif italic text-amber-100 font-light max-w-md tracking-wide leading-relaxed mb-10"
+            >
+              "Uyy, nandito ka na, tara..."
+            </motion.p>
+
+            {/* "Tara" Call to Action Button with Floating Heart Animation */}
+            <div className="relative flex flex-col items-center">
+              {/* Floating Hearts Container */}
+              <div className="absolute -top-6 inset-x-0 flex justify-center pointer-events-none z-10">
+                <AnimatePresence>
+                  {floatingHearts.map((heart) => (
+                    <motion.div
+                      key={heart.id}
+                      initial={{
+                        opacity: heart.opacity,
+                        scale: 0.3,
+                        x: 0,
+                        y: 0,
+                        rotate: 0,
+                      }}
+                      animate={{
+                        opacity: [heart.opacity, heart.opacity * 0.9, 0],
+                        scale: [0.3, heart.scale, heart.scale * 1.25],
+                        x: heart.x,
+                        y: heart.y,
+                        rotate: heart.rotate,
+                      }}
+                      transition={{
+                        duration: heart.duration,
+                        delay: heart.delay,
+                        ease: [0.22, 1, 0.36, 1],
+                      }}
+                      className="absolute"
+                    >
+                      <Heart
+                        className="w-5 h-5 drop-shadow-[0_0_12px_rgba(244,63,94,0.8)] fill-current"
+                        style={{ color: heart.color }}
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+
+              {/* Tara Button */}
+              <motion.button
+                id="tara-btn"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1.2, delay: 1.8 }}
+                onClick={handleTaraClick}
+                onMouseEnter={() => {
+                  if (!isTaraPressed && floatingHearts.length < 5) {
+                    triggerFloatingHearts(4);
+                  }
+                }}
+                className="relative group px-10 py-3.5 rounded-full bg-gradient-to-r from-amber-300 via-rose-200 to-amber-300 text-slate-950 font-serif text-sm tracking-[0.25em] uppercase font-semibold shadow-[0_0_35px_rgba(244,213,141,0.55)] hover:shadow-[0_0_45px_rgba(251,113,133,0.7)] hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer flex items-center gap-2 overflow-hidden"
+              >
+                {/* Subtle warm shimmer gradient overlay */}
+                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
+                
+                <Sparkles className="w-4 h-4 fill-slate-950 group-hover:rotate-12 transition-transform duration-300" />
+                <span className="relative z-10">Tara</span>
+                <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500 opacity-80 group-hover:scale-125 group-hover:opacity-100 transition-all duration-300" />
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 2. Interactive Sky Canvas Background */}
+      <SkyCanvas
+        zoneShift={zoneShift}
+        onMeteorClick={() => setIsWishModalOpen(true)}
+        isBuiltIn={hasEntered}
+      />
+
+      {/* 3. Top Navigation Bar */}
+      {hasEntered && (
+        <header className="fixed top-0 inset-x-0 z-30 px-6 py-4 flex items-center justify-between pointer-events-none">
+          <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 px-4 py-1.5 rounded-full pointer-events-auto shadow-lg">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+            <span className="text-xs font-serif font-medium text-amber-100 tracking-wider">
+              Ating Universe
+            </span>
+            <span className="text-[10px] text-amber-300/60 font-sans">
+              &bull; Cl &amp; Maica
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 pointer-events-auto">
+            {isReturnVisit && (
+              <span className="hidden sm:inline-block text-[11px] text-amber-200/80 bg-black/40 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full">
+                Visit #{visitCount}
+              </span>
+            )}
+            <button
+              id="btn-replay-opening"
+              onClick={handleReplayEntrance}
+              title="Balikan ang panimula"
+              className="flex items-center gap-1.5 text-xs bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/10 px-3.5 py-1.5 rounded-full text-slate-300 hover:text-amber-200 transition-colors shadow-lg"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Panimula</span>
+            </button>
+          </div>
+        </header>
+      )}
+
+      {/* 4. Main Constellation Scroll Content */}
+      {hasEntered && (
+        <main className="relative z-10">
+          <ConstellationLayer
+            onSelectWorld={handleSelectWorld}
+            onSpeak={handleSpeakWorld}
+            onOpenPangilatan={handleOpenPangilatan}
+            previewedIds={previewedIds}
+          />
+        </main>
+      )}
+
+      {/* 5. Ethereal Companion Dialogue System */}
+      <EntityVoice currentLine={currentLine} isAche={isAcheLine} />
+
+      {/* 6. Ambient Romantic Audio Player Widget */}
+      <AudioPlayerWidget />
+
+      {/* 7. Pangilatan Mountain Signature Photo Modal */}
+      <PangilatanModal
+        isOpen={isPangilatanOpen}
+        onClose={() => setIsPangilatanOpen(false)}
+        spokenLine={pangilatanSpokenLine}
+      />
+
+      {/* 8. World Detail Explorer Modal */}
+      <WorldDetailModal
+        world={selectedWorld}
+        onClose={() => setSelectedWorld(null)}
+        onSpeak={(text, ache) => speak(text, ache)}
+      />
+
+      {/* 9. Shooting Star / Meteor Wish Modal */}
+      <MeteorWishModal
+        isOpen={isWishModalOpen}
+        onClose={() => setIsWishModalOpen(false)}
+        onWishGranted={(wish) => speak(wish)}
+      />
+    </div>
+  );
+}

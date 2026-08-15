@@ -1,0 +1,258 @@
+import { WorldStar, AudioTrack, Letter, MemoryItem, TimelineMilestone, TravelDream } from '../types';
+
+export const WORLDS: WorldStar[] = [
+  {
+    id: 'our-first-year',
+    name: 'Our First Year',
+    url: '#first-year',
+    active: true,
+    order: 1,
+    previewLine: 'Maica! Ito, first year niyo, hehe.',
+    starColor: '#f4d58d',
+    unlockedDate: '2025-11-12',
+    tagline: 'Ang Simula ng Lahat',
+    description: 'Bawat araw, bawat tawag sa gabi, bawat tawanan at munting tampuhan na nauwi sa mas malalim na pagmamahal.',
+    iconName: 'Sparkles',
+  },
+  {
+    id: 'memory-gallery',
+    name: 'Memory Gallery',
+    url: '#gallery',
+    active: true,
+    order: 2,
+    previewLine: 'Grabe, dito puno ng — hmm, ikaw na magdiskubre, hahahah.',
+    acheLine: '...alam mo, may mga panahon na halos di na tayo nag-usap dati... pero andito pa rin tayo. Sooner, sabi mo noon. Tapos dumating na.',
+    starColor: '#c9a7eb',
+    unlockedDate: '2026-01-10',
+    tagline: 'Mga Tagpong Hindi Kumukupas',
+    description: 'Mga litrato at alaalang nakatatak sa puso — mula sa bundok ng Pangilatan hanggang sa bawat tanawin sa ilalim ng parehong langit.',
+    iconName: 'Image',
+  },
+  {
+    id: 'letters',
+    name: 'Letters',
+    url: '#letters',
+    active: true,
+    order: 3,
+    previewLine: 'May mga sinulat siya dito para sa\'yo... basahin mo, hehe.',
+    acheLine: 'Grabe, dito ko nilagay yung mga bagay na mahirap sabihin ng harapan... basahin mo lang, sige, tapos alam mo na — mahal na mahal kita, kahit anong layo.',
+    starColor: '#f7b2ad',
+    unlockedDate: '2026-03-01',
+    tagline: 'Mga Liham sa Pagitan ng Distansya',
+    description: 'Mga sulat-kamay at taimtim na salita para sa mga gabing magkalayo at mga umagang ikaw ang unang naiisip.',
+    iconName: 'Mail',
+  },
+  {
+    id: 'travel-world',
+    name: 'Travel World',
+    url: '#travel',
+    active: false,
+    order: 4,
+    previewLine: 'Lakad-lakad tayo dito...',
+    starColor: '#9ecae1',
+    unlockedDate: null,
+    tagline: 'Mga Susunod Nating Pupuntahan',
+    description: 'Mga pangarap na lugar na sabay nating tatapakan pagkatapos ng distansya. Malapit na, sooner.',
+    iconName: 'Compass',
+  },
+];
+
+export const PANGILATAN_LINES = [
+  "Uyy, ito na siya... Pangilatan. Hindi siya parang ibang bituin, 'no? Gumagala lang — parang tayo dati. Umiikot, tapos... nagkita rin ulit.",
+  "Naaalala mo pa dito? Basang-basa tayo noon. Pero heheh — andito pa rin tayo ngayon.",
+  "Dito rin tayo kumanta, 'no? Di maganda boses ko pero — hahaha — pinakinggan mo pa rin.",
+  "Ito si Pangilatan... hindi ko na kailangang ipaliwanag, 'no? Alam mo na.",
+  "Uyy, nadiskubre mo siya. Gumagala lang 'yan — ayaw sumunod sa linya. Minsan tayo rin naman, 'di ba? 'Di sumusunod sa plano, pero nagkita pa rin.",
+];
+
+export const AUDIO_TRACKS: AudioTrack[] = [
+  {
+    id: 'track-01',
+    title: "Say You Won't Let Go",
+    artist: 'James Arthur',
+    ambientVibe: 'Acoustic Warmth & Gentle Melodies',
+    tempo: 85,
+    src: '/music/say-you-wont-let-go.mp3',
+  },
+  {
+    id: 'track-02',
+    title: 'Supermarket Flowers',
+    artist: 'Ed Sheeran',
+    ambientVibe: 'Soft Piano Serenade & Heartfelt Peace',
+    tempo: 78,
+    src: '/music/supermarket-flowers.mp3',
+  },
+  {
+    id: 'track-03',
+    title: 'Those Eyes',
+    artist: 'New West',
+    ambientVibe: 'Dreamy Twilight Reverb & Cosmic Harmony',
+    tempo: 90,
+    src: '/music/those-eyes.mp3',
+  },
+];
+
+export const MEMORIES: MemoryItem[] = [
+  {
+    id: 'mem-1',
+    title: 'Tayo sa Tuktok ng Pangilatan',
+    location: 'Pangilatan Mountain Viewdeck',
+    date: 'Araw ng Pagtatagpo',
+    description: 'Nung umakyat tayo, kahit maulap at mahangin, hawak-kamay nating tinanaw ang buong kabundukan. Ang sarap sa pakiramdam na katabi kita.',
+    quote: '"Kahit gaano kalayo ang tinahak, basta kasama ka, laging worth it."',
+    imageType: 'selfie',
+    imageSrc: '/photos/pangilatan-1.jpg',
+  },
+  {
+    id: 'mem-2',
+    title: 'Tinging Malaya sa Kabundukan',
+    location: 'Pangilatan Hills Grassland',
+    date: 'Matahimik na Hapon',
+    description: 'Nakatitig ka lang sa malayo habang sumasayaw ang hangin sa buhok mo. Dun ko napagtanto kung gaano kita gustong alagaan at mahalin habangbuhay.',
+    quote: '"Sa katahimikan ng bundok, ikaw lang ang naririnig ng puso ko."',
+    imageType: 'scenic',
+    imageSrc: '/photos/selfie-love.jpg',
+  },
+  {
+    id: 'mem-3',
+    title: 'Sa Ilalim ng Maulap na Langit',
+    location: 'Silong ng Pangarap',
+    date: 'Hapon ng Tawanan at Jamming',
+    description: 'Tumitingala tayo habang nagpapatugtog at kumakanta kahit sintunado. Basang-basa man o pagod, puro ngiti lang ang natira.',
+    quote: '"Hindi mahalaga ang panahon sa labas kung ikaw ang araw ko sa loob."',
+    imageType: 'skyview',
+    imageSrc: '/photos/pangilatan-03.jpg',
+  },
+  {
+    id: 'mem-4',
+    title: 'Gullas Twilight & Shooting Stars',
+    location: 'Twilight Horizon',
+    date: 'Gabi ng mga Hiling',
+    description: 'Kulay ube at rosas ang langit sa dapit-hapon. Doon natin hiniling na sana, kahit magkalayo sa distansya, iisa pa rin ang ating uniberso.',
+    quote: '"Iisang langit ang tinitingnan natin gabi-gabi."',
+    imageType: 'twilight',
+    imageSrc: '/photos/pangilatan-1.jpg',
+  },
+];
+
+export const LETTERS: Letter[] = [
+  {
+    id: 'letter-1',
+    title: 'Para sa Aking Lovey, Kahit Anong Layo',
+    date: 'Mahalagang Araw',
+    excerpt: 'Hindi madali ang LDR, pero tuwing naaalala kita, nawawala lahat ng pagod...',
+    content: [
+      'Dearest Maica, aking Lovey,',
+      'Alam mo bang sa bawat gabing tahimik ang paligid at nakatitig ako sa kisame, ikaw agad ang pumapasok sa isip ko? Ang hirap minsan ng magkalayo — yung mga araw na gusto kitang yakapin pag pagod ka, o hawakan ang kamay mo habang naglalakad tayo nang walang patutunguhan.',
+      'Pero alam mo kung anong mas malakas kaysa sa distansya? Yung katiyakan na ikaw ang taong gusto kong makasama sa bawat yugto ng buhay ko.',
+      'Salamat sa pagtitiyaga, sa pagiging sandigan ko kahit sa screen lang tayo nagkikita, at sa pagmamahal mong kailanman ay hindi nagbago.',
+      'Hinding-hindi ako mapapagod maghintay at magsikap para sa araw na hindi na natin kailangang magpaalam sa airport o magbilang ng mga buwan bago magkita.',
+    ],
+    signature: 'Nagmamahal nang walang hanggan, Clint',
+    tag: 'Taimtim na Liham',
+    sealColor: '#e07a5f',
+  },
+  {
+    id: 'letter-2',
+    title: 'Nung Halos Mawalan Tayo ng Kausap ("Sooner")',
+    date: 'Panahon ng Pagtibay',
+    excerpt: 'Naaalala mo yung mga panahong parang ang bigat ng lahat? Pero look at us now...',
+    content: [
+      'Lovey,',
+      'Hindi perpekto ang kwento natin. May mga panahon noon na halos mawalan tayo ng lakas, na parang ang hirap abutin ng isa\'t isa dahil sa layo at sa dami ng iniisip.',
+      'Pero may isang salita kang laging sinasabi na naging angkla ko: "Sooner."',
+      'Simple lang pero puno ng pag-asa. Sabi mo, darating din ang araw na magiging madali ang lahat. At totoo nga — bawat unos na dumaan, imbes na maglayo sa atin, mas lalong nagpatibay sa kung sino tayo ngayon.',
+      'Salamat at hindi ka bumitaw. Salamat dahil pinili mo akong mahalin araw-araw.',
+    ],
+    signature: 'Palaging para sa\'yo, Clint',
+    tag: 'Alaala at Pagtibay',
+    sealColor: '#81b29a',
+  },
+  {
+    id: 'letter-3',
+    title: 'Pangako sa Ating Kinabukasan',
+    date: 'Pangarap Nating Dalawa',
+    excerpt: 'Hindi lang ito alaala ng nakaraan — ito ang pundasyon ng ating bukas...',
+    content: [
+      'Maica ko,',
+      'Ginawa ko itong Ating Universe hindi lang para balikan ang mga nakaraang buwan, kundi para ipaalala sa\'yo na may buong kalawakan pa tayong bubuuin nang magkasama.',
+      'Darating ang araw na gigising tayo sa umaga na walang timer ang tawag, walang flight ticket na kailangang habulin, kundi kape at ikaw lang sa tabi ko.',
+      'Marami pang mundo ang malilikha, Lovey. At sa bawat mundong iyon, ikaw at ikaw lang ang pipiliin ko.',
+      'Mahal na mahal kita, higit pa sa kayang bilangin ng mga bituin sa langit.',
+    ],
+    signature: 'Ang iyong kakampi habangbuhay, Clint',
+    tag: 'Pangako sa Hinaharap',
+    sealColor: '#3d405b',
+  },
+];
+
+export const TIMELINE_MILESTONES: TimelineMilestone[] = [
+  {
+    month: 'Unang Yugto',
+    title: 'Ang Unang "Uyy" at Tawanan',
+    story: 'Kung paano nagsimula sa simpleng chat hanggang sa naging 4am calls na ayaw nang magbabaan ng phone.',
+    highlight: 'Hindi namamalayan ang oras basta ikaw ang kausap.',
+    emoji: '🌙',
+  },
+  {
+    month: 'Araw ng Pagtatapat',
+    title: 'Nung Naging "Tayo"',
+    story: 'Ang pinakamasayang desisyon sa buhay ko — ang piliin kang maging tahanan ng puso ko.',
+    highlight: 'Official na aking Lovey.',
+    emoji: '✨',
+  },
+  {
+    month: 'Araw sa Pangilatan',
+    title: 'Kanta at Ulan sa Bundok',
+    story: 'Umakyat tayo sa Pangilatan, nagpatugtog ng gitara at kumanta kahit maulan. Walang paki sa dumi o lamig.',
+    highlight: 'Basta ikaw ang kasama, paraiso ang kahit saang lugar.',
+    emoji: '⛰️',
+  },
+  {
+    month: 'Mga Gabi ng LDR',
+    title: 'Pagtulog nang Magkasama sa Call',
+    story: 'Kahit screen lang ang pagitan, marinig lang ang hininga at boses mo, payapa na ang buong gabi.',
+    highlight: 'LDR can\'t stop genuine soul connection.',
+    emoji: '💫',
+  },
+  {
+    month: 'Anniversary Milestone',
+    title: 'Isang Taon ng Pagmamahal',
+    story: '365 na araw ng pagpili sa isa\'t isa. Patunay na ang tunay na pag-ibig ay hindi nasusukat sa distansya.',
+    highlight: 'First year down, lifetime to go.',
+    emoji: '💖',
+  },
+];
+
+export const TRAVEL_DREAMS: TravelDream[] = [
+  {
+    destination: 'Japan Cherry Blossom Season',
+    tagline: 'Lakad sa ilalim ng Sakura at gabi sa Kyoto',
+    activities: ['Mag-rent ng kimono', 'Kumain ng authentic matcha at ramen', 'Mag-night stroll sa Dotonbori'],
+    status: 'sooner',
+    note: 'Gusto kitang kuhanan ng litrato habang nahuhulog ang sakura petals sa buhok mo.',
+  },
+  {
+    destination: 'Siargao Island Getaway',
+    tagline: 'Motorbike rides sa ilalim ng coconut trees at sunset surf',
+    activities: ['Mag-motor sa palm tree road', 'Sugba Lagoon floating', 'Tumingin ng stars sa tabing-dagat'],
+    status: 'planned',
+    note: 'Yung ikaw ang nakayakap sa likod ko habang nagmomotor tayo sa gilid ng dagat.',
+  },
+  {
+    destination: 'Baguio & Sagada Foggy Mornings',
+    tagline: 'Mainit na kape, makapal na jacket, at yakap sa lamig',
+    activities: ['Uminom ng strawberry taho', 'Magkape sa overlooking cloud cafe', 'Stargazing sa cold mountain air'],
+    status: 'dreaming',
+    note: 'Walang mas sasarap sa yakap mo habang malamig ang simoy ng hangin sa bundok.',
+  },
+];
+
+export const WISH_QUOTES = [
+  "Wish granted: Mas lalo kitang mamahalin araw-araw.",
+  "Pangako, magkikita rin tayo sooner, Lovey.",
+  "Salamat sa pananatili sa tabi ko sa bawat unos at ulan.",
+  "Kahit gaano kalayo, iisang kalawakan ang tahanan nating dalawa.",
+  "Ikaw ang pinakamagandang hiling na natupad sa buhay ko.",
+  "Sa bawat pagtingala mo sa mga bituin, alalahanin mong may nagmamahal sa'yo nang wagas dito.",
+];
