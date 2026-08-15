@@ -40,13 +40,17 @@ export const MeteorWishModal: React.FC<MeteorWishModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/80 backdrop-blur-xl select-none">
+      <div
+        data-lenis-prevent
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/80 backdrop-blur-xl select-none"
+      >
         <motion.div
+          data-lenis-prevent
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ duration: 0.4 }}
-          className="relative w-full max-w-md bg-gradient-to-b from-amber-950/70 via-slate-950/90 to-black rounded-3xl border border-amber-300/40 p-6 sm:p-8 shadow-[0_0_50px_rgba(244,213,141,0.25)] text-center my-auto"
+          className="relative w-full max-w-md max-h-[90vh] overflow-y-auto bg-gradient-to-b from-amber-950/70 via-slate-950/90 to-black rounded-3xl border border-amber-300/40 p-6 sm:p-8 shadow-[0_0_50px_rgba(244,213,141,0.25)] text-center my-auto"
         >
           {/* Close button */}
           <button

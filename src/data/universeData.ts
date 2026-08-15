@@ -1,4 +1,7 @@
-import { WorldStar, AudioTrack, Letter, MemoryItem, TimelineMilestone, TravelDream } from '../types';
+import { WorldStar, AudioTrack, Letter, MemoryItem, RandomPhotoMemory, TimelineMilestone, TravelDream } from '../types';
+import { PANGILATAN_FOLDER_URL, RANDOM_MEMORIES_FOLDER_URL, getDriveThumbnailUrl } from '../utils/driveHelper';
+
+export { PANGILATAN_FOLDER_URL, RANDOM_MEMORIES_FOLDER_URL };
 
 export const WORLDS: WorldStar[] = [
   {
@@ -97,7 +100,7 @@ export const MEMORIES: MemoryItem[] = [
     id: 'mem-1',
     title: 'Tayo sa Tuktok ng Pangilatan',
     location: 'Pangilatan Mountain Viewdeck',
-    date: 'Araw ng Pagtatagpo',
+    date: 'Hulyo 2026 • Araw ng Pagtatagpo',
     description: 'Nung umakyat tayo, kahit maulap at mahangin, hawak-kamay nating tinanaw ang buong kabundukan. Ang sarap sa pakiramdam na katabi kita.',
     quote: '"Kahit gaano kalayo ang tinahak, basta kasama ka, laging worth it."',
     imageType: 'selfie',
@@ -115,6 +118,56 @@ export const MEMORIES: MemoryItem[] = [
   },
   {
     id: 'mem-3',
+    title: 'Unang Silip ng Liwayway',
+    location: 'Pangilatan Peak Ridge',
+    date: 'Hulyo 4, 2026 • Dapit-Umaga',
+    description: 'Ang unang liwanag ng araw na sumisilip sa likod ng mga ulap habang magkasama nating sinasalubong ang bagong umaga.',
+    quote: '"Sa bawat pagsikat ng araw, ikaw ang unang pasasalamatan."',
+    imageType: 'scenic',
+    imageSrc: '/photos/20260704_054740-1.jpg',
+  },
+  {
+    id: 'mem-4',
+    title: 'Dapit-Umaga sa Kabundukan',
+    location: 'Pangilatan Horizon',
+    date: 'Hulyo 4, 2026 • 5:47 AM',
+    description: 'Malamig ang hangin pero mainit ang puso dahil magkahawak ang ating mga kamay.',
+    quote: '"Walang hamog o lamig na hindi kayang pawiin ng iyong yakap."',
+    imageType: 'scenic',
+    imageSrc: '/photos/20260704_054749-1.jpg',
+  },
+  {
+    id: 'mem-5',
+    title: 'Yakap ng Malamig na Simoy',
+    location: 'Mountain Trail Overlook',
+    date: 'Hulyo 4, 2026 • 5:48 AM',
+    description: 'Habang nagliliwanag ang kalangitan, pinagmamasdan natin ang ganda ng kalikasan nang sabay.',
+    quote: '"Bawat hakbang paakyat, ikaw ang aking lakas."',
+    imageType: 'scenic',
+    imageSrc: '/photos/20260704_054832-1.jpg',
+  },
+  {
+    id: 'mem-6',
+    title: 'Gintong Sinag ng Pangarap',
+    location: 'Pangilatan Sunrise Crest',
+    date: 'Hulyo 4, 2026 • 5:50 AM',
+    description: 'Nang tuluyang sumikat ang araw at maging ginto ang ulap, doon ko ipinangako na hindi kita bibitawan.',
+    quote: '"Kasing liwanag ng bukang-liwayway ang pag-asa sa ating dalawa."',
+    imageType: 'scenic',
+    imageSrc: '/photos/20260704_055008.jpg',
+  },
+  {
+    id: 'mem-7',
+    title: 'Masayang Hapon Kasama Ka',
+    location: 'Tagpuan ng Pagmamahalan',
+    date: 'Hulyo 14, 2026 • 4:05 PM',
+    description: 'Simpleng araw, walang engrandeng plano, pero punong-puno ng lambing at tawanan.',
+    quote: '"Ang pinakamagandang oras sa buong araw ay yung oras na kasama kita."',
+    imageType: 'selfie',
+    imageSrc: '/photos/20260714_160538.jpg',
+  },
+  {
+    id: 'mem-8',
     title: 'Sa Ilalim ng Maulap na Langit',
     location: 'Silong ng Pangarap',
     date: 'Hapon ng Tawanan at Jamming',
@@ -123,15 +176,84 @@ export const MEMORIES: MemoryItem[] = [
     imageType: 'skyview',
     imageSrc: '/photos/pangilatan-03.jpg',
   },
+];
+
+/**
+ * RANDOM FLOATING MEMORY PHOTOS POOL
+ * Automatically loops through all real photos uploaded in /public/photos/
+ */
+export const RANDOM_MEMORY_PHOTOS: RandomPhotoMemory[] = [
   {
-    id: 'mem-4',
-    title: 'Gullas Twilight & Shooting Stars',
-    location: 'Twilight Horizon',
-    date: 'Gabi ng mga Hiling',
-    description: 'Kulay ube at rosas ang langit sa dapit-hapon. Doon natin hiniling na sana, kahit magkalayo sa distansya, iisa pa rin ang ating uniberso.',
-    quote: '"Iisang langit ang tinitingnan natin gabi-gabi."',
-    imageType: 'twilight',
-    imageSrc: '/photos/pangilatan-1.jpg',
+    id: 'photo-pangilatan-1',
+    src: '/photos/pangilatan-1.jpg',
+    title: 'Tuktok ng Pangilatan',
+    caption: 'Kahit gaano kataas ang akyatin, basta ikaw ang kasama ko, parang nasa ulap lang tayo.',
+    location: 'Pangilatan Mountain',
+    date: 'Araw ng Pagtatagpo',
+    glowColor: '#9dbf9a',
+  },
+  {
+    id: 'photo-selfie-love',
+    src: '/photos/selfie-love.jpg',
+    title: 'Ang Paborito Kong Ngiti',
+    caption: 'Sa bawat tingin mo, ramdam ko ang tahanan na matagal ko nang hinahanap.',
+    location: 'Pangilatan Trails',
+    date: 'Matahimik na Hapon',
+    glowColor: '#fb7185',
+  },
+  {
+    id: 'photo-20260704-054740',
+    src: '/photos/20260704_054740-1.jpg',
+    title: 'Unang Silip ng Liwayway',
+    caption: 'Kasama kang sumalubong sa unang sinag ng araw sa tuktok ng kabundukan.',
+    location: 'Pangilatan Ridge',
+    date: 'Hulyo 4, 2026 • 5:47 AM',
+    glowColor: '#f4d58d',
+  },
+  {
+    id: 'photo-20260704-054749',
+    src: '/photos/20260704_054749-1.jpg',
+    title: 'Dapit-Umaga sa Ulap',
+    caption: 'Malamig man ang simoy ng hangin, ang init ng kamay mo ang aking sandigan.',
+    location: 'Pangilatan Overlook',
+    date: 'Hulyo 4, 2026 • 5:47 AM',
+    glowColor: '#38bdf8',
+  },
+  {
+    id: 'photo-20260704-054832',
+    src: '/photos/20260704_054832-1.jpg',
+    title: 'Yakap ng Kalikasan',
+    caption: 'Dito sa ibabaw ng ulap, walang ingay ng mundo — ikaw at ako lang.',
+    location: 'Pangilatan Trail View',
+    date: 'Hulyo 4, 2026 • 5:48 AM',
+    glowColor: '#a78bfa',
+  },
+  {
+    id: 'photo-20260704-055008',
+    src: '/photos/20260704_055008.jpg',
+    title: 'Gintong Sinag ng Pangarap',
+    caption: 'Nang magliwanag ang buong bundok, alam kong ikaw ang liwanag ng buhay ko.',
+    location: 'Pangilatan Sunrise Peak',
+    date: 'Hulyo 4, 2026 • 5:50 AM',
+    glowColor: '#fbbf24',
+  },
+  {
+    id: 'photo-20260714-160538',
+    src: '/photos/20260714_160538.jpg',
+    title: 'Masayang Hapon Kasama Ka',
+    caption: 'Bawat tawa, bawat kwento, bawat simpleng tinginan — kayamanang itatabi ko habangbuhay.',
+    location: 'Ating Tagpuan',
+    date: 'Hulyo 14, 2026 • 4:05 PM',
+    glowColor: '#f43f5e',
+  },
+  {
+    id: 'photo-pangilatan-03',
+    src: '/photos/pangilatan-03.jpg',
+    title: 'Sa Ilalim ng Maulap na Langit',
+    caption: 'Walang ulan o hamog na kayang magpalamig sa init ng ating pagmamahalan.',
+    location: 'Mountain Ridge View',
+    date: 'Hapon ng Tawanan',
+    glowColor: '#34d399',
   },
 ];
 
@@ -256,3 +378,112 @@ export const WISH_QUOTES = [
   "Ikaw ang pinakamagandang hiling na natupad sa buhay ko.",
   "Sa bawat pagtingala mo sa mga bituin, alalahanin mong may nagmamahal sa'yo nang wagas dito.",
 ];
+
+export interface GuideLine {
+  text: string;
+  mood: 'happy' | 'loving' | 'starry' | 'playful' | 'tender' | 'ache';
+  actionHint?: string;
+}
+
+export const GUIDE_INTERACTIVE_DIALOGUES: GuideLine[] = [
+  {
+    text: "Uyy Maica! Ako si Tala, ang iyong cosmic star companion. Dito lang ako palagi sa tabi mo habang naglalakbay tayo sa ating kalawakan! ✨",
+    mood: 'happy',
+    actionHint: 'Mag-scroll pababa para makita ang mga mundo',
+  },
+  {
+    text: "Alam mo ba, bawat bituin dito ay sinindihan ng mga alaalang binuo niyo ni Clint... kahit gaano kalayo, kumikinang pa rin. 💫",
+    mood: 'loving',
+  },
+  {
+    text: "Psst! Napansin mo ba yung mga lumulutang na Polaroid sa gilid? I-tap mo sila para masilip ang mga tunay ninyong litrato! 📸",
+    mood: 'playful',
+    actionHint: 'Subukang i-tap ang lumulutang na litrato',
+  },
+  {
+    text: "Ang ganda ng tugtog, 'no? Damang-dama ang bawat nota. Pwede mong palitan o i-pause sa music player sa ibaba. 🎶",
+    mood: 'tender',
+  },
+  {
+    text: "Kahit LDR kayo ngayon, tandaan mo: iisang buwan at iisang langit ang tinitingnan ninyo gabi-gabi. 🌙",
+    mood: 'loving',
+  },
+  {
+    text: "Heheh! Ang cute mo raw sabi ni Clint habang nakangiti ka sa screen mo ngayon. 🙈💕",
+    mood: 'playful',
+  },
+  {
+    text: "Tingnan mo yung 'Pangilatan' na bituin sa may gilid! May sarili siyang orbit dahil espesyal ang bundok na iyon sa inyong dalawa. ⛰️",
+    mood: 'starry',
+    actionHint: 'I-tap ang Pangilatan Star para mag-explore',
+  },
+  {
+    text: "Minsan may mga gabing mahirap ang layo... pero tulad ng sabi mo noon: 'Sooner'. Palapit na nang palapit ang araw na magkasama na kayo. 💖",
+    mood: 'tender',
+  },
+  {
+    text: "Kapag may nakita kang shooting star o bulalakaw, i-tap mo agad para makapag-iwan ng hiling sa uniberso! 🌠",
+    mood: 'starry',
+    actionHint: 'Mag-abang ng dumaraang bulalakaw',
+  },
+  {
+    text: "Nabisita mo na ba ang World 3: Letters? May tatlong mahahabang liham doon na galing sa kaibuturan ng puso ni Clint. 💌",
+    mood: 'loving',
+    actionHint: 'Buksan ang Letters World',
+  },
+  {
+    text: "Salamat sa pagiging liwanag ni Clint sa bawat araw. Ikaw ang kanyang paboritong tala sa buong uniberso. ✨",
+    mood: 'tender',
+  },
+  {
+    text: "Kahit mag-brownout o mawalan ng signal, walang makakabura sa koneksyon ng mga puso ninyo. 💫",
+    mood: 'happy',
+  },
+];
+
+export const GUIDE_EXPLORATION_TIPS: GuideLine[] = [
+  {
+    text: "💡 Tip: I-tap ang bawat konstelasyon (World 1, 2, at 3) para mabuksan ang mga kwento, milestones, at gallery!",
+    mood: 'starry',
+  },
+  {
+    text: "💡 Tip: Gamitin ang 'Alaala sa Bituin' button sa ibaba para magpalipad ng mga random na litrato niyo sa Pangilatan!",
+    mood: 'happy',
+  },
+  {
+    text: "💡 Tip: Sa Pangilatan modal, pwede mong i-click ang mga arrows para tingnan lahat ng 8 totoong litrato mula sa inyong pag-akyat!",
+    mood: 'starry',
+  },
+  {
+    text: "💡 Tip: Pwede mong i-tap ako anumang oras kapag gusto mo ng munting kwento, payo, o lambing mula kay Clint!",
+    mood: 'playful',
+  },
+  {
+    text: "💡 Tip: Sa World 4 (Travel World), makikita mo ang mga pangarap na destinasyon tulad ng Japan, Siargao, at Baguio!",
+    mood: 'loving',
+  },
+];
+
+export const GUIDE_IDLE_CHIRPS: GuideLine[] = [
+  {
+    text: "Nandito lang ako, tahimik na nagmamasid sa inyong magandang kalawakan... ✨",
+    mood: 'tender',
+  },
+  {
+    text: "Basta't may pagmamahal, walang distansyang masyadong malayo. 💖",
+    mood: 'loving',
+  },
+  {
+    text: "Kumusta ka diyan, Maica? Huwag kalimutang magpahinga at uminom ng tubig ha. 😊",
+    mood: 'happy',
+  },
+  {
+    text: "Ang sarap balikan ng mga alaala sa Pangilatan... basang-basa pero puro ngiti. ⛰️🌧️",
+    mood: 'tender',
+  },
+  {
+    text: "Isang araw, hindi na 'to virtual universe lang — sabay niyo nang titingnan ang totoong mga bituin. 🌌",
+    mood: 'starry',
+  },
+];
+

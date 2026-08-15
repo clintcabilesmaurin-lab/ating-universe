@@ -4,6 +4,7 @@ import { audioEngine } from '../utils/audioEngine';
 interface Star {
   xFrac: number;
   yFrac: number;
+  depth: number; // 0.2 (distant) to 1.0 (near) for 3D parallax
   radius: number;
   baseAlpha: number;
   twinkleSpeed: number;
@@ -37,11 +38,11 @@ interface SkyCanvasProps {
   isBuiltIn?: boolean;
 }
 
-const STAR_COUNT = 90;
+const STAR_COUNT = 110;
 const HORIZON_RIDGES = [
-  { heightFrac: 0.50, jitter: 0.28, points: 24, spikeChance: 0.16, spikeBoost: 1.5, darken: 0.50, desaturate: 0.30 },
-  { heightFrac: 0.72, jitter: 0.38, points: 30, spikeChance: 0.22, spikeBoost: 1.7, darken: 0.32, desaturate: 0.42 },
-  { heightFrac: 1.00, jitter: 0.48, points: 38, spikeChance: 0.28, spikeBoost: 1.9, darken: 0.16, desaturate: 0.55 },
+  { heightFrac: 0.50, jitter: 0.28, points: 24, spikeChance: 0.16, spikeBoost: 1.5, parallax: 0.08 },
+  { heightFrac: 0.72, jitter: 0.38, points: 30, spikeChance: 0.22, spikeBoost: 1.7, parallax: 0.18 },
+  { heightFrac: 1.00, jitter: 0.48, points: 38, spikeChance: 0.28, spikeBoost: 1.9, parallax: 0.32 },
 ];
 
 export const SkyCanvas: React.FC<SkyCanvasProps> = ({
@@ -58,7 +59,11 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
   const meteorLingerStartRef = useRef<number>(Date.now());
   const [canCatchMeteor, setCanCatchMeteor] = useState(false);
 
-  // Initialize star field
+  // Mouse & Scroll Parallax Coordinates (smoothed via lerp)
+  const targetMouseRef = useRef({ x: 0, y: 0 });
+  const currentMouseRef = useRef({ x: 0, y: 0 });
+
+  // Initialize star field with 3D depth layer
   const initStars = useCallback(() => {
     const list: Star[] = [];
     for (let i = 0; i < STAR_COUNT; i++) {
@@ -73,10 +78,13 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
       }
 
       const isFeature = Math.random() < 0.18;
+      const depth = 0.25 + Math.random() * 0.75; // Depth multiplier for parallax
+
       list.push({
         xFrac,
         yFrac,
-        radius: isFeature ? 1.6 + Math.random() * 1.0 : 0.6 + Math.random() * 0.9,
+        depth,
+        radius: isFeature ? 1.6 + Math.random() * 1.1 : 0.6 + Math.random() * 0.9,
         baseAlpha: 0.45 + Math.random() * 0.55,
         twinkleSpeed: 0.5 + Math.random() * 0.9,
         twinklePhase: Math.random() * Math.PI * 2,
@@ -132,6 +140,19 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
     meteorLingerStartRef.current = Date.now();
   }, [initStars, initHorizon]);
 
+  // Global mousemove listener for deep 3D parallax tracking
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      // Normalize to -1 to +1 from screen center
+      const nx = (e.clientX / window.innerWidth - 0.5) * 2;
+      const ny = (e.clientY / window.innerHeight - 0.5) * 2;
+      targetMouseRef.current = { x: nx, y: ny };
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   // Main animation frame loop
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -154,28 +175,30 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
     const render = () => {
       const now = Date.now();
 
+      // Smooth lerp mouse parallax offset
+      currentMouseRef.current.x += (targetMouseRef.current.x - currentMouseRef.current.x) * 0.05;
+      currentMouseRef.current.y += (targetMouseRef.current.y - currentMouseRef.current.y) * 0.05;
+      const mouseOffset = currentMouseRef.current;
+
       ctx.clearRect(0, 0, width, height);
 
       // 1. Draw atmospheric background gradient (Zone-shift warmth)
       const grad = ctx.createLinearGradient(0, 0, 0, height);
-      // Top: Deep Indigo
       grad.addColorStop(0, '#0a0818');
-      // Upper Mid: Twilight Violet
       grad.addColorStop(0.35, zoneShift > 0.5 ? '#26173d' : '#1c1333');
-      // Lower Mid: Romantic Pink-Dusk
       grad.addColorStop(0.68, zoneShift > 0.5 ? '#703858' : '#572c47');
-      // Horizon Glow: Sunrise Amber
       grad.addColorStop(1, zoneShift > 0.5 ? '#d97448' : '#bf5f3b');
 
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, width, height);
 
-      // 2. Draw Milky Way diffuse glow
+      // 2. Draw Milky Way diffuse glow with subtle parallax
       const milkySteps = 8;
-      const bandBaseX = width * 0.22;
+      const bandBaseX = width * 0.22 + mouseOffset.x * 25;
+      const bandBaseY = mouseOffset.y * 15;
       for (let i = 0; i < milkySteps; i++) {
         const t = i / (milkySteps - 1);
-        const y = height * t;
+        const y = height * t + bandBaseY;
         const x = bandBaseX + Math.sin(t * Math.PI) * width * 0.14;
         const r = width * 0.24 * (0.6 + Math.sin(t * Math.PI) * 0.5);
 
@@ -190,11 +213,15 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
         ctx.fill();
       }
 
-      // 3. Draw Stars
+      // 3. Draw Stars with Parallax Depth Offset
       if (isBuiltIn) {
         starsRef.current.forEach((star) => {
-          const x = star.xFrac * width;
-          const y = star.yFrac * height;
+          // Calculate 3D parallax displacement based on individual star depth
+          const parallaxX = mouseOffset.x * star.depth * 35;
+          const parallaxY = mouseOffset.y * star.depth * 25;
+
+          const x = star.xFrac * width + parallaxX;
+          const y = star.yFrac * height + parallaxY;
           const elapsed = now / 1000;
           const twinkle = 0.75 + 0.25 * Math.sin(elapsed * star.twinkleSpeed + star.twinklePhase);
           const alpha = star.baseAlpha * twinkle;
@@ -235,23 +262,24 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
         }
       });
 
-      // 5. Draw Horizon Silhouette & Treeline
+      // 5. Draw Horizon Silhouette & Treeline with Parallax
       const bandHeight = height * 0.17;
       HORIZON_RIDGES.forEach((ridge, i) => {
         const profile = horizonProfilesRef.current[i];
         if (!profile) return;
 
+        const horizonParallaxX = mouseOffset.x * ridge.parallax * 30;
+        const horizonParallaxY = mouseOffset.y * ridge.parallax * 15;
         const peakHeight = bandHeight * ridge.heightFrac;
-        // Dark mountain tones blended with night sky
         const ridgeColor = i === 0 ? '#1f132b' : i === 1 ? '#150c1e' : '#0b0610';
 
         ctx.fillStyle = ridgeColor;
         ctx.beginPath();
-        ctx.moveTo(0, height);
+        ctx.moveTo(-40, height);
         profile.forEach((p) => {
-          ctx.lineTo(p.xFrac * width, height - p.peak * peakHeight);
+          ctx.lineTo(p.xFrac * width + horizonParallaxX, height - p.peak * peakHeight + horizonParallaxY);
         });
-        ctx.lineTo(width, height);
+        ctx.lineTo(width + 40, height);
         ctx.closePath();
         ctx.fill();
       });
@@ -261,7 +289,6 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
         if (!meteorRef.current && now - lastMeteorCheckRef.current > 4500) {
           lastMeteorCheckRef.current = now;
           const lingerSeconds = (now - meteorLingerStartRef.current) / 1000;
-          // Spawn probability rewards lingering (base 8% up to 35%)
           const prob = Math.min(0.35, 0.08 + lingerSeconds * 0.003);
           if (Math.random() < prob) {
             spawnMeteor(width, height, now);

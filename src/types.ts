@@ -44,6 +44,16 @@ export interface MemoryItem {
   imageSrc?: string;
 }
 
+export interface RandomPhotoMemory {
+  id: string;
+  src: string;
+  title: string;
+  caption?: string;
+  location?: string;
+  date?: string;
+  glowColor?: string;
+}
+
 export interface TimelineMilestone {
   month: string;
   title: string;

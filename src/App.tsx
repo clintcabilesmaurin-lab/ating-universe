@@ -3,16 +3,18 @@ import { motion, AnimatePresence } from 'motion/react';
 import Lenis from 'lenis';
 import gsap from 'gsap';
 import { SkyCanvas } from './components/SkyCanvas';
-import { EntityVoice } from './components/EntityVoice';
+import { CompanionGuide } from './components/CompanionGuide';
 import { ConstellationLayer } from './components/ConstellationLayer';
 import { PangilatanModal } from './components/PangilatanModal';
 import { WorldDetailModal } from './components/WorldDetailModal';
 import { AudioPlayerWidget } from './components/AudioPlayerWidget';
 import { MeteorWishModal } from './components/MeteorWishModal';
+import { RandomMemoriesDrifter } from './components/RandomMemoriesDrifter';
+import { PhotoManagerModal } from './components/PhotoManagerModal';
 import { WorldStar } from './types';
 import { readState, recordVisitStart, resetVisitState } from './utils/storage';
 import { audioEngine } from './utils/audioEngine';
-import { Sparkles, RotateCcw, Heart } from 'lucide-react';
+import { Sparkles, RotateCcw, Heart, Image as ImageIcon } from 'lucide-react';
 
 export default function App() {
   const [hasEntered, setHasEntered] = useState(false);
@@ -21,11 +23,13 @@ export default function App() {
   const [isAcheLine, setIsAcheLine] = useState(false);
   const [selectedWorld, setSelectedWorld] = useState<WorldStar | null>(null);
   const [isPangilatanOpen, setIsPangilatanOpen] = useState(false);
+  const [isPhotoManagerOpen, setIsPhotoManagerOpen] = useState(false);
   const [pangilatanSpokenLine, setPangilatanSpokenLine] = useState('');
   const [isWishModalOpen, setIsWishModalOpen] = useState(false);
   const [previewedIds, setPreviewedIds] = useState<Set<string>>(new Set());
   const [zoneShift, setZoneShift] = useState(0.2);
   const [visitCount, setVisitCount] = useState(1);
+  const [spawnPhotoTrigger, setSpawnPhotoTrigger] = useState(0);
   const [floatingHearts, setFloatingHearts] = useState<Array<{
     id: number;
     x: number;
@@ -319,6 +323,16 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2 pointer-events-auto">
+            <button
+              id="btn-open-photo-manager"
+              onClick={() => setIsPhotoManagerOpen(true)}
+              title="Ayusin o I-upload ang mga Larawan"
+              className="flex items-center gap-1.5 text-xs bg-black/40 hover:bg-black/60 backdrop-blur-md border border-amber-400/30 px-3.5 py-1.5 rounded-full text-amber-200 hover:text-amber-100 transition-colors shadow-lg"
+            >
+              <ImageIcon className="w-3.5 h-3.5 text-amber-300" />
+              <span className="hidden sm:inline">Mga Larawan</span>
+            </button>
+
             {isReturnVisit && (
               <span className="hidden sm:inline-block text-[11px] text-amber-200/80 bg-black/40 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full">
                 Visit #{visitCount}
@@ -349,31 +363,57 @@ export default function App() {
         </main>
       )}
 
-      {/* 5. Ethereal Companion Dialogue System */}
-      <EntityVoice currentLine={currentLine} isAche={isAcheLine} />
+      {/* 5. Living Companion & Guide System (Tala) */}
+      <CompanionGuide
+        currentLine={currentLine}
+        isAche={isAcheLine}
+        onOpenPangilatan={() => {
+          setPangilatanSpokenLine("Uyy, ito na siya... Pangilatan. Ang paborito nating tagpuan sa ibabaw ng mga ulap! ⛰️✨");
+          setIsPangilatanOpen(true);
+        }}
+        onOpenWishModal={() => setIsWishModalOpen(true)}
+        onSpawnPhoto={() => setSpawnPhotoTrigger((prev) => prev + 1)}
+        onTriggerHearts={(count) => triggerFloatingHearts(count || 16)}
+      />
 
-      {/* 6. Ambient Romantic Audio Player Widget */}
+      {/* 6. Random Appearing Celestial Memory Shards */}
+      <RandomMemoriesDrifter
+        isSkyReady={hasEntered}
+        manualSpawnTrigger={spawnPhotoTrigger}
+        onSpeak={(line) => speak(line)}
+        onOpenPhotoManager={() => setIsPhotoManagerOpen(true)}
+      />
+
+      {/* 7. Ambient Romantic Audio Player Widget */}
       <AudioPlayerWidget />
 
-      {/* 7. Pangilatan Mountain Signature Photo Modal */}
+      {/* 8. Pangilatan Mountain Signature Photo Modal */}
       <PangilatanModal
         isOpen={isPangilatanOpen}
         onClose={() => setIsPangilatanOpen(false)}
         spokenLine={pangilatanSpokenLine}
+        onOpenPhotoManager={() => setIsPhotoManagerOpen(true)}
       />
 
-      {/* 8. World Detail Explorer Modal */}
+      {/* 9. World Detail Explorer Modal */}
       <WorldDetailModal
         world={selectedWorld}
         onClose={() => setSelectedWorld(null)}
         onSpeak={(text, ache) => speak(text, ache)}
+        onOpenPhotoManager={() => setIsPhotoManagerOpen(true)}
       />
 
-      {/* 9. Shooting Star / Meteor Wish Modal */}
+      {/* 10. Shooting Star / Meteor Wish Modal */}
       <MeteorWishModal
         isOpen={isWishModalOpen}
         onClose={() => setIsWishModalOpen(false)}
         onWishGranted={(wish) => speak(wish)}
+      />
+
+      {/* 11. Photo & Google Drive Link Manager Modal */}
+      <PhotoManagerModal
+        isOpen={isPhotoManagerOpen}
+        onClose={() => setIsPhotoManagerOpen(false)}
       />
     </div>
   );

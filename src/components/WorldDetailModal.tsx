@@ -1,23 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Sparkles, Heart, Mail, Calendar, Compass, ArrowLeft, CheckCircle2, Lock, BookOpen } from 'lucide-react';
+import { X, Sparkles, Heart, Mail, Calendar, Compass, ArrowLeft, CheckCircle2, Lock, BookOpen, Camera } from 'lucide-react';
 import { WorldStar, Letter } from '../types';
 import { TIMELINE_MILESTONES, MEMORIES, LETTERS, TRAVEL_DREAMS } from '../data/universeData';
 import { audioEngine } from '../utils/audioEngine';
+import { DriveDirectLinkNotice } from './DriveDirectLinkNotice';
+import { CelestialMemoryVisual } from './CelestialMemoryVisual';
+import { loadCustomPhotos, getDriveThumbnailUrl } from '../utils/driveHelper';
 
 interface WorldDetailModalProps {
   world: WorldStar | null;
   onClose: () => void;
   onSpeak: (text: string, isAche?: boolean) => void;
+  onOpenPhotoManager?: () => void;
 }
 
 export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
   world,
   onClose,
   onSpeak,
+  onOpenPhotoManager,
 }) => {
   const [selectedLetter, setSelectedLetter] = useState<Letter | null>(null);
   const [activeTab, setActiveTab] = useState<'timeline' | 'moments'>('timeline');
+  const [imgLoadFailed, setImgLoadFailed] = useState<Record<string, boolean>>({});
+  const [customPhotos, setCustomPhotos] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const updatePhotos = () => {
+      setCustomPhotos(loadCustomPhotos());
+    };
+    updatePhotos();
+    window.addEventListener('universe_custom_photos_updated', updatePhotos);
+    return () => window.removeEventListener('universe_custom_photos_updated', updatePhotos);
+  }, []);
 
   if (!world) return null;
 
@@ -29,8 +45,12 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/85 backdrop-blur-2xl">
+      <div
+        data-lenis-prevent
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/85 backdrop-blur-2xl"
+      >
         <motion.div
+          data-lenis-prevent
           initial={{ opacity: 0, scale: 0.94, y: 25 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 25 }}
@@ -147,45 +167,66 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                   </p>
                 </div>
 
+                {/* Google Drive Link Notice */}
+                <DriveDirectLinkNotice folderType="both" onOpenPhotoManager={onOpenPhotoManager} />
+
                 {/* Photo Gallery Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {MEMORIES.map((mem) => (
-                    <div
-                      key={mem.id}
-                      className="rounded-2xl bg-slate-900/70 border border-purple-400/20 hover:border-purple-400/50 transition-all flex flex-col justify-between group shadow-lg overflow-hidden"
-                    >
-                      {mem.imageSrc && (
-                        <div className="h-44 w-full overflow-hidden bg-slate-950">
-                          <img
-                            src={mem.imageSrc}
-                            alt={mem.title}
-                            referrerPolicy="no-referrer"
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                        </div>
-                      )}
-                      <div className="p-5 flex-1 flex flex-col justify-between">
-                        <div>
-                          <div className="flex items-center justify-between text-xs text-purple-300/70 font-sans mb-2">
-                            <span>📍 {mem.location}</span>
-                            <span>{mem.date}</span>
+                  {MEMORIES.map((mem) => {
+                    const itemSrc = customPhotos[mem.id] || mem.imageSrc;
+                    const resolved = itemSrc ? getDriveThumbnailUrl(itemSrc, 800) : '';
+                    const isFailed = imgLoadFailed[mem.id];
+                    return (
+                      <div
+                        key={mem.id}
+                        className="rounded-2xl bg-slate-900/70 border border-purple-400/20 hover:border-purple-400/50 transition-all flex flex-col justify-between group shadow-lg overflow-hidden"
+                      >
+                        {resolved && !isFailed ? (
+                          <div className="h-44 w-full overflow-hidden bg-slate-950">
+                            <img
+                              src={resolved}
+                              alt={mem.title}
+                              referrerPolicy="no-referrer"
+                              onError={() => {
+                                setImgLoadFailed((prev) => ({ ...prev, [mem.id]: true }));
+                              }}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
                           </div>
-                          <h4 className="text-lg font-serif text-white font-medium group-hover:text-purple-200 transition-colors">
-                            {mem.title}
-                          </h4>
-                          <p className="text-xs text-slate-300/90 font-serif leading-relaxed mt-2 italic">
-                            {mem.description}
-                          </p>
-                        </div>
-
-                        {mem.quote && (
-                          <div className="mt-4 pt-3 border-t border-white/10 text-xs text-amber-200/90 font-serif">
-                            {mem.quote}
+                        ) : (
+                          <div className="h-44 w-full overflow-hidden">
+                            <CelestialMemoryVisual
+                              title={mem.title}
+                              location={mem.location}
+                              date={mem.date}
+                              theme="purple"
+                              size="sm"
+                            />
                           </div>
                         )}
+                        <div className="p-5 flex-1 flex flex-col justify-between">
+                          <div>
+                            <div className="flex items-center justify-between text-xs text-purple-300/70 font-sans mb-2">
+                              <span>📍 {mem.location}</span>
+                              <span>{mem.date}</span>
+                            </div>
+                            <h4 className="text-lg font-serif text-white font-medium group-hover:text-purple-200 transition-colors">
+                              {mem.title}
+                            </h4>
+                            <p className="text-xs text-slate-300/90 font-serif leading-relaxed mt-2 italic">
+                              {mem.description}
+                            </p>
+                          </div>
+
+                          {mem.quote && (
+                            <div className="mt-4 pt-3 border-t border-white/10 text-xs text-amber-200/90 font-serif">
+                              {mem.quote}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}

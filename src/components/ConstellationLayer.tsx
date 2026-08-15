@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { WORLDS, PANGILATAN_LINES } from '../data/universeData';
 import { WorldStar } from '../types';
 import { Sparkles, Heart, Compass, Image as ImageIcon, Mail, Lock } from 'lucide-react';
+import { World3DIcon } from './World3DIcon';
 import { audioEngine } from '../utils/audioEngine';
 
 interface ConstellationLayerProps {
@@ -18,11 +19,11 @@ interface NodePos {
 }
 
 const CONSTELLATION_LINKS = [
-  { id: 'link-1-2', from: 'world-1', to: 'world-2', label: 'Unang Taon • Galeriya', color1: '#f4d58d', color2: '#c084fc', curve: 0.12 },
-  { id: 'link-2-3', from: 'world-2', to: 'world-3', label: 'Galeriya • Liham', color1: '#c084fc', color2: '#fb7185', curve: -0.13 },
-  { id: 'link-3-4', from: 'world-3', to: 'world-4', label: 'Liham • Pangarap', color1: '#fb7185', color2: '#38bdf8', curve: 0.1 },
-  { id: 'link-1-pangilatan', from: 'world-1', to: 'pangilatan', label: 'Panimula • Pangilatan', color1: '#f4d58d', color2: '#9dbf9a', curve: -0.09 },
-  { id: 'link-2-pangilatan', from: 'world-2', to: 'pangilatan', label: 'Alaala • Pangilatan', color1: '#c084fc', color2: '#9dbf9a', curve: 0.08 },
+  { id: 'link-1-2', from: 'our-first-year', to: 'memory-gallery', label: 'Unang Taon • Galeriya', color1: '#f4d58d', color2: '#c084fc', curve: 0.12 },
+  { id: 'link-2-3', from: 'memory-gallery', to: 'letters', label: 'Galeriya • Liham', color1: '#c084fc', color2: '#fb7185', curve: -0.13 },
+  { id: 'link-3-4', from: 'letters', to: 'travel-world', label: 'Liham • Pangarap', color1: '#fb7185', color2: '#38bdf8', curve: 0.1 },
+  { id: 'link-1-pangilatan', from: 'our-first-year', to: 'pangilatan', label: 'Panimula • Pangilatan', color1: '#f4d58d', color2: '#9dbf9a', curve: -0.09 },
+  { id: 'link-2-pangilatan', from: 'memory-gallery', to: 'pangilatan', label: 'Alaala • Pangilatan', color1: '#c084fc', color2: '#9dbf9a', curve: 0.08 },
 ];
 
 export const ConstellationLayer: React.FC<ConstellationLayerProps> = ({
@@ -39,9 +40,41 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = ({
   const [activeTappedId, setActiveTappedId] = useState<string | null>(null);
   const tapTimerRef = useRef<number | null>(null);
 
+  // Mouse Parallax Offset for foreground 3D depth floating
+  const [mouseParallax, setMouseParallax] = useState({ x: 0, y: 0 });
+
   const [selectedMountainLine] = useState(() => {
     return PANGILATAN_LINES[Math.floor(Math.random() * PANGILATAN_LINES.length)];
   });
+
+  // Track mouse coordinates for foreground constellation parallax
+  useEffect(() => {
+    let animFrame: number;
+    let targetX = 0;
+    let targetY = 0;
+    let currentX = 0;
+    let currentY = 0;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      targetX = (e.clientX / window.innerWidth - 0.5) * 2;
+      targetY = (e.clientY / window.innerHeight - 0.5) * 2;
+    };
+
+    const updateLoop = () => {
+      currentX += (targetX - currentX) * 0.06;
+      currentY += (targetY - currentY) * 0.06;
+      setMouseParallax({ x: currentX, y: currentY });
+      animFrame = requestAnimationFrame(updateLoop);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    animFrame = requestAnimationFrame(updateLoop);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      cancelAnimationFrame(animFrame);
+    };
+  }, []);
 
   // Calculate pixel positions of all constellation star nodes relative to container
   const updatePositions = () => {
@@ -89,22 +122,6 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = ({
       window.clearTimeout(t3);
     };
   }, []);
-
-  const getIcon = (name: string, active: boolean) => {
-    const cls = `w-5 h-5 ${active ? 'text-amber-200' : 'text-slate-400'}`;
-    switch (name) {
-      case 'Sparkles':
-        return <Sparkles className={cls} />;
-      case 'Image':
-        return <ImageIcon className={cls} />;
-      case 'Mail':
-        return <Mail className={cls} />;
-      case 'Compass':
-        return <Compass className={cls} />;
-      default:
-        return <Heart className={cls} />;
-    }
-  };
 
   const triggerTapGlow = (id: string) => {
     setActiveTappedId(id);
@@ -301,8 +318,13 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = ({
       {/* Decorative vertical glowing constellation guide */}
       <div className="absolute left-1/2 -translate-x-1/2 top-32 bottom-48 w-0.5 bg-gradient-to-b from-amber-200/20 via-purple-300/30 to-sky-300/10 pointer-events-none" />
 
-      {/* Intro Header */}
-      <div className="text-center pt-8 pb-16 relative z-10">
+      {/* Intro Header with 3D Parallax */}
+      <div
+        className="text-center pt-8 pb-16 relative z-10 transition-transform duration-300 ease-out"
+        style={{
+          transform: `translate3d(${mouseParallax.x * -12}px, ${mouseParallax.y * -8}px, 0)`,
+        }}
+      >
         <motion.p
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -336,6 +358,9 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = ({
           const isPreviewed = previewedIds.has(world.id);
           const isHovered = hoveredNodeId === world.id || activeTappedId === world.id;
 
+          // Parallax depth multiplier per node to enhance 3D spatial separation
+          const nodeParallaxFactor = (index % 2 === 0 ? 1.2 : 0.85) * -18;
+
           return (
             <motion.div
               key={world.id}
@@ -345,7 +370,10 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = ({
               transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
               onMouseEnter={() => setHoveredNodeId(world.id)}
               onMouseLeave={() => setHoveredNodeId(null)}
-              className={`relative flex flex-col items-center ${
+              style={{
+                transform: `translate3d(${mouseParallax.x * nodeParallaxFactor}px, ${mouseParallax.y * (nodeParallaxFactor * 0.7)}px, 0)`,
+              }}
+              className={`relative flex flex-col items-center transition-transform duration-300 ease-out ${
                 isEven ? 'md:items-start md:pl-16' : 'md:items-end md:pr-16'
               }`}
             >
@@ -359,51 +387,75 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = ({
               >
                 {/* Star Halo & Ambient Glow */}
                 <div
-                  className={`absolute -inset-8 rounded-full blur-xl transition-all duration-700 ${
-                    isHovered ? 'scale-135 opacity-90' : 'opacity-40 group-hover:opacity-80 group-hover:scale-125'
+                  className={`absolute -inset-8 rounded-full blur-2xl transition-all duration-700 pointer-events-none ${
+                    isHovered
+                      ? 'scale-150 opacity-95'
+                      : 'opacity-35 group-hover:opacity-85 group-hover:scale-130'
                   }`}
                   style={{
                     backgroundColor: world.active ? world.starColor : '#64748b',
                   }}
                 />
 
-                {/* Core Star Body */}
+                {/* Core Star Body with 3D Three.js Interactive Mesh & Glowing Orbit */}
                 <div
-                  className={`relative w-16 h-16 rounded-full flex items-center justify-center border-2 transition-all duration-500 shadow-2xl backdrop-blur-md ${
-                    isHovered ? 'scale-115 shadow-[0_0_35px_rgba(244,213,141,0.8)]' : 'group-hover:scale-110'
+                  className={`relative w-20 h-20 rounded-full flex items-center justify-center border-2 transition-all duration-500 ease-out backdrop-blur-md ${
+                    isHovered
+                      ? 'scale-115 z-20'
+                      : 'group-hover:scale-110'
                   } ${
                     world.active
-                      ? 'bg-black/60 border-amber-200/60 shadow-[0_0_25px_rgba(244,213,141,0.5)]'
-                      : 'bg-slate-900/60 border-slate-600/40 opacity-70'
+                      ? 'bg-black/75 border-amber-200/70'
+                      : 'bg-slate-900/75 border-slate-600/50 opacity-75'
                   }`}
                   style={{
                     borderColor: world.active ? world.starColor : '#64748b',
+                    boxShadow: isHovered
+                      ? `0 0 30px ${world.active ? world.starColor : '#64748b'}95, 0 0 60px ${world.active ? world.starColor : '#64748b'}45, inset 0 0 15px rgba(255, 255, 255, 0.3)`
+                      : world.active
+                      ? `0 0 18px ${world.starColor}45`
+                      : 'none',
                   }}
                 >
-                  {getIcon(world.iconName, world.active)}
+                  {/* 3D Three.js Animated Celestial Display */}
+                  <World3DIcon
+                    worldId={world.id}
+                    color={world.starColor}
+                    isActive={world.active}
+                    isHovered={isHovered}
+                    size={72}
+                  />
 
                   {/* Pulsing Star Orbit Ring */}
                   {world.active && (
                     <span
-                      className="absolute -inset-1 rounded-full border border-amber-200/40 animate-ping opacity-30"
+                      className={`absolute -inset-2 rounded-full border border-amber-200/40 animate-ping opacity-30 transition-opacity duration-300 ${
+                        isHovered ? 'opacity-60 border-amber-200/70' : ''
+                      }`}
                       style={{ animationDuration: `${3 + index}s` }}
                     />
                   )}
                 </div>
 
                 {/* Star Order Badge */}
-                <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-amber-500/80 text-black text-[10px] font-bold flex items-center justify-center shadow-md">
+                <div
+                  className={`absolute -top-1 -right-1 w-5 h-5 rounded-full text-black text-[10px] font-bold flex items-center justify-center shadow-md transition-all duration-300 z-20 ${
+                    isHovered
+                      ? 'bg-amber-300 scale-110 shadow-[0_0_10px_rgba(253,230,138,0.8)]'
+                      : 'bg-amber-500/80'
+                  }`}
+                >
                   {world.order}
                 </div>
               </div>
 
               {/* Persistent World Label Card */}
               <div
-                className={`mt-4 max-w-xs text-center md:text-left bg-black/40 backdrop-blur-md p-4 rounded-2xl border transition-all duration-300 ${
+                className={`mt-4 max-w-xs text-center md:text-left bg-black/45 backdrop-blur-md p-4 rounded-2xl border transition-all duration-300 ${
                   isEven ? 'md:text-left' : 'md:text-right'
                 } ${
                   isHovered
-                    ? 'border-amber-200/60 shadow-[0_0_25px_rgba(244,213,141,0.25)] bg-black/60 scale-[1.02]'
+                    ? 'border-amber-200/60 shadow-[0_0_25px_rgba(244,213,141,0.25)] bg-black/65 scale-[1.02]'
                     : world.active
                     ? 'border-white/15 hover:border-amber-200/40'
                     : 'border-white/5 opacity-60'
@@ -453,7 +505,7 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = ({
           );
         })}
 
-        {/* Standalone Pangilatan Mountain Signature Star (Wandering off-spine) */}
+        {/* Standalone Pangilatan Mountain Signature Star (Wandering off-spine with Parallax) */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           whileInView={{ opacity: 1, scale: 1 }}
@@ -461,7 +513,10 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = ({
           transition={{ duration: 1.5 }}
           onMouseEnter={() => setHoveredNodeId('pangilatan')}
           onMouseLeave={() => setHoveredNodeId(null)}
-          className="absolute right-6 sm:right-16 top-[720px] z-20"
+          style={{
+            transform: `translate3d(${mouseParallax.x * -24}px, ${mouseParallax.y * -16}px, 0)`,
+          }}
+          className="absolute right-6 sm:right-16 top-[720px] z-20 transition-transform duration-300 ease-out"
         >
           <div
             ref={(el) => {
@@ -471,18 +526,31 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = ({
             onClick={handleMountainClick}
             className="group relative cursor-pointer flex flex-col items-center"
           >
-            {/* Emerald/Sage Glow */}
+            {/* Emerald/Sage Ambient Glow */}
             <div
-              className={`absolute -inset-6 rounded-full bg-[#9dbf9a]/30 blur-xl transition-all duration-700 ${
+              className={`absolute -inset-6 rounded-full bg-[#9dbf9a]/30 blur-2xl transition-all duration-700 pointer-events-none ${
                 hoveredNodeId === 'pangilatan' || activeTappedId === 'pangilatan'
-                  ? 'scale-140 opacity-90'
-                  : 'group-hover:scale-130'
+                  ? 'scale-160 opacity-95'
+                  : 'group-hover:scale-135 opacity-40 group-hover:opacity-85'
               }`}
             />
 
-            {/* 4-Pointed Sparkle Star */}
-            <div className="relative w-12 h-12 flex items-center justify-center animate-spin-slow">
-              <svg viewBox="0 0 100 100" className="w-10 h-10 drop-shadow-[0_0_12px_#9dbf9a]">
+            {/* 4-Pointed Sparkle Star with scale-up and glowing shadow */}
+            <div
+              className={`relative w-14 h-14 flex items-center justify-center transition-all duration-500 ease-out animate-spin-slow ${
+                hoveredNodeId === 'pangilatan' || activeTappedId === 'pangilatan'
+                  ? 'scale-120'
+                  : 'group-hover:scale-110'
+              }`}
+            >
+              <svg
+                viewBox="0 0 100 100"
+                className={`w-11 h-11 transition-all duration-500 ${
+                  hoveredNodeId === 'pangilatan' || activeTappedId === 'pangilatan'
+                    ? 'drop-shadow-[0_0_20px_#9dbf9a] drop-shadow-[0_0_40px_rgba(157,191,154,0.6)]'
+                    : 'drop-shadow-[0_0_12px_#9dbf9a]'
+                }`}
+              >
                 <path
                   d="M 50 0 L 60 40 L 100 50 L 60 60 L 50 100 L 40 60 L 0 50 L 40 40 Z"
                   fill="#9dbf9a"
@@ -492,7 +560,13 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = ({
             </div>
 
             {/* Tag / Tooltip */}
-            <div className="mt-2 bg-emerald-950/80 border border-emerald-500/30 px-3 py-1 rounded-full text-[11px] text-emerald-200 font-serif tracking-wider shadow-lg flex items-center gap-1.5 backdrop-blur-md">
+            <div
+              className={`mt-2 bg-emerald-950/85 border px-3 py-1 rounded-full text-[11px] font-serif tracking-wider shadow-lg flex items-center gap-1.5 backdrop-blur-md transition-all duration-300 ${
+                hoveredNodeId === 'pangilatan' || activeTappedId === 'pangilatan'
+                  ? 'border-emerald-400 text-emerald-100 shadow-[0_0_15px_rgba(157,191,154,0.4)] scale-105'
+                  : 'border-emerald-500/30 text-emerald-200 group-hover:border-emerald-400/60'
+              }`}
+            >
               <span>⛰️ Pangilatan Mountain</span>
             </div>
           </div>
