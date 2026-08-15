@@ -9,6 +9,7 @@ import { DriveDirectLinkNotice } from './DriveDirectLinkNotice';
 import {
   loadCustomPhotos,
   getDriveThumbnailUrl,
+  getDriveFallbackUrl,
   RANDOM_MEMORIES_FOLDER_ID,
   fetchDriveFolderFiles,
   getCachedFolderFiles,

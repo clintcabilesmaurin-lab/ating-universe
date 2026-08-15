@@ -104,7 +104,7 @@ export const MEMORIES: MemoryItem[] = [
     description: 'Nung umakyat tayo, kahit maulap at mahangin, hawak-kamay nating tinanaw ang buong kabundukan. Ang sarap sa pakiramdam na katabi kita.',
     quote: '"Kahit gaano kalayo ang tinahak, basta kasama ka, laging worth it."',
     imageType: 'selfie',
-    imageSrc: '/photos/pangilatan-1.jpg',
+    imageSrc: 'https://drive.google.com/file/d/10Vv9RMxrD42ZHfnfC5xvw7o-34IXNcb_/view?usp=drive_link',
   },
   {
     id: 'mem-2',
@@ -114,7 +114,7 @@ export const MEMORIES: MemoryItem[] = [
     description: 'Nakatitig ka lang sa malayo habang sumasayaw ang hangin sa buhok mo. Dun ko napagtanto kung gaano kita gustong alagaan at mahalin habangbuhay.',
     quote: '"Sa katahimikan ng bundok, ikaw lang ang naririnig ng puso ko."',
     imageType: 'scenic',
-    imageSrc: '/photos/selfie-love.jpg',
+    imageSrc: 'https://drive.google.com/file/d/1smj64ajtPckAIyyWY5oqHY8RkzgKl7pB/view?usp=drive_link',
   },
   {
     id: 'mem-3',
@@ -124,7 +124,7 @@ export const MEMORIES: MemoryItem[] = [
     description: 'Ang unang liwanag ng araw na sumisilip sa likod ng mga ulap habang magkasama nating sinasalubong ang bagong umaga.',
     quote: '"Sa bawat pagsikat ng araw, ikaw ang unang pasasalamatan."',
     imageType: 'scenic',
-    imageSrc: '/photos/20260704_054740-1.jpg',
+    imageSrc: 'https://drive.google.com/file/d/1e9tm3i8Ay1Mtog8BQ9F4gucB08rFCGzz/view?usp=drive_link',
   },
   {
     id: 'mem-4',
@@ -134,58 +134,18 @@ export const MEMORIES: MemoryItem[] = [
     description: 'Malamig ang hangin pero mainit ang puso dahil magkahawak ang ating mga kamay.',
     quote: '"Walang hamog o lamig na hindi kayang pawiin ng iyong yakap."',
     imageType: 'scenic',
-    imageSrc: '/photos/20260704_054749-1.jpg',
-  },
-  {
-    id: 'mem-5',
-    title: 'Yakap ng Malamig na Simoy',
-    location: 'Mountain Trail Overlook',
-    date: 'Hulyo 4, 2026 • 5:48 AM',
-    description: 'Habang nagliliwanag ang kalangitan, pinagmamasdan natin ang ganda ng kalikasan nang sabay.',
-    quote: '"Bawat hakbang paakyat, ikaw ang aking lakas."',
-    imageType: 'scenic',
-    imageSrc: '/photos/20260704_054832-1.jpg',
-  },
-  {
-    id: 'mem-6',
-    title: 'Gintong Sinag ng Pangarap',
-    location: 'Pangilatan Sunrise Crest',
-    date: 'Hulyo 4, 2026 • 5:50 AM',
-    description: 'Nang tuluyang sumikat ang araw at maging ginto ang ulap, doon ko ipinangako na hindi kita bibitawan.',
-    quote: '"Kasing liwanag ng bukang-liwayway ang pag-asa sa ating dalawa."',
-    imageType: 'scenic',
-    imageSrc: '/photos/20260704_055008.jpg',
-  },
-  {
-    id: 'mem-7',
-    title: 'Masayang Hapon Kasama Ka',
-    location: 'Tagpuan ng Pagmamahalan',
-    date: 'Hulyo 14, 2026 • 4:05 PM',
-    description: 'Simpleng araw, walang engrandeng plano, pero punong-puno ng lambing at tawanan.',
-    quote: '"Ang pinakamagandang oras sa buong araw ay yung oras na kasama kita."',
-    imageType: 'selfie',
-    imageSrc: '/photos/20260714_160538.jpg',
-  },
-  {
-    id: 'mem-8',
-    title: 'Sa Ilalim ng Maulap na Langit',
-    location: 'Silong ng Pangarap',
-    date: 'Hapon ng Tawanan at Jamming',
-    description: 'Tumitingala tayo habang nagpapatugtog at kumakanta kahit sintunado. Basang-basa man o pagod, puro ngiti lang ang natira.',
-    quote: '"Hindi mahalaga ang panahon sa labas kung ikaw ang araw ko sa loob."',
-    imageType: 'skyview',
-    imageSrc: '/photos/pangilatan-03.jpg',
+    imageSrc: 'https://drive.google.com/file/d/16Y45AClQV-QPJFJopdeHItKZjuIiWhyQ/view?usp=drive_link',
   },
 ];
 
 /**
  * RANDOM FLOATING MEMORY PHOTOS POOL
- * Automatically loops through all real photos uploaded in /public/photos/
+ * Direct Google Drive links for floating celestial memory shards in the sky
  */
 export const RANDOM_MEMORY_PHOTOS: RandomPhotoMemory[] = [
   {
     id: 'photo-pangilatan-1',
-    src: '/photos/pangilatan-1.jpg',
+    src: 'https://drive.google.com/file/d/10Vv9RMxrD42ZHfnfC5xvw7o-34IXNcb_/view?usp=drive_link',
     title: 'Tuktok ng Pangilatan',
     caption: 'Kahit gaano kataas ang akyatin, basta ikaw ang kasama ko, parang nasa ulap lang tayo.',
     location: 'Pangilatan Mountain',
@@ -193,8 +153,8 @@ export const RANDOM_MEMORY_PHOTOS: RandomPhotoMemory[] = [
     glowColor: '#9dbf9a',
   },
   {
-    id: 'photo-selfie-love',
-    src: '/photos/selfie-love.jpg',
+    id: 'photo-pangilatan-2',
+    src: 'https://drive.google.com/file/d/1smj64ajtPckAIyyWY5oqHY8RkzgKl7pB/view?usp=drive_link',
     title: 'Ang Paborito Kong Ngiti',
     caption: 'Sa bawat tingin mo, ramdam ko ang tahanan na matagal ko nang hinahanap.',
     location: 'Pangilatan Trails',
@@ -202,8 +162,8 @@ export const RANDOM_MEMORY_PHOTOS: RandomPhotoMemory[] = [
     glowColor: '#fb7185',
   },
   {
-    id: 'photo-20260704-054740',
-    src: '/photos/20260704_054740-1.jpg',
+    id: 'photo-pangilatan-3',
+    src: 'https://drive.google.com/file/d/1e9tm3i8Ay1Mtog8BQ9F4gucB08rFCGzz/view?usp=drive_link',
     title: 'Unang Silip ng Liwayway',
     caption: 'Kasama kang sumalubong sa unang sinag ng araw sa tuktok ng kabundukan.',
     location: 'Pangilatan Ridge',
@@ -211,49 +171,13 @@ export const RANDOM_MEMORY_PHOTOS: RandomPhotoMemory[] = [
     glowColor: '#f4d58d',
   },
   {
-    id: 'photo-20260704-054749',
-    src: '/photos/20260704_054749-1.jpg',
+    id: 'photo-pangilatan-4',
+    src: 'https://drive.google.com/file/d/16Y45AClQV-QPJFJopdeHItKZjuIiWhyQ/view?usp=drive_link',
     title: 'Dapit-Umaga sa Ulap',
     caption: 'Malamig man ang simoy ng hangin, ang init ng kamay mo ang aking sandigan.',
     location: 'Pangilatan Overlook',
     date: 'Hulyo 4, 2026 • 5:47 AM',
     glowColor: '#38bdf8',
-  },
-  {
-    id: 'photo-20260704-054832',
-    src: '/photos/20260704_054832-1.jpg',
-    title: 'Yakap ng Kalikasan',
-    caption: 'Dito sa ibabaw ng ulap, walang ingay ng mundo — ikaw at ako lang.',
-    location: 'Pangilatan Trail View',
-    date: 'Hulyo 4, 2026 • 5:48 AM',
-    glowColor: '#a78bfa',
-  },
-  {
-    id: 'photo-20260704-055008',
-    src: '/photos/20260704_055008.jpg',
-    title: 'Gintong Sinag ng Pangarap',
-    caption: 'Nang magliwanag ang buong bundok, alam kong ikaw ang liwanag ng buhay ko.',
-    location: 'Pangilatan Sunrise Peak',
-    date: 'Hulyo 4, 2026 • 5:50 AM',
-    glowColor: '#fbbf24',
-  },
-  {
-    id: 'photo-20260714-160538',
-    src: '/photos/20260714_160538.jpg',
-    title: 'Masayang Hapon Kasama Ka',
-    caption: 'Bawat tawa, bawat kwento, bawat simpleng tinginan — kayamanang itatabi ko habangbuhay.',
-    location: 'Ating Tagpuan',
-    date: 'Hulyo 14, 2026 • 4:05 PM',
-    glowColor: '#f43f5e',
-  },
-  {
-    id: 'photo-pangilatan-03',
-    src: '/photos/pangilatan-03.jpg',
-    title: 'Sa Ilalim ng Maulap na Langit',
-    caption: 'Walang ulan o hamog na kayang magpalamig sa init ng ating pagmamahalan.',
-    location: 'Mountain Ridge View',
-    date: 'Hapon ng Tawanan',
-    glowColor: '#34d399',
   },
 ];
 

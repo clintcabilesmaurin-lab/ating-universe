@@ -3,6 +3,25 @@
  * into reliable direct image URLs via the backend image proxy service.
  */
 
+/**
+ * Direct Google Drive links provided for Pangilatan & Random Memories.
+ * Works seamlessly in client-side static deployments (e.g. Vercel) and local environments.
+ */
+
+export const PANGILATAN_DIRECT_LINKS = [
+  'https://drive.google.com/file/d/10Vv9RMxrD42ZHfnfC5xvw7o-34IXNcb_/view?usp=drive_link',
+  'https://drive.google.com/file/d/1smj64ajtPckAIyyWY5oqHY8RkzgKl7pB/view?usp=drive_link',
+  'https://drive.google.com/file/d/1e9tm3i8Ay1Mtog8BQ9F4gucB08rFCGzz/view?usp=drive_link',
+  'https://drive.google.com/file/d/16Y45AClQV-QPJFJopdeHItKZjuIiWhyQ/view?usp=drive_link',
+];
+
+export const PANGILATAN_DIRECT_FILE_IDS = [
+  '10Vv9RMxrD42ZHfnfC5xvw7o-34IXNcb_',
+  '1smj64ajtPckAIyyWY5oqHY8RkzgKl7pB',
+  '1e9tm3i8Ay1Mtog8BQ9F4gucB08rFCGzz',
+  '16Y45AClQV-QPJFJopdeHItKZjuIiWhyQ',
+];
+
 export const PANGILATAN_FOLDER_ID = '1Qn4bXppLRV_u8HymuBJZh6zzseKm6GdT';
 export const RANDOM_MEMORIES_FOLDER_ID = '1bmxqSuz-w8dmYPBi0SARQcG7pO7g2b5r';
 
@@ -93,34 +112,51 @@ export function extractDriveFileId(input: string): string | null {
 }
 
 /**
- * Returns a reliable image URL using our backend Google Drive Image Proxy.
- * Streams image buffer with CORS headers, multi-CDN failover, and binary caching.
+ * Returns a reliable direct image URL for Google Drive files.
+ * Works natively on static hosting like Vercel as well as full-stack environments.
  */
 export function getDriveThumbnailUrl(input: string, size = 1200): string {
   if (!input) return '';
   const trimmed = input.trim();
 
-  // If it's a data URL or blob, return as is
-  if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
-    return trimmed;
-  }
-
-  // If already our proxy url with size parameter
-  if (trimmed.startsWith('/api/drive/image/')) {
+  // If it's a data URL, blob, or local public path
+  if (
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('blob:') ||
+    trimmed.startsWith('/photos/') ||
+    trimmed.startsWith('/music/')
+  ) {
     return trimmed;
   }
 
   const fileId = extractDriveFileId(trimmed);
   if (fileId) {
-    return `/api/drive/image/${fileId}?size=${size}`;
+    // Primary: Google Drive Direct Thumbnail CDN (works universally on client-side)
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w${size}`;
   }
 
-  // If it's another remote URL, serve via proxy or directly
+  // If it's already an http link
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     return trimmed;
   }
 
   return trimmed;
+}
+
+/**
+ * Returns alternate fallback CDN endpoints for a Google Drive file in case one CDN throttles.
+ */
+export function getDriveFallbackUrl(input: string, size = 1200, currentUrl = ''): string {
+  const fileId = extractDriveFileId(input) || extractDriveFileId(currentUrl);
+  if (!fileId) return '';
+
+  if (currentUrl.includes('drive.google.com/thumbnail')) {
+    return `https://lh3.googleusercontent.com/d/${fileId}=s${size}`;
+  }
+  if (currentUrl.includes('lh3.googleusercontent.com')) {
+    return `https://drive.google.com/uc?export=view&id=${fileId}`;
+  }
+  return `https://drive.google.com/thumbnail?id=${fileId}&sz=w${size}`;
 }
 
 /**
