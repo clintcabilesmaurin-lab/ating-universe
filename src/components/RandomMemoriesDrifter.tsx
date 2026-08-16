@@ -5,7 +5,6 @@ import { RandomPhotoMemory } from '../types';
 import { Sparkles, Heart, X, MapPin, Calendar, Eye, Compass, Camera, RefreshCw } from 'lucide-react';
 import { audioEngine } from '../utils/audioEngine';
 import { CelestialMemoryVisual } from './CelestialMemoryVisual';
-import { DriveDirectLinkNotice } from './DriveDirectLinkNotice';
 import {
   loadCustomPhotos,
   getDriveThumbnailUrl,
@@ -385,9 +384,6 @@ export const RandomMemoriesDrifter: React.FC<RandomMemoriesDrifterProps> = ({
                   Lumulutang na Alaala &bull; Photo Shard
                 </span>
               </div>
-
-              {/* Google Drive Notice inside Memory Inspector */}
-              <DriveDirectLinkNotice folderType="random" onOpenPhotoManager={onOpenPhotoManager} />
 
               {/* Photo Display Frame */}
               <div className="relative rounded-2xl overflow-hidden border border-white/15 shadow-2xl bg-black/60 aspect-[4/3] mb-5 group">

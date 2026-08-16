@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { audioEngine } from '../utils/audioEngine';
 
+type RgbTuple = [number, number, number];
+
 interface Star {
   xFrac: number;
   yFrac: number;
@@ -10,7 +12,9 @@ interface Star {
   twinkleSpeed: number;
   twinklePhase: number;
   glow: boolean;
-  color?: string;
+  coolRgb: RgbTuple; // Crystalline ice-blue / diamond white at zenith indigo
+  warmRgb: RgbTuple; // Deeply saturated gold / rose / violet / amber at dusk purple
+  saturationFactor: number;
 }
 
 interface Meteor {
@@ -33,20 +37,137 @@ interface Ripple {
 }
 
 interface SkyCanvasProps {
-  zoneShift?: number; // 0 to 1
+  zoneShift?: number; // 0 (deep indigo) to 1 (dusk purple)
   onMeteorClick?: () => void;
   isBuiltIn?: boolean;
 }
 
-const STAR_COUNT = 110;
-const HORIZON_RIDGES = [
-  { heightFrac: 0.50, jitter: 0.28, points: 24, spikeChance: 0.16, spikeBoost: 1.5, parallax: 0.08 },
-  { heightFrac: 0.72, jitter: 0.38, points: 30, spikeChance: 0.22, spikeBoost: 1.7, parallax: 0.18 },
-  { heightFrac: 1.00, jitter: 0.48, points: 38, spikeChance: 0.28, spikeBoost: 1.9, parallax: 0.32 },
+interface MountainPoint {
+  x: number; // 0 to 1 fraction across screen width
+  y: number; // 0 to 1 normalized height fraction of tier band
+}
+
+interface MountainTierNatural {
+  depth: number;
+  parallax: number;
+  heightFrac: number;
+  points: MountainPoint[];
+  litCool: RgbTuple;
+  shadedCool: RgbTuple;
+  litWarm: RgbTuple;
+  shadedWarm: RgbTuple;
+  rimCool: RgbTuple;
+  rimWarm: RgbTuple;
+  mistCool: RgbTuple;
+  mistWarm: RgbTuple;
+}
+
+const STAR_COUNT = 125;
+
+// Defined Natural Smooth Mountain Range Tiers (Distant Cordillera, Mount Pangilatan Massif, Gentle Rolling Foothills)
+const NATURAL_MOUNTAIN_TIERS: MountainTierNatural[] = [
+  {
+    depth: 0.85,
+    parallax: 0.05,
+    heightFrac: 0.28,
+    litCool: [46, 58, 92],
+    shadedCool: [20, 26, 44],
+    litWarm: [82, 42, 80],
+    shadedWarm: [36, 16, 40],
+    rimCool: [190, 220, 255],
+    rimWarm: [255, 190, 150],
+    mistCool: [28, 38, 64],
+    mistWarm: [52, 22, 58],
+    points: [
+      { x: -0.10, y: 0.35 },
+      { x: 0.05, y: 0.68 },
+      { x: 0.16, y: 0.48 },
+      { x: 0.26, y: 0.88 },
+      { x: 0.38, y: 0.58 },
+      { x: 0.50, y: 0.76 },
+      { x: 0.62, y: 0.95 },
+      { x: 0.74, y: 0.62 },
+      { x: 0.85, y: 0.82 },
+      { x: 0.96, y: 0.55 },
+      { x: 1.12, y: 0.40 },
+    ],
+  },
+  {
+    depth: 0.50,
+    parallax: 0.14,
+    heightFrac: 0.23,
+    litCool: [30, 40, 68],
+    shadedCool: [14, 18, 32],
+    litWarm: [58, 26, 56],
+    shadedWarm: [24, 10, 26],
+    rimCool: [150, 195, 250],
+    rimWarm: [250, 160, 120],
+    mistCool: [18, 26, 46],
+    mistWarm: [38, 14, 42],
+    // Featuring natural rounded Mount Pangilatan peak around x=0.34
+    points: [
+      { x: -0.12, y: 0.28 },
+      { x: 0.02, y: 0.55 },
+      { x: 0.14, y: 0.42 },
+      { x: 0.24, y: 0.75 },
+      { x: 0.34, y: 0.98 }, // Mount Pangilatan Smooth Summit
+      { x: 0.44, y: 0.68 },
+      { x: 0.56, y: 0.84 },
+      { x: 0.68, y: 0.52 },
+      { x: 0.78, y: 0.78 },
+      { x: 0.90, y: 0.60 },
+      { x: 1.02, y: 0.72 },
+      { x: 1.14, y: 0.32 },
+    ],
+  },
+  {
+    depth: 0.18,
+    parallax: 0.26,
+    heightFrac: 0.15,
+    litCool: [18, 24, 40],
+    shadedCool: [8, 10, 18],
+    litWarm: [38, 16, 34],
+    shadedWarm: [14, 6, 14],
+    rimCool: [110, 160, 220],
+    rimWarm: [220, 120, 90],
+    mistCool: [12, 16, 28],
+    mistWarm: [22, 8, 24],
+    // Gentle rolling front hills
+    points: [
+      { x: -0.15, y: 0.20 },
+      { x: -0.02, y: 0.48 },
+      { x: 0.10, y: 0.62 },
+      { x: 0.22, y: 0.38 },
+      { x: 0.35, y: 0.65 },
+      { x: 0.48, y: 0.45 },
+      { x: 0.60, y: 0.72 },
+      { x: 0.72, y: 0.50 },
+      { x: 0.84, y: 0.68 },
+      { x: 0.98, y: 0.42 },
+      { x: 1.15, y: 0.25 },
+    ],
+  },
 ];
 
+// Color interpolation helpers
+const interpolateRgb = (c1: RgbTuple, c2: RgbTuple, t: number): string => {
+  const clampedT = Math.max(0, Math.min(1, t));
+  const r = Math.round(c1[0] + (c2[0] - c1[0]) * clampedT);
+  const g = Math.round(c1[1] + (c2[1] - c1[1]) * clampedT);
+  const b = Math.round(c1[2] + (c2[2] - c1[2]) * clampedT);
+  return `rgb(${r}, ${g}, ${b})`;
+};
+
+const interpolateRgba = (c1: RgbTuple, c2: RgbTuple, t: number, alpha: number): string => {
+  const clampedT = Math.max(0, Math.min(1, t));
+  const r = Math.round(c1[0] + (c2[0] - c1[0]) * clampedT);
+  const g = Math.round(c1[1] + (c2[1] - c1[1]) * clampedT);
+  const b = Math.round(c1[2] + (c2[2] - c1[2]) * clampedT);
+  return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, alpha))})`;
+};
+
 export const SkyCanvas: React.FC<SkyCanvasProps> = ({
-  zoneShift = 0.2,
+  zoneShift = 0,
   onMeteorClick,
   isBuiltIn = true,
 }) => {
@@ -54,7 +175,6 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
   const starsRef = useRef<Star[]>([]);
   const meteorRef = useRef<Meteor | null>(null);
   const ripplesRef = useRef<Ripple[]>([]);
-  const horizonProfilesRef = useRef<{ xFrac: number; peak: number }[][]>([]);
   const lastMeteorCheckRef = useRef<number>(0);
   const meteorLingerStartRef = useRef<number>(Date.now());
   const [canCatchMeteor, setCanCatchMeteor] = useState(false);
@@ -63,13 +183,24 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
   const targetMouseRef = useRef({ x: 0, y: 0 });
   const currentMouseRef = useRef({ x: 0, y: 0 });
 
-  // Initialize star field with 3D depth layer
+  // Initialize star field with chromatic palettes for zoneShift
   const initStars = useCallback(() => {
     const list: Star[] = [];
+
+    // Distinct cool & warm color pairings for deep indigo -> dusk purple
+    const colorPairings: { cool: RgbTuple; warm: RgbTuple }[] = [
+      { cool: [255, 255, 255], warm: [255, 230, 160] }, // Pure Diamond -> Celestial Gold
+      { cool: [210, 235, 255], warm: [255, 185, 95] },  // Ice Azure -> Solar Amber
+      { cool: [195, 225, 255], warm: [255, 140, 180] }, // Crystalline Blue -> Romantic Rose
+      { cool: [225, 240, 255], warm: [225, 155, 255] }, // Starlight White -> Cosmic Lavender
+      { cool: [180, 220, 255], warm: [248, 115, 215] }, // Deep Cyan -> Radiant Magenta
+      { cool: [240, 248, 255], warm: [255, 205, 130] }, // Stellar Pearl -> Warm Topaz
+    ];
+
     for (let i = 0; i < STAR_COUNT; i++) {
-      const isBand = i < STAR_COUNT * 0.35;
+      const isBand = i < STAR_COUNT * 0.38;
       let xFrac = Math.random();
-      let yFrac = Math.random() * 0.85;
+      let yFrac = Math.random() * 0.88;
 
       if (isBand) {
         const t = Math.random();
@@ -77,38 +208,25 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
         yFrac = t;
       }
 
-      const isFeature = Math.random() < 0.18;
-      const depth = 0.25 + Math.random() * 0.75; // Depth multiplier for parallax
+      const isFeature = Math.random() < 0.22;
+      const depth = 0.25 + Math.random() * 0.75;
+      const pairing = colorPairings[Math.floor(Math.random() * colorPairings.length)];
 
       list.push({
         xFrac,
         yFrac,
         depth,
-        radius: isFeature ? 1.6 + Math.random() * 1.1 : 0.6 + Math.random() * 0.9,
-        baseAlpha: 0.45 + Math.random() * 0.55,
-        twinkleSpeed: 0.5 + Math.random() * 0.9,
+        radius: isFeature ? 1.6 + Math.random() * 1.2 : 0.6 + Math.random() * 0.9,
+        baseAlpha: 0.48 + Math.random() * 0.52,
+        twinkleSpeed: 0.6 + Math.random() * 1.1,
         twinklePhase: Math.random() * Math.PI * 2,
         glow: isFeature,
-        color: Math.random() > 0.8 ? '#f4d58d' : Math.random() > 0.85 ? '#c9a7eb' : '#ffffff',
+        coolRgb: pairing.cool,
+        warmRgb: pairing.warm,
+        saturationFactor: 0.8 + Math.random() * 0.6,
       });
     }
     starsRef.current = list;
-  }, []);
-
-  // Initialize horizon profiles
-  const initHorizon = useCallback(() => {
-    horizonProfilesRef.current = HORIZON_RIDGES.map((ridge) => {
-      const profile: { xFrac: number; peak: number }[] = [];
-      for (let i = 0; i <= ridge.points; i++) {
-        const xFrac = i / ridge.points;
-        let peak = 0.4 + Math.random() * ridge.jitter;
-        if (Math.random() < ridge.spikeChance) {
-          peak *= ridge.spikeBoost;
-        }
-        profile.push({ xFrac, peak: Math.min(1.3, peak) });
-      }
-      return profile;
-    });
   }, []);
 
   // Spawn a meteor
@@ -136,14 +254,12 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
 
   useEffect(() => {
     initStars();
-    initHorizon();
     meteorLingerStartRef.current = Date.now();
-  }, [initStars, initHorizon]);
+  }, [initStars]);
 
-  // Global mousemove listener for deep 3D parallax tracking
+  // Global mousemove listener for 3D parallax tracking
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      // Normalize to -1 to +1 from screen center
       const nx = (e.clientX / window.innerWidth - 0.5) * 2;
       const ny = (e.clientY / window.innerHeight - 0.5) * 2;
       targetMouseRef.current = { x: nx, y: ny };
@@ -174,6 +290,7 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
 
     const render = () => {
       const now = Date.now();
+      const clampedShift = Math.max(0, Math.min(1, zoneShift));
 
       // Smooth lerp mouse parallax offset
       currentMouseRef.current.x += (targetMouseRef.current.x - currentMouseRef.current.x) * 0.05;
@@ -182,30 +299,45 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
 
       ctx.clearRect(0, 0, width, height);
 
-      // 1. Draw atmospheric background gradient (Zone-shift warmth)
+      // 1. Draw atmospheric background gradient (Continuous smooth transition from deep indigo to dusk purple)
       const grad = ctx.createLinearGradient(0, 0, 0, height);
-      grad.addColorStop(0, '#0a0818');
-      grad.addColorStop(0.35, zoneShift > 0.5 ? '#26173d' : '#1c1333');
-      grad.addColorStop(0.68, zoneShift > 0.5 ? '#703858' : '#572c47');
-      grad.addColorStop(1, zoneShift > 0.5 ? '#d97448' : '#bf5f3b');
+      
+      // Zenith Top
+      grad.addColorStop(0, interpolateRgb([6, 8, 22], [12, 6, 30], clampedShift));
+      
+      // Upper Atmosphere
+      grad.addColorStop(0.35, interpolateRgb([18, 26, 62], [42, 18, 74], clampedShift));
+      
+      // Mid Horizon Glow
+      grad.addColorStop(0.68, interpolateRgb([36, 48, 96], [116, 42, 92], clampedShift));
+      
+      // Horizon Base Ember
+      grad.addColorStop(1, interpolateRgb([60, 74, 126], [222, 108, 72], clampedShift));
 
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, width, height);
 
-      // 2. Draw Milky Way diffuse glow with subtle parallax
+      // 2. Draw Milky Way diffuse glow with zoneShift tinting & saturation
       const milkySteps = 8;
       const bandBaseX = width * 0.22 + mouseOffset.x * 25;
       const bandBaseY = mouseOffset.y * 15;
+      
+      // Milky Way shifts from cool celestial cyan-violet to warm saturated magenta-lavender
+      const coolMilkyRgb: RgbTuple = [185, 210, 255];
+      const warmMilkyRgb: RgbTuple = [240, 145, 225];
+      const milkyAlphaCore = 0.07 + clampedShift * 0.06;
+      const milkyAlphaEdge = 0.02 + clampedShift * 0.03;
+
       for (let i = 0; i < milkySteps; i++) {
         const t = i / (milkySteps - 1);
         const y = height * t + bandBaseY;
         const x = bandBaseX + Math.sin(t * Math.PI) * width * 0.14;
-        const r = width * 0.24 * (0.6 + Math.sin(t * Math.PI) * 0.5);
+        const r = width * 0.25 * (0.6 + Math.sin(t * Math.PI) * 0.5);
 
         const mGrad = ctx.createRadialGradient(x, y, 0, x, y, r);
-        mGrad.addColorStop(0, 'rgba(215, 195, 240, 0.08)');
-        mGrad.addColorStop(0.5, 'rgba(200, 175, 230, 0.03)');
-        mGrad.addColorStop(1, 'rgba(200, 175, 230, 0)');
+        mGrad.addColorStop(0, interpolateRgba(coolMilkyRgb, warmMilkyRgb, clampedShift, milkyAlphaCore));
+        mGrad.addColorStop(0.5, interpolateRgba(coolMilkyRgb, warmMilkyRgb, clampedShift, milkyAlphaEdge));
+        mGrad.addColorStop(1, interpolateRgba(coolMilkyRgb, warmMilkyRgb, clampedShift, 0));
 
         ctx.fillStyle = mGrad;
         ctx.beginPath();
@@ -213,25 +345,40 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
         ctx.fill();
       }
 
-      // 3. Draw Stars with Parallax Depth Offset
+      // 3. Draw Stars with Parallax Depth, Dynamic Twinkle Intensity, and Color Saturation Shift
       if (isBuiltIn) {
+        const elapsed = now / 1000;
+
         starsRef.current.forEach((star) => {
-          // Calculate 3D parallax displacement based on individual star depth
+          // 3D parallax displacement based on depth
           const parallaxX = mouseOffset.x * star.depth * 35;
           const parallaxY = mouseOffset.y * star.depth * 25;
 
           const x = star.xFrac * width + parallaxX;
           const y = star.yFrac * height + parallaxY;
-          const elapsed = now / 1000;
-          const twinkle = 0.75 + 0.25 * Math.sin(elapsed * star.twinkleSpeed + star.twinklePhase);
-          const alpha = star.baseAlpha * twinkle;
 
+          // Expand twinkle intensity: Deep Indigo is crisp and calm (0.18 amp), Dusk Purple twinkles vibrantly (0.75 amp)
+          const twinkleAmp = 0.18 + clampedShift * 0.57;
+          const speedMultiplier = 1.0 + clampedShift * 0.85;
+          const harmonic = Math.sin(elapsed * star.twinkleSpeed * 2.2 * speedMultiplier + star.twinklePhase * 1.5) * (0.18 + clampedShift * 0.22);
+          const primaryWave = Math.sin(elapsed * star.twinkleSpeed * speedMultiplier + star.twinklePhase);
+          const twinkle = Math.max(0.06, 1 - twinkleAmp + twinkleAmp * (primaryWave * 0.75 + harmonic));
+          
+          // Alpha scales gently with atmospheric depth
+          const alpha = Math.min(1, star.baseAlpha * twinkle * (0.88 + clampedShift * 0.28));
+
+          // Interpolated chromatic star color (from ice/diamond to rich saturated jewel tones)
+          const starColor = interpolateRgba(star.coolRgb, star.warmRgb, clampedShift, alpha);
+
+          // Corona / Atmospheric Bloom Halo
           if (star.glow) {
-            const glowR = star.radius * 3.8;
+            // Glow radius blooms wider and warmer as zoneShift increases toward dusk purple
+            const glowR = star.radius * (2.8 + clampedShift * 3.4);
             const starGrad = ctx.createRadialGradient(x, y, 0, x, y, glowR);
-            starGrad.addColorStop(0, `rgba(255, 255, 255, ${alpha})`);
-            starGrad.addColorStop(0.4, star.color === '#ffffff' ? `rgba(255, 255, 255, ${alpha * 0.4})` : star.color || 'rgba(244, 213, 141, 0.4)');
-            starGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            
+            starGrad.addColorStop(0, interpolateRgba(star.coolRgb, star.warmRgb, clampedShift, alpha));
+            starGrad.addColorStop(0.4, interpolateRgba(star.coolRgb, star.warmRgb, clampedShift, alpha * (0.35 + clampedShift * 0.25)));
+            starGrad.addColorStop(1, interpolateRgba(star.coolRgb, star.warmRgb, clampedShift, 0));
 
             ctx.fillStyle = starGrad;
             ctx.beginPath();
@@ -239,7 +386,8 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
             ctx.fill();
           }
 
-          ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+          // Star Core Disc
+          ctx.fillStyle = starColor;
           ctx.beginPath();
           ctx.arc(x, y, star.radius, 0, Math.PI * 2);
           ctx.fill();
@@ -252,7 +400,7 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
         rip.alpha -= 0.015;
 
         if (rip.alpha > 0) {
-          ctx.strokeStyle = `rgba(244, 213, 141, ${rip.alpha * 0.6})`;
+          ctx.strokeStyle = interpolateRgba([215, 235, 255], [255, 215, 140], clampedShift, rip.alpha * 0.7);
           ctx.lineWidth = 1.2;
           ctx.beginPath();
           ctx.arc(rip.x, rip.y, rip.radius, 0, Math.PI * 2);
@@ -262,26 +410,128 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
         }
       });
 
-      // 5. Draw Horizon Silhouette & Treeline with Parallax
-      const bandHeight = height * 0.17;
-      HORIZON_RIDGES.forEach((ridge, i) => {
-        const profile = horizonProfilesRef.current[i];
-        if (!profile) return;
+      // 5. Draw Natural Smooth Mountain Ranges with Organic Curvature, Parallax & Atmosphere Shifting
+      NATURAL_MOUNTAIN_TIERS.forEach((tier) => {
+        const horizonParallaxX = mouseOffset.x * tier.parallax * 45;
+        const horizonParallaxY = mouseOffset.y * tier.parallax * 20;
+        const maxPeakHeight = height * tier.heightFrac;
+        const baseY = height;
 
-        const horizonParallaxX = mouseOffset.x * ridge.parallax * 30;
-        const horizonParallaxY = mouseOffset.y * ridge.parallax * 15;
-        const peakHeight = bandHeight * ridge.heightFrac;
-        const ridgeColor = i === 0 ? '#1f132b' : i === 1 ? '#150c1e' : '#0b0610';
+        // A. Atmospheric Valley Mist behind each natural tier
+        const mistAlpha = 0.20 + (1 - tier.depth) * 0.18 + clampedShift * 0.12;
+        const mistGrad = ctx.createLinearGradient(0, baseY - maxPeakHeight * 0.85, 0, baseY);
+        mistGrad.addColorStop(
+          0,
+          interpolateRgba(tier.mistCool, tier.mistWarm, clampedShift, 0)
+        );
+        mistGrad.addColorStop(
+          0.5,
+          interpolateRgba(tier.mistCool, tier.mistWarm, clampedShift, mistAlpha * 0.6)
+        );
+        mistGrad.addColorStop(
+          1,
+          interpolateRgba(tier.mistCool, tier.mistWarm, clampedShift, mistAlpha)
+        );
 
-        ctx.fillStyle = ridgeColor;
+        ctx.fillStyle = mistGrad;
+        ctx.fillRect(-30, baseY - maxPeakHeight * 0.95, width + 60, maxPeakHeight * 0.95 + 20);
+
+        // Compute screen coordinates for smooth curved mountain profile
+        const screenPts = tier.points.map((pt) => ({
+          x: pt.x * width + horizonParallaxX,
+          y: baseY - pt.y * maxPeakHeight + horizonParallaxY,
+        }));
+
+        if (screenPts.length < 2) return;
+
+        // B. Render Smooth Organic Mountain Body
+        const mountainGrad = ctx.createLinearGradient(0, baseY - maxPeakHeight, 0, baseY);
+        mountainGrad.addColorStop(
+          0,
+          interpolateRgb(tier.litCool, tier.litWarm, clampedShift)
+        );
+        mountainGrad.addColorStop(
+          0.45,
+          interpolateRgb(tier.shadedCool, tier.shadedWarm, clampedShift)
+        );
+        mountainGrad.addColorStop(
+          1,
+          interpolateRgb(
+            [Math.round(tier.shadedCool[0] * 0.4), Math.round(tier.shadedCool[1] * 0.4), Math.round(tier.shadedCool[2] * 0.4)],
+            [Math.round(tier.shadedWarm[0] * 0.4), Math.round(tier.shadedWarm[1] * 0.4), Math.round(tier.shadedWarm[2] * 0.4)],
+            clampedShift
+          )
+        );
+
+        ctx.fillStyle = mountainGrad;
         ctx.beginPath();
-        ctx.moveTo(-40, height);
-        profile.forEach((p) => {
-          ctx.lineTo(p.xFrac * width + horizonParallaxX, height - p.peak * peakHeight + horizonParallaxY);
-        });
-        ctx.lineTo(width + 40, height);
+        ctx.moveTo(screenPts[0].x, screenPts[0].y);
+        for (let i = 0; i < screenPts.length - 1; i++) {
+          const xc = (screenPts[i].x + screenPts[i + 1].x) / 2;
+          const yc = (screenPts[i].y + screenPts[i + 1].y) / 2;
+          ctx.quadraticCurveTo(screenPts[i].x, screenPts[i].y, xc, yc);
+        }
+        const lastPt = screenPts[screenPts.length - 1];
+        ctx.lineTo(lastPt.x, lastPt.y);
+        ctx.lineTo(width + 80, baseY + 30);
+        ctx.lineTo(-80, baseY + 30);
         ctx.closePath();
         ctx.fill();
+
+        // C. Soft Natural Ridge Volume Accent (Subtle undulating inner slope layer)
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(screenPts[0].x, screenPts[0].y);
+        for (let i = 0; i < screenPts.length - 1; i++) {
+          const xc = (screenPts[i].x + screenPts[i + 1].x) / 2;
+          const yc = (screenPts[i].y + screenPts[i + 1].y) / 2;
+          ctx.quadraticCurveTo(screenPts[i].x, screenPts[i].y, xc, yc);
+        }
+        ctx.lineTo(lastPt.x, lastPt.y);
+        ctx.lineTo(width + 80, baseY + 30);
+        ctx.lineTo(-80, baseY + 30);
+        ctx.closePath();
+        ctx.clip();
+
+        // Soft diagonal natural starlight slope illumination
+        const slopeGrad = ctx.createLinearGradient(
+          width * 0.2,
+          baseY - maxPeakHeight * 1.2,
+          width * 0.8,
+          baseY
+        );
+        slopeGrad.addColorStop(
+          0,
+          interpolateRgba(tier.rimCool, tier.rimWarm, clampedShift, 0.16)
+        );
+        slopeGrad.addColorStop(
+          0.5,
+          interpolateRgba(tier.litCool, tier.litWarm, clampedShift, 0.08)
+        );
+        slopeGrad.addColorStop(
+          1,
+          interpolateRgba(tier.shadedCool, tier.shadedWarm, clampedShift, 0)
+        );
+        ctx.fillStyle = slopeGrad;
+        ctx.fillRect(-30, baseY - maxPeakHeight * 1.1, width + 60, maxPeakHeight * 1.1 + 30);
+        ctx.restore();
+
+        // D. Ethereal Mountain Crest Rim Highlight (Smooth, soft starlight edge)
+        ctx.strokeStyle = interpolateRgba(
+          tier.rimCool,
+          tier.rimWarm,
+          clampedShift,
+          0.38 + (1 - tier.depth) * 0.32 + clampedShift * 0.18
+        );
+        ctx.lineWidth = Math.max(1, 1.8 * (1 - tier.depth * 0.45));
+        ctx.beginPath();
+        ctx.moveTo(screenPts[0].x, screenPts[0].y);
+        for (let i = 0; i < screenPts.length - 1; i++) {
+          const xc = (screenPts[i].x + screenPts[i + 1].x) / 2;
+          const yc = (screenPts[i].y + screenPts[i + 1].y) / 2;
+          ctx.quadraticCurveTo(screenPts[i].x, screenPts[i].y, xc, yc);
+        }
+        ctx.stroke();
       });
 
       // 6. Meteor Check & Rendering
@@ -314,10 +564,10 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
             const tailX = headX - (m.vx / dirLen) * m.trailLen;
             const tailY = headY - (m.vy / dirLen) * m.trailLen;
 
-            // Draw streak
+            // Draw streak with atmospheric tint
             const trailGrad = ctx.createLinearGradient(tailX, tailY, headX, headY);
             trailGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
-            trailGrad.addColorStop(0.7, `rgba(244, 213, 141, ${0.45 * fade})`);
+            trailGrad.addColorStop(0.7, interpolateRgba([200, 230, 255], [255, 215, 140], clampedShift, 0.45 * fade));
             trailGrad.addColorStop(1, `rgba(255, 255, 255, ${0.95 * fade})`);
 
             ctx.strokeStyle = trailGrad;

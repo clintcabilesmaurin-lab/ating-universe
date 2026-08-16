@@ -7,6 +7,11 @@ class UniverseAudioEngine {
   private isPlaying: boolean = false;
   private currentTrackIndex: number = 0;
   private masterGain: GainNode | null = null;
+  private atmosphereFilter: BiquadFilterNode | null = null;
+  private reverbDelayNode: DelayNode | null = null;
+  private reverbFeedbackNode: GainNode | null = null;
+  private reverbWetGain: GainNode | null = null;
+  private currentZoneShift: number = 0.2;
   private targetVolume: number = 0.38;
   private timerId: number | null = null;
   private audioElement: HTMLAudioElement | null = null;
@@ -54,6 +59,31 @@ class UniverseAudioEngine {
       this.audioCtx = new AudioContextClass();
       this.masterGain = this.audioCtx.createGain();
       this.masterGain.gain.setValueAtTime(0, this.audioCtx.currentTime);
+
+      // Warm dynamic atmospheric lowpass filter
+      this.atmosphereFilter = this.audioCtx.createBiquadFilter();
+      this.atmosphereFilter.type = 'lowpass';
+      this.atmosphereFilter.frequency.setValueAtTime(10500, this.audioCtx.currentTime);
+      this.atmosphereFilter.Q.setValueAtTime(0.8, this.audioCtx.currentTime);
+
+      // Ambient space reverb / delay feedback chain
+      this.reverbDelayNode = this.audioCtx.createDelay();
+      this.reverbDelayNode.delayTime.setValueAtTime(0.26, this.audioCtx.currentTime);
+
+      this.reverbFeedbackNode = this.audioCtx.createGain();
+      this.reverbFeedbackNode.gain.setValueAtTime(0.38, this.audioCtx.currentTime);
+
+      this.reverbWetGain = this.audioCtx.createGain();
+      this.reverbWetGain.gain.setValueAtTime(0.08, this.audioCtx.currentTime);
+
+      // Routing: AtmosphereFilter -> MasterGain, and AtmosphereFilter -> Reverb -> MasterGain
+      this.atmosphereFilter.connect(this.masterGain);
+      this.atmosphereFilter.connect(this.reverbDelayNode);
+      this.reverbDelayNode.connect(this.reverbFeedbackNode);
+      this.reverbFeedbackNode.connect(this.reverbDelayNode);
+      this.reverbDelayNode.connect(this.reverbWetGain);
+      this.reverbWetGain.connect(this.masterGain);
+
       this.masterGain.connect(this.audioCtx.destination);
     }
     if (this.audioCtx.state === 'suspended') {
@@ -188,13 +218,55 @@ class UniverseAudioEngine {
   public setVolume(vol: number): void {
     this.targetVolume = Math.max(0, Math.min(1, vol));
     if (this.audioElement) {
-      this.audioElement.volume = this.targetVolume;
+      const zoneVolScale = 0.92 + this.currentZoneShift * 0.22;
+      this.audioElement.volume = Math.max(0, Math.min(1, this.targetVolume * zoneVolScale));
     }
     if (this.audioCtx && this.masterGain && this.isPlaying) {
+      const zoneVolScale = 0.92 + this.currentZoneShift * 0.22;
       this.masterGain.gain.cancelScheduledValues(this.audioCtx.currentTime);
-      this.masterGain.gain.linearRampToValueAtTime(this.targetVolume, this.audioCtx.currentTime + 0.3);
+      this.masterGain.gain.linearRampToValueAtTime(
+        this.targetVolume * zoneVolScale,
+        this.audioCtx.currentTime + 0.3
+      );
     }
     this.notify();
+  }
+
+  public setZoneShift(shift: number): void {
+    const clamped = Math.max(0, Math.min(1, shift));
+    this.currentZoneShift = clamped;
+
+    // 1. Modulate HTML5 Audio volume dynamically with atmospheric depth
+    if (this.audioElement) {
+      const zoneVolScale = 0.92 + clamped * 0.22;
+      this.audioElement.volume = Math.max(0, Math.min(1, this.targetVolume * zoneVolScale));
+    }
+
+    // 2. Modulate Web Audio Filter & Space Reverb
+    if (this.audioCtx && this.atmosphereFilter && this.reverbWetGain) {
+      const now = this.audioCtx.currentTime;
+
+      // Deep Indigo (0.0): Crisp starlight, open filter (~12000Hz), subtle dry presence (0.06 wet)
+      // Dusk Purple (1.0): Warm lush acoustic intimacy (~4200Hz warm cutoff), expanded cosmic reverb (0.28 wet)
+      const targetFreq = 12000 - clamped * 7500;
+      const targetWet = 0.06 + clamped * 0.22;
+      const targetQ = 0.7 + clamped * 0.6;
+
+      this.atmosphereFilter.frequency.cancelScheduledValues(now);
+      this.atmosphereFilter.frequency.setTargetAtTime(targetFreq, now, 0.4);
+
+      this.atmosphereFilter.Q.cancelScheduledValues(now);
+      this.atmosphereFilter.Q.setTargetAtTime(targetQ, now, 0.4);
+
+      this.reverbWetGain.gain.cancelScheduledValues(now);
+      this.reverbWetGain.gain.setTargetAtTime(targetWet, now, 0.4);
+
+      if (this.masterGain && this.isPlaying) {
+        const zoneVolScale = 0.92 + clamped * 0.22;
+        this.masterGain.gain.cancelScheduledValues(now);
+        this.masterGain.gain.setTargetAtTime(this.targetVolume * zoneVolScale, now, 0.3);
+      }
+    }
   }
 
   public getCurrentTrack(): AudioTrack {
@@ -306,6 +378,67 @@ class UniverseAudioEngine {
 
       osc.start(now + idx * 0.08);
       osc.stop(now + idx * 0.08 + 1.2);
+    });
+  }
+
+  public playPortalWarp(): void {
+    if (!this.audioCtx || !this.masterGain) return;
+    const now = this.audioCtx.currentTime;
+
+    // Resonant cosmic filter sweep
+    const filter = this.audioCtx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(300, now);
+    filter.frequency.exponentialRampToValueAtTime(3200, now + 0.5);
+    filter.frequency.exponentialRampToValueAtTime(800, now + 0.9);
+    filter.Q.setValueAtTime(4.0, now);
+
+    const warpGain = this.audioCtx.createGain();
+    warpGain.gain.setValueAtTime(0.001, now);
+    warpGain.gain.linearRampToValueAtTime(0.14, now + 0.35);
+    warpGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.95);
+
+    // Dual oscillator celestial portal shimmer (sine + saw with subtle detune)
+    const osc1 = this.audioCtx.createOscillator();
+    osc1.type = 'sawtooth';
+    osc1.frequency.setValueAtTime(140, now);
+    osc1.frequency.exponentialRampToValueAtTime(587.33, now + 0.45); // D5
+    osc1.frequency.exponentialRampToValueAtTime(880, now + 0.85); // A5
+
+    const osc2 = this.audioCtx.createOscillator();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(220, now);
+    osc2.frequency.exponentialRampToValueAtTime(659.25, now + 0.5); // E5
+    osc2.frequency.exponentialRampToValueAtTime(1046.50, now + 0.9); // C6
+
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(warpGain);
+    warpGain.connect(this.masterGain);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.95);
+    osc2.stop(now + 0.95);
+
+    // Stardust chimes accompanying the portal entry
+    const chimeFrequencies = [587.33, 739.99, 880.00, 1174.66]; // D5, F#5, A5, D6
+    chimeFrequencies.forEach((freq, idx) => {
+      if (!this.audioCtx || !this.masterGain) return;
+      const chimeOsc = this.audioCtx.createOscillator();
+      const chimeGain = this.audioCtx.createGain();
+      chimeOsc.type = 'sine';
+      chimeOsc.frequency.setValueAtTime(freq, now + 0.2 + idx * 0.1);
+
+      chimeGain.gain.setValueAtTime(0.001, now + 0.2 + idx * 0.1);
+      chimeGain.gain.linearRampToValueAtTime(0.06, now + 0.2 + idx * 0.1 + 0.04);
+      chimeGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2 + idx * 0.1 + 0.7);
+
+      chimeOsc.connect(chimeGain);
+      chimeGain.connect(this.masterGain);
+
+      chimeOsc.start(now + 0.2 + idx * 0.1);
+      chimeOsc.stop(now + 0.2 + idx * 0.1 + 0.7);
     });
   }
 }

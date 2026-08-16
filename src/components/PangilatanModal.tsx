@@ -13,7 +13,8 @@ import {
   Maximize2,
   CheckCircle2,
 } from 'lucide-react';
-import { MEMORIES } from '../data/universeData';
+import { MEMORIES, WORLDS } from '../data/universeData';
+import { WorldStar } from '../types';
 import { CelestialMemoryVisual } from './CelestialMemoryVisual';
 import {
   PANGILATAN_FOLDER_URL,
@@ -27,12 +28,15 @@ interface PangilatanModalProps {
   onClose: () => void;
   spokenLine: string;
   onOpenPhotoManager?: () => void;
+  onNavigateWorld?: (world: WorldStar) => void;
 }
 
 export const PangilatanModal: React.FC<PangilatanModalProps> = ({
   isOpen,
   onClose,
   spokenLine,
+  onOpenPhotoManager,
+  onNavigateWorld,
 }) => {
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(0);
   const [imgLoadFailed, setImgLoadFailed] = useState<Record<string, boolean>>({});
@@ -316,14 +320,37 @@ export const PangilatanModal: React.FC<PangilatanModalProps> = ({
               </div>
             </div>
 
-            {/* Bottom Actions */}
-            <div className="flex justify-end pt-2">
+            {/* Bottom Actions with Portal Jumpers */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-white/10">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 w-full sm:w-auto">
+                <span className="text-[11px] font-sans text-slate-400 mr-1 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-amber-300" />
+                  <span>Lipat ng Mundo:</span>
+                </span>
+
+                {WORLDS.map((w) => (
+                  <button
+                    key={w.id}
+                    id={`pangilatan-jump-${w.id}`}
+                    onClick={() => {
+                      if (onNavigateWorld) {
+                        onNavigateWorld(w);
+                      }
+                    }}
+                    className="px-2.5 py-1 rounded-full text-[11px] font-sans font-medium bg-black/40 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 hover:border-white/25 active:scale-95 transition-all flex items-center gap-1"
+                    style={{ borderColor: `${w.starColor}40`, color: `${w.starColor}dd` }}
+                  >
+                    <span>{w.name}</span>
+                  </button>
+                ))}
+              </div>
+
               <button
                 id="btn-return-sky"
                 onClick={onClose}
-                className="px-6 py-2.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 text-xs tracking-wider font-sans transition-all shadow-md hover:scale-102"
+                className="px-6 py-2 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 text-xs tracking-wider font-sans transition-all shadow-md hover:scale-102 shrink-0"
               >
-                Bumalik sa Kalawakan &bull; Return to Sky
+                Bumalik sa Kalawakan
               </button>
             </div>
           </div>

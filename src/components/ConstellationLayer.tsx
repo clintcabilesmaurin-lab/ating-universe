@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { WORLDS, PANGILATAN_LINES } from '../data/universeData';
 import { WorldStar } from '../types';
-import { Sparkles, Heart, Compass, Image as ImageIcon, Mail, Lock } from 'lucide-react';
+import { Sparkles, Heart, Compass, Image as ImageIcon, Mail, Lock, ExternalLink, Globe } from 'lucide-react';
 import { World3DIcon } from './World3DIcon';
 import { audioEngine } from '../utils/audioEngine';
 
@@ -17,6 +17,98 @@ interface NodePos {
   x: number;
   y: number;
 }
+
+interface PangilatanSafeZone {
+  id: string;
+  name: string;
+  side: 'left' | 'right';
+  minTop: number;
+  maxTop: number;
+  minOffsetPercent: number;
+  maxOffsetPercent: number;
+}
+
+// Certified safe, non-overlapping celestial coordinates for Pangilatan on refresh
+const PANGILATAN_SAFE_ZONES: PangilatanSafeZone[] = [
+  {
+    id: 'zone-upper-right',
+    name: 'Silangang Kalangitan',
+    side: 'right',
+    minTop: 90,
+    maxTop: 240,
+    minOffsetPercent: 3,
+    maxOffsetPercent: 12,
+  },
+  {
+    id: 'zone-gap-0-1-right',
+    name: 'Itaas na Pagitan ng mga Bituin',
+    side: 'right',
+    minTop: 420,
+    maxTop: 500,
+    minOffsetPercent: 4,
+    maxOffsetPercent: 14,
+  },
+  {
+    id: 'zone-mid-left',
+    name: 'Kanlurang Tagpuan ng Ulap',
+    side: 'left',
+    minTop: 680,
+    maxTop: 830,
+    minOffsetPercent: 3,
+    maxOffsetPercent: 12,
+  },
+  {
+    id: 'zone-gap-1-2-left',
+    name: 'Gitnang Pagitan ng Alaala',
+    side: 'left',
+    minTop: 980,
+    maxTop: 1060,
+    minOffsetPercent: 4,
+    maxOffsetPercent: 14,
+  },
+  {
+    id: 'zone-mid-right',
+    name: 'Silangang Tuktok ng Liham',
+    side: 'right',
+    minTop: 1240,
+    maxTop: 1390,
+    minOffsetPercent: 3,
+    maxOffsetPercent: 12,
+  },
+  {
+    id: 'zone-gap-2-3-right',
+    name: 'Ibaba na Pagitan ng Pangarap',
+    side: 'right',
+    minTop: 1540,
+    maxTop: 1620,
+    minOffsetPercent: 4,
+    maxOffsetPercent: 14,
+  },
+  {
+    id: 'zone-lower-left',
+    name: 'Katimugang Horizon ng Pangilatan',
+    side: 'left',
+    minTop: 1800,
+    maxTop: 1950,
+    minOffsetPercent: 3,
+    maxOffsetPercent: 12,
+  },
+];
+
+const getRandomPangilatanPosition = () => {
+  const zone = PANGILATAN_SAFE_ZONES[Math.floor(Math.random() * PANGILATAN_SAFE_ZONES.length)];
+  const randomTop = Math.floor(zone.minTop + Math.random() * (zone.maxTop - zone.minTop));
+  const randomOffset = Math.floor(
+    zone.minOffsetPercent + Math.random() * (zone.maxOffsetPercent - zone.minOffsetPercent)
+  );
+  return {
+    side: zone.side,
+    top: randomTop,
+    offsetPercent: randomOffset,
+    zoneName: zone.name,
+    zoneId: zone.id,
+  };
+};
 
 const CONSTELLATION_LINKS = [
   { id: 'link-1-2', from: 'our-first-year', to: 'memory-gallery', label: 'Unang Taon • Galeriya', color1: '#f4d58d', color2: '#c084fc', curve: 0.12 },
@@ -46,6 +138,9 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = ({
   const [selectedMountainLine] = useState(() => {
     return PANGILATAN_LINES[Math.floor(Math.random() * PANGILATAN_LINES.length)];
   });
+
+  // Random safe, non-overlapping position generated per refresh
+  const [pangilatanPos] = useState(() => getRandomPangilatanPosition());
 
   // Track mouse coordinates for foreground constellation parallax
   useEffect(() => {
@@ -136,23 +231,13 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = ({
   const handleStarClick = (world: WorldStar) => {
     audioEngine.playStarGazeChime();
     triggerTapGlow(world.id);
-
-    // If first time tapping: speak previewLine (+ ache line if present)
-    if (!previewedIds.has(world.id)) {
-      onSpeak(world.previewLine);
-      if (world.acheLine) {
-        window.setTimeout(() => {
-          onSpeak(world.acheLine!, true);
-        }, 3600);
-      }
-    } else {
-      // Second tap: open the world modal if active, or tease if inactive
-      if (world.active) {
-        onSelectWorld(world);
-      } else {
-        onSpeak(world.previewLine);
-      }
+    onSpeak(world.previewLine);
+    if (world.acheLine) {
+      window.setTimeout(() => {
+        onSpeak(world.acheLine!, true);
+      }, 4200);
     }
+    onSelectWorld(world);
   };
 
   const handleMountainClick = () => {
@@ -483,29 +568,40 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = ({
                   {world.description}
                 </p>
 
-                {/* Action Button */}
-                <div className="mt-3 flex items-center gap-2 justify-center md:justify-start">
+                {/* Action Buttons */}
+                <div className="mt-3 flex flex-wrap items-center gap-2 justify-center md:justify-start">
                   <button
                     id={`btn-open-${world.id}`}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleStarClick(world);
                     }}
-                    className={`text-xs px-3.5 py-1.5 rounded-full font-sans tracking-wider transition-all flex items-center gap-1.5 ${
-                      world.active
-                        ? 'bg-amber-400/20 hover:bg-amber-400/30 text-amber-200 border border-amber-300/40 hover:border-amber-200'
-                        : 'bg-slate-800/40 text-slate-400 border border-slate-700 cursor-not-allowed'
-                    }`}
+                    className="text-xs px-3.5 py-1.5 rounded-full font-sans tracking-wider transition-all flex items-center gap-1.5 bg-amber-400/20 hover:bg-amber-400/30 text-amber-200 border border-amber-300/40 hover:border-amber-200 active:scale-95"
                   >
-                    {world.active ? (isPreviewed ? 'Buksan • Explore' : 'Pakinggan') : 'Pangarap'}
+                    <span>Buksan • Pumasok</span>
                   </button>
+
+                  {world.id === 'memory-gallery' && (
+                    <a
+                      href={world.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      id="card-btn-gallery-walk"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs px-3 py-1.5 rounded-full font-sans tracking-wider bg-purple-500/25 hover:bg-purple-500/45 text-purple-200 border border-purple-400/40 hover:border-purple-300 transition-all flex items-center gap-1 shadow-sm hover:scale-105"
+                    >
+                      <Globe className="w-3 h-3 text-purple-300" />
+                      <span>3D Walk</span>
+                      <ExternalLink className="w-3 h-3 text-purple-300 ml-0.5" />
+                    </a>
+                  )}
                 </div>
               </div>
             </motion.div>
           );
         })}
 
-        {/* Standalone Pangilatan Mountain Signature Star (Wandering off-spine with Parallax) */}
+        {/* Standalone Pangilatan Mountain Signature Star (Randomized Non-Overlapping Safe Position with Parallax) */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           whileInView={{ opacity: 1, scale: 1 }}
@@ -514,9 +610,13 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = ({
           onMouseEnter={() => setHoveredNodeId('pangilatan')}
           onMouseLeave={() => setHoveredNodeId(null)}
           style={{
+            top: `${pangilatanPos.top}px`,
+            ...(pangilatanPos.side === 'left'
+              ? { left: `${pangilatanPos.offsetPercent}%` }
+              : { right: `${pangilatanPos.offsetPercent}%` }),
             transform: `translate3d(${mouseParallax.x * -24}px, ${mouseParallax.y * -16}px, 0)`,
           }}
-          className="absolute right-6 sm:right-16 top-[720px] z-20 transition-transform duration-300 ease-out"
+          className="absolute z-20 transition-transform duration-300 ease-out"
         >
           <div
             ref={(el) => {

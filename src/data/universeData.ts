@@ -1,6 +1,8 @@
 import { WorldStar, AudioTrack, Letter, MemoryItem, RandomPhotoMemory, TimelineMilestone, TravelDream } from '../types';
 import { PANGILATAN_FOLDER_URL, RANDOM_MEMORIES_FOLDER_URL, getDriveThumbnailUrl } from '../utils/driveHelper';
 
+export const MEMORY_GALLERY_WALK_URL = 'https://memory-gallary-walk.vercel.app/';
+
 export { PANGILATAN_FOLDER_URL, RANDOM_MEMORIES_FOLDER_URL };
 
 export const WORLDS: WorldStar[] = [
@@ -10,25 +12,25 @@ export const WORLDS: WorldStar[] = [
     url: '#first-year',
     active: true,
     order: 1,
-    previewLine: 'Maica! Ito, first year niyo, hehe.',
+    previewLine: 'Look, Lovey... our first year, hahahah.',
     starColor: '#f4d58d',
     unlockedDate: '2025-11-12',
-    tagline: 'Ang Simula ng Lahat',
-    description: 'Bawat araw, bawat tawag sa gabi, bawat tawanan at munting tampuhan na nauwi sa mas malalim na pagmamahal.',
+    tagline: 'Diri Nagsugod ang Tanan',
+    description: 'Bawat late-night call, mga katawa-tawa nga moments, ug mga gagmay nga butang nga nagpatig-a sa atong pagsalig.',
     iconName: 'Sparkles',
   },
   {
     id: 'memory-gallery',
     name: 'Memory Gallery',
-    url: '#gallery',
+    url: 'https://memory-gallary-walk.vercel.app/',
     active: true,
     order: 2,
-    previewLine: 'Grabe, dito puno ng — hmm, ikaw na magdiskubre, hahahah.',
-    acheLine: '...alam mo, may mga panahon na halos di na tayo nag-usap dati... pero andito pa rin tayo. Sooner, sabi mo noon. Tapos dumating na.',
+    previewLine: 'Grabe, diri puno ug memories... ikaw na tan-aw, hahahah.',
+    acheLine: '...alam mo, naa jud toy time nga halos di na ta magka-storya sa una... pero andito pa rin tayo. "Sooner", ana ka ato. Tapos look at us now.',
     starColor: '#c9a7eb',
     unlockedDate: '2026-01-10',
-    tagline: 'Mga Tagpong Hindi Kumukupas',
-    description: 'Mga litrato at alaalang nakatatak sa puso — mula sa bundok ng Pangilatan hanggang sa bawat tanawin sa ilalim ng parehong langit.',
+    tagline: 'Mga Tagpong Di Jud Malimtan',
+    description: 'Mga litrato ug handumanan — gikan sa tugnaw nga bukid sa Pangilatan hantod sa 3D interactive virtual gallery walk sa memory-gallary-walk.vercel.app.',
     iconName: 'Image',
   },
   {
@@ -37,12 +39,12 @@ export const WORLDS: WorldStar[] = [
     url: '#letters',
     active: true,
     order: 3,
-    previewLine: 'May mga sinulat siya dito para sa\'yo... basahin mo, hehe.',
-    acheLine: 'Grabe, dito ko nilagay yung mga bagay na mahirap sabihin ng harapan... basahin mo lang, sige, tapos alam mo na — mahal na mahal kita, kahit anong layo.',
+    previewLine: 'Naa koy gipang-sulat diri para sa\'yo... basaha lang, hehe.',
+    acheLine: 'Actually, diri nako gibutang ang mga butang nga lisod usahay isulti ug diretso... basaha lang, Lovey. Na appreciate jud nako tanan imoha gibuhat.',
     starColor: '#f7b2ad',
     unlockedDate: '2026-03-01',
-    tagline: 'Mga Liham sa Pagitan ng Distansya',
-    description: 'Mga sulat-kamay at taimtim na salita para sa mga gabing magkalayo at mga umagang ikaw ang unang naiisip.',
+    tagline: 'Liham sa Pikas nga Dapit',
+    description: 'Mga kinasingkasing nga sulat para sa mga gabii nga mingaw ug sa mga adlaw nga ikaw akong kusog.',
     iconName: 'Mail',
   },
   {
@@ -51,21 +53,21 @@ export const WORLDS: WorldStar[] = [
     url: '#travel',
     active: false,
     order: 4,
-    previewLine: 'Lakad-lakad tayo dito...',
+    previewLine: 'Fast forward ta gamay... lakaw-lakaw ta diri puhon.',
     starColor: '#9ecae1',
     unlockedDate: null,
-    tagline: 'Mga Susunod Nating Pupuntahan',
-    description: 'Mga pangarap na lugar na sabay nating tatapakan pagkatapos ng distansya. Malapit na, sooner.',
+    tagline: 'Mga Dalan nga Atong Pagalaktan',
+    description: 'Mga lugar nga sabay natong adtoan puhon human sa distansya. Step by step, maabot ra na nato.',
     iconName: 'Compass',
   },
 ];
 
 export const PANGILATAN_LINES = [
-  "Uyy, ito na siya... Pangilatan. Hindi siya parang ibang bituin, 'no? Gumagala lang — parang tayo dati. Umiikot, tapos... nagkita rin ulit.",
-  "Naaalala mo pa dito? Basang-basa tayo noon. Pero heheh — andito pa rin tayo ngayon.",
-  "Dito rin tayo kumanta, 'no? Di maganda boses ko pero — hahaha — pinakinggan mo pa rin.",
-  "Ito si Pangilatan... hindi ko na kailangang ipaliwanag, 'no? Alam mo na.",
-  "Uyy, nadiskubre mo siya. Gumagala lang 'yan — ayaw sumunod sa linya. Minsan tayo rin naman, 'di ba? 'Di sumusunod sa plano, pero nagkita pa rin.",
+  "Uyy, look... si Pangilatan. Di ba funny, wala siya gasunod sa linya? Galakaw-lakaw ra — murag kita sa una. Umiikot, pero nagkita ra gihapon.",
+  "Hahahah remember diri? Basa kaayo ta sa ulan ato. Pero tan-awa, andito pa rin tayo ngayon, mas lig-on pa.",
+  "Diri pud ta nag-guitar ug nikanta, no? Dili kaayo nindot akong tingog pero — hahahah — gipaminaw gihapon nimo.",
+  "Actually, looking back sa Pangilatan... dira nako na-realize nga basta ikaw akong tupad, bisan asa nga lugar mahimong panimalay.",
+  "Uyy, nakit-an nimo siya. Special jud ni nga bituin para nato. Alam mo na 'yan, Lovey.",
 ];
 
 export const AUDIO_TRACKS: AudioTrack[] = [
@@ -98,56 +100,52 @@ export const AUDIO_TRACKS: AudioTrack[] = [
 export const MEMORIES: MemoryItem[] = [
   {
     id: 'mem-1',
-    title: 'Tayo sa Tuktok ng Pangilatan',
-    location: 'Pangilatan Mountain Viewdeck',
+    title: 'Tuktok sa Pangilatan',
+    location: 'Pangilatan Viewdeck',
     date: 'Hulyo 2026 • Araw ng Pagtatagpo',
-    description: 'Nung umakyat tayo, kahit maulap at mahangin, hawak-kamay nating tinanaw ang buong kabundukan. Ang sarap sa pakiramdam na katabi kita.',
-    quote: '"Kahit gaano kalayo ang tinahak, basta kasama ka, laging worth it."',
+    description: 'Nung umakyat tayo, basa man sa ulan ug tugnaw ang hangin, nag-gunitay ta sa kamot samtang gatan-aw sa clouds. Ka-nice sa pamati nga ikaw akong tupad.',
+    quote: '"Bisan unsa kalayo atong gilakaw, basta ikaw akong kauban, worth it jud pirmi."',
     imageType: 'selfie',
     imageSrc: 'https://drive.google.com/file/d/10Vv9RMxrD42ZHfnfC5xvw7o-34IXNcb_/view?usp=drive_link',
   },
   {
     id: 'mem-2',
-    title: 'Tinging Malaya sa Kabundukan',
+    title: 'Gatan-aw sa Bukid',
     location: 'Pangilatan Hills Grassland',
     date: 'Matahimik na Hapon',
-    description: 'Nakatitig ka lang sa malayo habang sumasayaw ang hangin sa buhok mo. Dun ko napagtanto kung gaano kita gustong alagaan at mahalin habangbuhay.',
-    quote: '"Sa katahimikan ng bundok, ikaw lang ang naririnig ng puso ko."',
+    description: 'Nakatutok ra ka sa layo samtang gihuyop sa hangin imong buhok. Dira nako na-realize kung unsa ka bililhon nga ampingan tika.',
+    quote: '"Sa kahilom sa bukid, ikaw ra jud akong kalinaw."',
     imageType: 'scenic',
     imageSrc: 'https://drive.google.com/file/d/1smj64ajtPckAIyyWY5oqHY8RkzgKl7pB/view?usp=drive_link',
   },
   {
     id: 'mem-3',
-    title: 'Unang Silip ng Liwayway',
+    title: 'Unang Silip sa Liwayway',
     location: 'Pangilatan Peak Ridge',
     date: 'Hulyo 4, 2026 • Dapit-Umaga',
-    description: 'Ang unang liwanag ng araw na sumisilip sa likod ng mga ulap habang magkasama nating sinasalubong ang bagong umaga.',
-    quote: '"Sa bawat pagsikat ng araw, ikaw ang unang pasasalamatan."',
+    description: 'Ang unang silaw sa adlaw nga misulod sa panganod samtang dungan natong gisugat ang bag-ong kabuntagon.',
+    quote: '"Sa kada pagsubang sa adlaw, ikaw akong unang ipasalamat sa Ginoo."',
     imageType: 'scenic',
     imageSrc: 'https://drive.google.com/file/d/1e9tm3i8Ay1Mtog8BQ9F4gucB08rFCGzz/view?usp=drive_link',
   },
   {
     id: 'mem-4',
-    title: 'Dapit-Umaga sa Kabundukan',
+    title: 'Dapit-Umaga sa Pangilatan',
     location: 'Pangilatan Horizon',
     date: 'Hulyo 4, 2026 • 5:47 AM',
-    description: 'Malamig ang hangin pero mainit ang puso dahil magkahawak ang ating mga kamay.',
-    quote: '"Walang hamog o lamig na hindi kayang pawiin ng iyong yakap."',
+    description: 'Bugnaw kaayo ang simoy sa bukid pero init atong kasingkasing kay magka-holding hands ta.',
+    quote: '"Walay kabugnaw nga dili mawa basta ikaw akong gakos."',
     imageType: 'scenic',
     imageSrc: 'https://drive.google.com/file/d/16Y45AClQV-QPJFJopdeHItKZjuIiWhyQ/view?usp=drive_link',
   },
 ];
 
-/**
- * RANDOM FLOATING MEMORY PHOTOS POOL
- * Direct Google Drive links for floating celestial memory shards in the sky
- */
 export const RANDOM_MEMORY_PHOTOS: RandomPhotoMemory[] = [
   {
     id: 'photo-pangilatan-1',
     src: 'https://drive.google.com/file/d/10Vv9RMxrD42ZHfnfC5xvw7o-34IXNcb_/view?usp=drive_link',
-    title: 'Tuktok ng Pangilatan',
-    caption: 'Kahit gaano kataas ang akyatin, basta ikaw ang kasama ko, parang nasa ulap lang tayo.',
+    title: 'Tuktok sa Pangilatan',
+    caption: 'Bisan unsa pa kataas ang tungason, basta ikaw akong kauban, sayon ra kaayo ang dalan.',
     location: 'Pangilatan Mountain',
     date: 'Araw ng Pagtatagpo',
     glowColor: '#9dbf9a',
@@ -155,8 +153,8 @@ export const RANDOM_MEMORY_PHOTOS: RandomPhotoMemory[] = [
   {
     id: 'photo-pangilatan-2',
     src: 'https://drive.google.com/file/d/1smj64ajtPckAIyyWY5oqHY8RkzgKl7pB/view?usp=drive_link',
-    title: 'Ang Paborito Kong Ngiti',
-    caption: 'Sa bawat tingin mo, ramdam ko ang tahanan na matagal ko nang hinahanap.',
+    title: 'Ang Paborito Nakong Smile',
+    caption: 'Sa kada tan-aw nimo nako, murag niana jud akong panimalay.',
     location: 'Pangilatan Trails',
     date: 'Matahimik na Hapon',
     glowColor: '#fb7185',
@@ -164,8 +162,8 @@ export const RANDOM_MEMORY_PHOTOS: RandomPhotoMemory[] = [
   {
     id: 'photo-pangilatan-3',
     src: 'https://drive.google.com/file/d/1e9tm3i8Ay1Mtog8BQ9F4gucB08rFCGzz/view?usp=drive_link',
-    title: 'Unang Silip ng Liwayway',
-    caption: 'Kasama kang sumalubong sa unang sinag ng araw sa tuktok ng kabundukan.',
+    title: 'Unang Silip sa Liwayway',
+    caption: 'Kauban kang misugat sa unang sinag sa adlaw sa tumoy sa bukid.',
     location: 'Pangilatan Ridge',
     date: 'Hulyo 4, 2026 • 5:47 AM',
     glowColor: '#f4d58d',
@@ -173,8 +171,8 @@ export const RANDOM_MEMORY_PHOTOS: RandomPhotoMemory[] = [
   {
     id: 'photo-pangilatan-4',
     src: 'https://drive.google.com/file/d/16Y45AClQV-QPJFJopdeHItKZjuIiWhyQ/view?usp=drive_link',
-    title: 'Dapit-Umaga sa Ulap',
-    caption: 'Malamig man ang simoy ng hangin, ang init ng kamay mo ang aking sandigan.',
+    title: 'Kabuntagon sa Panganod',
+    caption: 'Tugnaw man ang hangin, ang kainit sa imong kamot akong dangpanan.',
     location: 'Pangilatan Overlook',
     date: 'Hulyo 4, 2026 • 5:47 AM',
     glowColor: '#38bdf8',
@@ -184,49 +182,49 @@ export const RANDOM_MEMORY_PHOTOS: RandomPhotoMemory[] = [
 export const LETTERS: Letter[] = [
   {
     id: 'letter-1',
-    title: 'Para sa Aking Lovey, Kahit Anong Layo',
+    title: 'Para sa Aking Lovey, Bisag Unsa Kalayo',
     date: 'Mahalagang Araw',
-    excerpt: 'Hindi madali ang LDR, pero tuwing naaalala kita, nawawala lahat ng pagod...',
+    excerpt: 'Dili lalim ang LDR, pero whenever I think of you, mawa tanan kakapoy...',
     content: [
       'Dearest Maica, aking Lovey,',
-      'Alam mo bang sa bawat gabing tahimik ang paligid at nakatitig ako sa kisame, ikaw agad ang pumapasok sa isip ko? Ang hirap minsan ng magkalayo — yung mga araw na gusto kitang yakapin pag pagod ka, o hawakan ang kamay mo habang naglalakad tayo nang walang patutunguhan.',
-      'Pero alam mo kung anong mas malakas kaysa sa distansya? Yung katiyakan na ikaw ang taong gusto kong makasama sa bawat yugto ng buhay ko.',
-      'Salamat sa pagtitiyaga, sa pagiging sandigan ko kahit sa screen lang tayo nagkikita, at sa pagmamahal mong kailanman ay hindi nagbago.',
-      'Hinding-hindi ako mapapagod maghintay at magsikap para sa araw na hindi na natin kailangang magpaalam sa airport o magbilang ng mga buwan bago magkita.',
+      'Alam mo bang sa bawat gabing hilom ang palibot ug naghigda ko, ikaw dayon akong mahinumdoman? Lisod usahay ang magkalayo — kanang mga adlaw nga gusto tika gakson pag kapoy ka, o magkuyog ta sa motor bisan walay klarong adtoan.',
+      'Pero kahibalo ka kung unsa ang mas lig-on kaysa sa distansya? The certainty nga ikaw ang tawo nga gusto nako kauban sa tanang yugto sa akong kinabuhi.',
+      'Salamat kaayo sa imong pasensya, sa pagpabati nako nga safe ko bisan sa screen ra ta mag-talk, ug sa imong kasingkasing nga kanunay tinuod.',
+      'Hinding-hindi ako mapapagod maghintay ug magpaningkamot para sa adlaw nga wala na tay airport goodbyes or mag-ihap ug mga buwan bago magkita.',
     ],
-    signature: 'Nagmamahal nang walang hanggan, Clint',
-    tag: 'Taimtim na Liham',
+    signature: 'Na appreciate jud nako tanan, Clint',
+    tag: 'Kinasingkasing nga Liham',
     sealColor: '#e07a5f',
   },
   {
     id: 'letter-2',
-    title: 'Nung Halos Mawalan Tayo ng Kausap ("Sooner")',
+    title: 'Nung Halos Di Ta Magka-storya ("Sooner")',
     date: 'Panahon ng Pagtibay',
-    excerpt: 'Naaalala mo yung mga panahong parang ang bigat ng lahat? Pero look at us now...',
+    excerpt: 'Remember katong mga panahong bug-at ang tanan? Pero look at us now...',
     content: [
-      'Lovey,',
-      'Hindi perpekto ang kwento natin. May mga panahon noon na halos mawalan tayo ng lakas, na parang ang hirap abutin ng isa\'t isa dahil sa layo at sa dami ng iniisip.',
-      'Pero may isang salita kang laging sinasabi na naging angkla ko: "Sooner."',
-      'Simple lang pero puno ng pag-asa. Sabi mo, darating din ang araw na magiging madali ang lahat. At totoo nga — bawat unos na dumaan, imbes na maglayo sa atin, mas lalong nagpatibay sa kung sino tayo ngayon.',
-      'Salamat at hindi ka bumitaw. Salamat dahil pinili mo akong mahalin araw-araw.',
+      'Lovey... bitaw no.',
+      'Dili perpekto atong agi. Naay mga panahon sa una nga murag kapoy kaayo, nga lisod abuton ang usag-usa tungod sa layo ug sa kadaghan sa gihuna-huna.',
+      'Pero naa kay usa ka word nga pirmi isulti nako: "Sooner."',
+      'Simple ra kaayo siya, pero I swear, mao to akong gikuptan. Sabi mo, moabot ra ang panahon nga mahimong sayon ang tanan. Ug tinuod jud — bawat unos nga miagi, imbes nga magpalayo nato, mas gipalig-on ta.',
+      'Salamat kay wala ka nibitaw. Salamat sa pagpili nako adlaw-adlaw.',
     ],
-    signature: 'Palaging para sa\'yo, Clint',
-    tag: 'Alaala at Pagtibay',
+    signature: 'Kanunay naga-paluyo nimo, Clint',
+    tag: 'Alaala ug Pagtibay',
     sealColor: '#81b29a',
   },
   {
     id: 'letter-3',
-    title: 'Pangako sa Ating Kinabukasan',
+    title: 'Atong Saad sa Umaabot',
     date: 'Pangarap Nating Dalawa',
-    excerpt: 'Hindi lang ito alaala ng nakaraan — ito ang pundasyon ng ating bukas...',
+    excerpt: 'Dili ra ni handumanan sa nilabay — pundasyon ni sa atong ugma...',
     content: [
       'Maica ko,',
-      'Ginawa ko itong Ating Universe hindi lang para balikan ang mga nakaraang buwan, kundi para ipaalala sa\'yo na may buong kalawakan pa tayong bubuuin nang magkasama.',
-      'Darating ang araw na gigising tayo sa umaga na walang timer ang tawag, walang flight ticket na kailangang habulin, kundi kape at ikaw lang sa tabi ko.',
-      'Marami pang mundo ang malilikha, Lovey. At sa bawat mundong iyon, ikaw at ikaw lang ang pipiliin ko.',
-      'Mahal na mahal kita, higit pa sa kayang bilangin ng mga bituin sa langit.',
+      'Gihimo nako kining Ating Universe dili lang para balikan ang niaging tuig, kundi para ipahinumdom nimo nga tibuok kalawakan pa atong tukuron nga magkauban.',
+      'Moabot ra ang adlaw nga momata ta sa buntag nga walay timer ang call, walay flight nga kinahanglan apason — kape ra ug ikaw sa akong kilid.',
+      'Daghan pa tang adtoan nga mga dalan, Lovey. Ug sa kada dalan, ikaw ug ikaw ra jud akong pilion.',
+      'Mahal kaayo tika, more than all the stars in the night sky.',
     ],
-    signature: 'Ang iyong kakampi habangbuhay, Clint',
+    signature: 'Imong katuwang hangtod sa kahangturan, Clint',
     tag: 'Pangako sa Hinaharap',
     sealColor: '#3d405b',
   },
@@ -235,36 +233,36 @@ export const LETTERS: Letter[] = [
 export const TIMELINE_MILESTONES: TimelineMilestone[] = [
   {
     month: 'Unang Yugto',
-    title: 'Ang Unang "Uyy" at Tawanan',
-    story: 'Kung paano nagsimula sa simpleng chat hanggang sa naging 4am calls na ayaw nang magbabaan ng phone.',
-    highlight: 'Hindi namamalayan ang oras basta ikaw ang kausap.',
+    title: 'Ang Unang "Uyy" ug Tawanan',
+    story: 'Kung paano nagsugod sa simpleng chat hangtod naging 4am calls nga dili na ganahan mag-end sa phone.',
+    highlight: 'Dili mamalayan ang oras basta ikaw ang ka-istorya.',
     emoji: '🌙',
   },
   {
     month: 'Araw ng Pagtatapat',
     title: 'Nung Naging "Tayo"',
-    story: 'Ang pinakamasayang desisyon sa buhay ko — ang piliin kang maging tahanan ng puso ko.',
+    story: 'Ang pinakamasayang desisyon sa akong kinabuhi — ang piliin ka nga maging panimalay sa akong kasingkasing.',
     highlight: 'Official na aking Lovey.',
     emoji: '✨',
   },
   {
     month: 'Araw sa Pangilatan',
-    title: 'Kanta at Ulan sa Bundok',
-    story: 'Umakyat tayo sa Pangilatan, nagpatugtog ng gitara at kumanta kahit maulan. Walang paki sa dumi o lamig.',
-    highlight: 'Basta ikaw ang kasama, paraiso ang kahit saang lugar.',
+    title: 'Kanta ug Ulan sa Bukid',
+    story: 'Misaka ta sa Pangilatan, nag-guitar ug nikanta bisan nag-ulan. Walay paki sa lapok o tugnaw basta magkuyog.',
+    highlight: 'Basta ikaw akong kauban, nindot bisan asang dapita.',
     emoji: '⛰️',
   },
   {
     month: 'Mga Gabi ng LDR',
-    title: 'Pagtulog nang Magkasama sa Call',
-    story: 'Kahit screen lang ang pagitan, marinig lang ang hininga at boses mo, payapa na ang buong gabi.',
-    highlight: 'LDR can\'t stop genuine soul connection.',
+    title: 'Nakatulog sa Call',
+    story: 'Bisan screen ra ang tunga, madungog lang imong ginhawa ug tingog, payapa na kaayo akong gabii.',
+    highlight: 'Distansya can\'t stop genuine soul connection.',
     emoji: '💫',
   },
   {
     month: 'Anniversary Milestone',
-    title: 'Isang Taon ng Pagmamahal',
-    story: '365 na araw ng pagpili sa isa\'t isa. Patunay na ang tunay na pag-ibig ay hindi nasusukat sa distansya.',
+    title: 'Usa ka Tuig nga Paghigugma',
+    story: '365 ka adlaw nga pagpili sa usag-usa. Patunay nga ang tinuod nga pagbati dili masukod sa kilometro.',
     highlight: 'First year down, lifetime to go.',
     emoji: '💖',
   },
@@ -273,141 +271,156 @@ export const TIMELINE_MILESTONES: TimelineMilestone[] = [
 export const TRAVEL_DREAMS: TravelDream[] = [
   {
     destination: 'Japan Cherry Blossom Season',
-    tagline: 'Lakad sa ilalim ng Sakura at gabi sa Kyoto',
-    activities: ['Mag-rent ng kimono', 'Kumain ng authentic matcha at ramen', 'Mag-night stroll sa Dotonbori'],
+    tagline: 'Lakaw sa ilalom sa Sakura ug gabi sa Kyoto',
+    activities: ['Mag-rent og kimono', 'Mokaon og authentic matcha ug ramen', 'Mag-night stroll sa Dotonbori'],
     status: 'sooner',
-    note: 'Gusto kitang kuhanan ng litrato habang nahuhulog ang sakura petals sa buhok mo.',
+    note: 'Gusto tika picturan samtang gakatagak ang sakura petals sa imong buhok.',
   },
   {
     destination: 'Siargao Island Getaway',
-    tagline: 'Motorbike rides sa ilalim ng coconut trees at sunset surf',
-    activities: ['Mag-motor sa palm tree road', 'Sugba Lagoon floating', 'Tumingin ng stars sa tabing-dagat'],
+    tagline: 'Motorbike rides ilalom sa palm trees ug sunset surf',
+    activities: ['Mag-motor sa palm tree road', 'Sugba Lagoon floating', 'Magtan-aw og stars sa baybayon'],
     status: 'planned',
-    note: 'Yung ikaw ang nakayakap sa likod ko habang nagmomotor tayo sa gilid ng dagat.',
+    note: 'Kanang ikaw ang naggakos sa akong likod samtang nagmotor ta sa kilid sa dagat.',
   },
   {
     destination: 'Baguio & Sagada Foggy Mornings',
-    tagline: 'Mainit na kape, makapal na jacket, at yakap sa lamig',
-    activities: ['Uminom ng strawberry taho', 'Magkape sa overlooking cloud cafe', 'Stargazing sa cold mountain air'],
+    tagline: 'Init nga kape, baga nga jacket, ug gakos sa tugnaw',
+    activities: ['Moinom og strawberry taho', 'Magkape sa overlooking cloud cafe', 'Stargazing sa bugnaw nga bukid'],
     status: 'dreaming',
-    note: 'Walang mas sasarap sa yakap mo habang malamig ang simoy ng hangin sa bundok.',
+    note: 'Walay mas lami kaysa sa imong gakos samtang bugnaw kaayo ang simoy sa bukid.',
   },
 ];
 
 export const WISH_QUOTES = [
-  "Wish granted: Mas lalo kitang mamahalin araw-araw.",
-  "Pangako, magkikita rin tayo sooner, Lovey.",
-  "Salamat sa pananatili sa tabi ko sa bawat unos at ulan.",
-  "Kahit gaano kalayo, iisang kalawakan ang tahanan nating dalawa.",
-  "Ikaw ang pinakamagandang hiling na natupad sa buhay ko.",
-  "Sa bawat pagtingala mo sa mga bituin, alalahanin mong may nagmamahal sa'yo nang wagas dito.",
+  "Wish granted: Mas lalo kitang aalagaan at mamahalin araw-araw.",
+  "Pangako, magkikita ra ta sooner, Lovey.",
+  "Salamat sa pananatili sa akong kilid sa bawat unos ug ulan.",
+  "Bisag unsa kalayo, iisang kalawakan ang panimalay natong duha.",
+  "Ikaw ang pinakanindot nga pag-ampo nga gitubag sa Ginoo.",
+  "Sa kada pagtan-aw nimo sa mga bituin, hinumdumi nga naay Clint nga nagmahal sa'yo pirmi.",
 ];
 
 export interface GuideLine {
   text: string;
-  mood: 'happy' | 'loving' | 'starry' | 'playful' | 'tender' | 'ache';
+  mood: 'happy' | 'loving' | 'starry' | 'playful' | 'tender' | 'ache' | 'giggle' | 'laugh' | 'angry' | 'curious' | 'sleepy';
   actionHint?: string;
 }
 
 export const GUIDE_INTERACTIVE_DIALOGUES: GuideLine[] = [
   {
-    text: "Uyy Maica! Ako si Tala, ang iyong cosmic star companion. Dito lang ako palagi sa tabi mo habang naglalakbay tayo sa ating kalawakan! ✨",
-    mood: 'happy',
-    actionHint: 'Mag-scroll pababa para makita ang mga mundo',
+    text: "Uyy Maica! Hahahah, tan-awa akong nagdilaab nga kalayo! Diri ra ko sa imong kilid samtang nagtan-aw ta sa atong kalangitan. ✨🔥",
+    mood: 'laugh',
+    actionHint: 'I-scroll paubos para masilip ang mga mundo',
   },
   {
-    text: "Alam mo ba, bawat bituin dito ay sinindihan ng mga alaalang binuo niyo ni Clint... kahit gaano kalayo, kumikinang pa rin. 💫",
+    text: "Heheheh! Nag-flare up akong mga embers kay perti nakong lipaya nga kauban tika karon! 😆✨",
+    mood: 'giggle',
+  },
+  {
+    text: "Ehem! Ayaw ko'g binuangi ha, kay mu-blaze ko diri parehas ni Ember sa Elemental! Grrr... pero sweet man ko sa'yo pirmi hehe. 🔥😤",
+    mood: 'angry',
+  },
+  {
+    text: "Tan-awa gud... kada bituin diri, naay gamay nga memory ninyo ni Clint. Bisan layo, hayag kaayo tan-awon no? 💫",
     mood: 'loving',
   },
   {
-    text: "Psst! Napansin mo ba yung mga lumulutang na Polaroid sa gilid? I-tap mo sila para masilip ang mga tunay ninyong litrato! 📸",
+    text: "Psst! Nakabantay ka sa mga naglutaw-lutaw nga litrato sa kilid? I-tap to sila, cute kaayo to nga mga kuha sa Pangilatan! 📸",
     mood: 'playful',
-    actionHint: 'Subukang i-tap ang lumulutang na litrato',
+    actionHint: 'Sulayi pag-tap ang naglutaw nga litrato',
   },
   {
-    text: "Ang ganda ng tugtog, 'no? Damang-dama ang bawat nota. Pwede mong palitan o i-pause sa music player sa ibaba. 🎶",
+    text: "Hmmm? Unsa kaha'ng sunod natong pangarap nga adtoon puhon? Japan o Siargao? Tan-awon nato! 🧐🗺️",
+    mood: 'curious',
+  },
+  {
+    text: "Ka-nice sa music no? Relax lang ka diha samtang nagbasa. Pwede nimo i-pause or ilisdan sa music player ubos. 🎶",
     mood: 'tender',
   },
   {
-    text: "Kahit LDR kayo ngayon, tandaan mo: iisang buwan at iisang langit ang tinitingnan ninyo gabi-gabi. 🌙",
+    text: "Kahit LDR ta karon, look up usahay ha... iisang langit ug iisang buwan ra gihapon atong ginatan-aw gabi-gabi. 🌙",
     mood: 'loving',
   },
   {
-    text: "Heheh! Ang cute mo raw sabi ni Clint habang nakangiti ka sa screen mo ngayon. 🙈💕",
+    text: "Heheh! Cute kaayo ka tan-awon samtang nag-smile ka sa screen karon. Na-appreciate jud nako na. 🙈💕",
     mood: 'playful',
   },
   {
-    text: "Tingnan mo yung 'Pangilatan' na bituin sa may gilid! May sarili siyang orbit dahil espesyal ang bundok na iyon sa inyong dalawa. ⛰️",
+    text: "Haaaaay... katugon naman ko gamay, pero bantayan gihapon tika samtang nag-basa ka diri. 😴🌙",
+    mood: 'sleepy',
+  },
+  {
+    text: "Tan-awa tong Pangilatan nga bituin sa kilid! Nag-orbit siya sa iyang kaugalingon kay special kaayo tong bukid sa inyong duha. ⛰️",
     mood: 'starry',
     actionHint: 'I-tap ang Pangilatan Star para mag-explore',
   },
   {
-    text: "Minsan may mga gabing mahirap ang layo... pero tulad ng sabi mo noon: 'Sooner'. Palapit na nang palapit ang araw na magkasama na kayo. 💖",
+    text: "Remember katong halos mawad-an ta ug gana tungod sa layo? Pero you said 'Sooner'. Kupti jud to pirmi ha. 💖",
     mood: 'tender',
   },
   {
-    text: "Kapag may nakita kang shooting star o bulalakaw, i-tap mo agad para makapag-iwan ng hiling sa uniberso! 🌠",
+    text: "Ay hala, naay shooting star o! I-tap dayon aron makahimo kag hiling sa uniberso. 🌠",
     mood: 'starry',
-    actionHint: 'Mag-abang ng dumaraang bulalakaw',
+    actionHint: 'Paghulat og molabay nga bulalakaw',
   },
   {
-    text: "Nabisita mo na ba ang World 3: Letters? May tatlong mahahabang liham doon na galing sa kaibuturan ng puso ni Clint. 💌",
+    text: "Naka-open na ba ka sa Letters World? Naa koy mga sinulat didto gikan sa akong kasingkasing. 💌",
     mood: 'loving',
-    actionHint: 'Buksan ang Letters World',
+    actionHint: 'Buksi ang Letters World',
   },
   {
-    text: "Salamat sa pagiging liwanag ni Clint sa bawat araw. Ikaw ang kanyang paboritong tala sa buong uniberso. ✨",
+    text: "Salamat sa pag-exist, Maica. You make ordinary days feel so special and meaningful. ✨",
     mood: 'tender',
   },
   {
-    text: "Kahit mag-brownout o mawalan ng signal, walang makakabura sa koneksyon ng mga puso ninyo. 💫",
+    text: "Bisan unsa pay mahitabo, remember that we're walking the same direction together. 🤝",
     mood: 'happy',
   },
 ];
 
 export const GUIDE_EXPLORATION_TIPS: GuideLine[] = [
   {
-    text: "💡 Tip: I-tap ang bawat konstelasyon (World 1, 2, at 3) para mabuksan ang mga kwento, milestones, at gallery!",
+    text: "💡 Tip: I-tap ang matag konstelasyon (World 1, 2, ug 3) para makita ang mga kwento, milestones, ug gallery!",
     mood: 'starry',
   },
   {
-    text: "💡 Tip: Gamitin ang 'Alaala sa Bituin' button sa ibaba para magpalipad ng mga random na litrato niyo sa Pangilatan!",
+    text: "💡 Tip: Gamita ang 'Alaala sa Bituin' button sa ubos para magpalupad og mga random nga litrato ninyo sa Pangilatan!",
     mood: 'happy',
   },
   {
-    text: "💡 Tip: Sa Pangilatan modal, pwede mong i-click ang mga arrows para tingnan lahat ng 8 totoong litrato mula sa inyong pag-akyat!",
+    text: "💡 Tip: Sa Pangilatan modal, pwede nimo i-click ang mga arrows para tan-awon ang 8 ka tinuod nga litrato sa inyong pagsaka!",
     mood: 'starry',
   },
   {
-    text: "💡 Tip: Pwede mong i-tap ako anumang oras kapag gusto mo ng munting kwento, payo, o lambing mula kay Clint!",
+    text: "💡 Tip: Pwede nimo i-tap si Lumi anytime kung gusto ka og munting kwento, lambing, or kalingawan!",
     mood: 'playful',
   },
   {
-    text: "💡 Tip: Sa World 4 (Travel World), makikita mo ang mga pangarap na destinasyon tulad ng Japan, Siargao, at Baguio!",
+    text: "💡 Tip: Sa World 4 (Travel World), makita nimo ang mga pangarap nga destinasyon sama sa Japan, Siargao, ug Baguio!",
     mood: 'loving',
   },
 ];
 
 export const GUIDE_IDLE_CHIRPS: GuideLine[] = [
   {
-    text: "Nandito lang ako, tahimik na nagmamasid sa inyong magandang kalawakan... ✨",
+    text: "Nandito lang ko, hilom nga nagtan-aw sa atong universe uban nimo... ✨",
     mood: 'tender',
   },
   {
-    text: "Basta't may pagmamahal, walang distansyang masyadong malayo. 💖",
+    text: "Basta naay pagsalig ug pag-amuma, kaya ra kaayo bisan unsa kalayo. 💖",
     mood: 'loving',
   },
   {
-    text: "Kumusta ka diyan, Maica? Huwag kalimutang magpahinga at uminom ng tubig ha. 😊",
+    text: "Kumusta imong adlaw diha, Lovey? Ayaw kalimot ug inom ug tubig ug pahuway ha. 😊",
     mood: 'happy',
   },
   {
-    text: "Ang sarap balikan ng mga alaala sa Pangilatan... basang-basa pero puro ngiti. ⛰️🌧️",
+    text: "Ka-fresh jud sa hangin sa Pangilatan sa una no? Basa sa ulan pero perti natong ngisi. ⛰️🌧️",
     mood: 'tender',
   },
   {
-    text: "Isang araw, hindi na 'to virtual universe lang — sabay niyo nang titingnan ang totoong mga bituin. 🌌",
+    text: "Fast forward ta gamay... puhon dungan na jud ta magtan-aw sa tinud-anay nga mga bituin sa gawas. 🌌",
     mood: 'starry',
   },
 ];
-

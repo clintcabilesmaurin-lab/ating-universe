@@ -11,6 +11,10 @@ import { AudioPlayerWidget } from './components/AudioPlayerWidget';
 import { MeteorWishModal } from './components/MeteorWishModal';
 import { RandomMemoriesDrifter } from './components/RandomMemoriesDrifter';
 import { PhotoManagerModal } from './components/PhotoManagerModal';
+import { PortalTransition, PortalConfig } from './components/PortalTransition';
+import { CosmicWeather, WeatherMoodId } from './components/CosmicWeather';
+import { DailyLetter } from './components/DailyLetter';
+import { LumiFlareType } from './components/LumiCompanion';
 import { WorldStar } from './types';
 import { readState, recordVisitStart, resetVisitState } from './utils/storage';
 import { audioEngine } from './utils/audioEngine';
@@ -26,6 +30,8 @@ export default function App() {
   const [isPhotoManagerOpen, setIsPhotoManagerOpen] = useState(false);
   const [pangilatanSpokenLine, setPangilatanSpokenLine] = useState('');
   const [isWishModalOpen, setIsWishModalOpen] = useState(false);
+  const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null);
+  const pendingDestinationRef = useRef<(() => void) | null>(null);
   const [previewedIds, setPreviewedIds] = useState<Set<string>>(new Set());
   const [zoneShift, setZoneShift] = useState(0.2);
   const [visitCount, setVisitCount] = useState(1);
@@ -42,8 +48,17 @@ export default function App() {
     opacity: number;
   }>>([]);
   const [isTaraPressed, setIsTaraPressed] = useState(false);
+  const [weatherMood, setWeatherMood] = useState<WeatherMoodId>('heart-rain');
+  const [companionFlareTrigger, setCompanionFlareTrigger] = useState(0);
+  const [companionFlareType, setCompanionFlareType] = useState<LumiFlareType>('star');
   const voiceTimeoutRef = useRef<number | null>(null);
   const lenisRef = useRef<Lenis | null>(null);
+
+  // Trigger expressive 3D companion particle flare and reactions
+  const triggerCompanionReaction = (type: LumiFlareType = 'star') => {
+    setCompanionFlareType(type);
+    setCompanionFlareTrigger((prev) => prev + 1);
+  };
 
   // Initialize Lenis + GSAP smooth scroll
   useEffect(() => {
@@ -59,17 +74,20 @@ export default function App() {
     });
     lenisRef.current = lenis;
 
-    // Track scroll position to update zoneShift (cooler at top, warmer at bottom)
+    // Track scroll position to update zoneShift (deep indigo at top, dusk purple at bottom)
     const handleScroll = () => {
       const scrollY = window.scrollY;
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
       if (maxScroll > 0) {
         const progress = Math.min(1, Math.max(0, scrollY / maxScroll));
         setZoneShift(progress);
+        audioEngine.setZoneShift(progress);
       }
     };
 
     lenis.on('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleScroll, { passive: true });
 
     // Sync Lenis with GSAP high performance RAF ticker
     const updateRaf = (time: number) => {
@@ -81,6 +99,8 @@ export default function App() {
 
     return () => {
       lenis.destroy();
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
       gsap.ticker.remove(updateRaf);
       lenisRef.current = null;
     };
@@ -88,12 +108,12 @@ export default function App() {
 
   // Pause / resume smooth scroll when modals open/close
   useEffect(() => {
-    if (isPangilatanOpen || selectedWorld !== null || isWishModalOpen || !hasEntered) {
+    if (isPangilatanOpen || selectedWorld !== null || isWishModalOpen || isPhotoManagerOpen || !hasEntered) {
       lenisRef.current?.stop();
     } else {
       lenisRef.current?.start();
     }
-  }, [isPangilatanOpen, selectedWorld, isWishModalOpen, hasEntered]);
+  }, [isPangilatanOpen, selectedWorld, isWishModalOpen, isPhotoManagerOpen, hasEntered]);
 
   // Initialize audio and visit state on load
   useEffect(() => {
@@ -108,7 +128,7 @@ export default function App() {
 
       // Return greeting line
       setTimeout(() => {
-        speak("Uyy, nandito ka ulit, heheh.");
+        speak("Uyy, nandito ka ulit, Lovey... heheh.");
       }, 1200);
     } else {
       setIsReturnVisit(false);
@@ -155,6 +175,7 @@ export default function App() {
     if (isTaraPressed) return;
     setIsTaraPressed(true);
     triggerFloatingHearts(18);
+    triggerCompanionReaction('heart');
 
     audioEngine.unlock();
     audioEngine.play();
@@ -168,7 +189,7 @@ export default function App() {
 
     // After 2.8s when sky has built in, speak the sky reveal line
     setTimeout(() => {
-      speak("Ito Lovey, ang Ating Universe, heheh.");
+      speak("Look, Lovey... ato ning Universe, hahahah.");
     }, 3000);
   };
 
@@ -177,17 +198,73 @@ export default function App() {
     speak(text, isAche);
   };
 
-  // Open Pangilatan Mountain Memory
-  const handleOpenPangilatan = (line: string) => {
-    setPangilatanSpokenLine(line);
-    setIsPangilatanOpen(true);
-    speak(line);
+  // Trigger cosmic portal warp effect when navigating between worlds
+  const triggerWorldPortal = (
+    config: { title: string; tagline?: string; color: string; iconName?: string },
+    onArrival: () => void
+  ) => {
+    // Automatically turn off/pause background music when entering a world
+    try {
+      audioEngine.pause();
+    } catch (e) {
+      console.warn('Audio pause on world warp:', e);
+    }
+
+    pendingDestinationRef.current = onArrival;
+    setPortalConfig({
+      destinationTitle: config.title,
+      destinationTagline: config.tagline,
+      color: config.color,
+      iconName: config.iconName,
+      durationMs: 1100,
+    });
   };
 
-  // Handle World Modal Open
+  const handlePortalComplete = () => {
+    if (pendingDestinationRef.current) {
+      pendingDestinationRef.current();
+      pendingDestinationRef.current = null;
+    }
+    setPortalConfig(null);
+  };
+
+  // Open Pangilatan Mountain Memory with Portal Warp
+  const handleOpenPangilatan = (line: string) => {
+    setSelectedWorld(null);
+    setIsPangilatanOpen(false);
+    triggerCompanionReaction('heart');
+    triggerWorldPortal(
+      {
+        title: 'Tuktok ng Pangilatan',
+        tagline: 'Ang Ating Paboritong Tagpuan sa Ibabaw ng mga Ulap',
+        color: '#10b981',
+        iconName: 'Mountain',
+      },
+      () => {
+        setPangilatanSpokenLine(line);
+        setIsPangilatanOpen(true);
+        speak(line);
+      }
+    );
+  };
+
+  // Handle World Modal Open with Portal Warp
   const handleSelectWorld = (world: WorldStar) => {
-    setSelectedWorld(world);
-    setPreviewedIds((prev) => new Set([...prev, world.id]));
+    setIsPangilatanOpen(false);
+    setSelectedWorld(null);
+    triggerCompanionReaction('wonder');
+    triggerWorldPortal(
+      {
+        title: world.name,
+        tagline: world.tagline,
+        color: world.starColor,
+        iconName: world.iconName,
+      },
+      () => {
+        setSelectedWorld(world);
+        setPreviewedIds((prev) => new Set([...prev, world.id]));
+      }
+    );
   };
 
   // Replay entrance from start
@@ -309,13 +386,25 @@ export default function App() {
         isBuiltIn={hasEntered}
       />
 
+      {/* 2.5 Dynamic Atmospheric Cosmic Weather (Rain of Hearts, Soft Snow, Embers, Petals, Aurora) */}
+      {hasEntered && (
+        <CosmicWeather
+          activeMoodId={weatherMood}
+          onMoodChange={(mood) => {
+            setWeatherMood(mood);
+            triggerCompanionReaction('wonder');
+          }}
+          onSpeakMood={(text) => speak(text)}
+        />
+      )}
+
       {/* 3. Top Navigation Bar */}
       {hasEntered && (
-        <header className="fixed top-0 inset-x-0 z-30 px-6 py-4 flex items-center justify-between pointer-events-none">
-          <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 px-4 py-1.5 rounded-full pointer-events-auto shadow-lg">
+        <header className="fixed top-0 inset-x-0 z-30 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between pointer-events-none">
+          <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 px-3.5 sm:px-4 py-1.5 rounded-full pointer-events-auto shadow-lg">
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
             <span className="text-xs font-serif font-medium text-amber-100 tracking-wider">
-              Ating Universe
+              Our First Year
             </span>
             <span className="text-[10px] text-amber-300/60 font-sans">
               &bull; Cl &amp; Maica
@@ -363,17 +452,29 @@ export default function App() {
         </main>
       )}
 
-      {/* 5. Living Companion & Guide System (Tala) */}
+      {/* 5. Living Companion & Guide System (Lumi ✨) */}
       <CompanionGuide
         currentLine={currentLine}
         isAche={isAcheLine}
+        weatherMood={weatherMood}
+        externalFlareTrigger={companionFlareTrigger}
+        externalFlareType={companionFlareType}
         onOpenPangilatan={() => {
-          setPangilatanSpokenLine("Uyy, ito na siya... Pangilatan. Ang paborito nating tagpuan sa ibabaw ng mga ulap! ⛰️✨");
-          setIsPangilatanOpen(true);
+          triggerCompanionReaction('heart');
+          handleOpenPangilatan("Uyy, ito na siya... Pangilatan. Ang paborito nating tagpuan sa ibabaw ng mga ulap! ⛰️✨");
         }}
-        onOpenWishModal={() => setIsWishModalOpen(true)}
-        onSpawnPhoto={() => setSpawnPhotoTrigger((prev) => prev + 1)}
-        onTriggerHearts={(count) => triggerFloatingHearts(count || 16)}
+        onOpenWishModal={() => {
+          triggerCompanionReaction('star');
+          setIsWishModalOpen(true);
+        }}
+        onSpawnPhoto={() => {
+          triggerCompanionReaction('sparkle');
+          setSpawnPhotoTrigger((prev) => prev + 1);
+        }}
+        onTriggerHearts={(count) => {
+          triggerCompanionReaction('heart');
+          triggerFloatingHearts(count || 16);
+        }}
       />
 
       {/* 6. Random Appearing Celestial Memory Shards */}
@@ -387,12 +488,22 @@ export default function App() {
       {/* 7. Ambient Romantic Audio Player Widget */}
       <AudioPlayerWidget />
 
+      {/* 7.5 Floating Origami Daily Love Letter */}
+      <DailyLetter
+        hasEntered={hasEntered}
+        onLetterOpen={() => {
+          triggerCompanionReaction('heart');
+          speak("Naa koy gamay nga sinulat para sa'yo karon, Lovey... 💌✨");
+        }}
+      />
+
       {/* 8. Pangilatan Mountain Signature Photo Modal */}
       <PangilatanModal
         isOpen={isPangilatanOpen}
         onClose={() => setIsPangilatanOpen(false)}
         spokenLine={pangilatanSpokenLine}
         onOpenPhotoManager={() => setIsPhotoManagerOpen(true)}
+        onNavigateWorld={handleSelectWorld}
       />
 
       {/* 9. World Detail Explorer Modal */}
@@ -401,19 +512,30 @@ export default function App() {
         onClose={() => setSelectedWorld(null)}
         onSpeak={(text, ache) => speak(text, ache)}
         onOpenPhotoManager={() => setIsPhotoManagerOpen(true)}
+        onNavigateWorld={handleSelectWorld}
+        onOpenPangilatan={handleOpenPangilatan}
       />
 
       {/* 10. Shooting Star / Meteor Wish Modal */}
       <MeteorWishModal
         isOpen={isWishModalOpen}
         onClose={() => setIsWishModalOpen(false)}
-        onWishGranted={(wish) => speak(wish)}
+        onWishGranted={(wish) => {
+          triggerCompanionReaction('star');
+          speak(wish);
+        }}
       />
 
       {/* 11. Photo & Google Drive Link Manager Modal */}
       <PhotoManagerModal
         isOpen={isPhotoManagerOpen}
         onClose={() => setIsPhotoManagerOpen(false)}
+      />
+
+      {/* 12. Cosmic World Portal Warp Transition Layer */}
+      <PortalTransition
+        portalConfig={portalConfig}
+        onPortalComplete={handlePortalComplete}
       />
     </div>
   );
