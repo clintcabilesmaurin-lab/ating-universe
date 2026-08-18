@@ -489,6 +489,165 @@ class UniverseAudioEngine {
       osc.stop(now + idx * 0.07 + 0.65);
     });
   }
+
+  public playPopSound(): void {
+    if (!this.audioCtx || !this.masterGain) return;
+    const now = this.audioCtx.currentTime;
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(420, now);
+    osc.frequency.exponentialRampToValueAtTime(840, now + 0.06);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.08, now + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc.start(now);
+    osc.stop(now + 0.095);
+  }
+
+  public playChime(freq = 660, maxGain = 0.08): void {
+    if (!this.audioCtx || !this.masterGain) return;
+    const now = this.audioCtx.currentTime;
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, now);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(maxGain, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.45);
+
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+
+    osc.start(now);
+    osc.stop(now + 0.46);
+  }
+
+  public playGiggleSound(): void {
+    if (!this.audioCtx || !this.masterGain) return;
+    const now = this.audioCtx.currentTime;
+    const pitches = [784, 988, 1174, 1318, 1568]; // G5, B5, D6, E6, G6
+    pitches.forEach((p, i) => {
+      if (!this.audioCtx || !this.masterGain) return;
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(p + (i % 2 === 0 ? 30 : -20), now + i * 0.04);
+      gain.gain.setValueAtTime(0.001, now + i * 0.04);
+      gain.gain.linearRampToValueAtTime(0.06, now + i * 0.04 + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.04 + 0.16);
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(now + i * 0.04);
+      osc.stop(now + i * 0.04 + 0.17);
+    });
+  }
+
+  public playLaughSound(): void {
+    if (!this.audioCtx || !this.masterGain) return;
+    const now = this.audioCtx.currentTime;
+    const laughNotes = [523.25, 659.25, 783.99, 1046.5, 1318.5, 1567.98];
+    laughNotes.forEach((freq, idx) => {
+      if (!this.audioCtx || !this.masterGain) return;
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.055);
+      gain.gain.setValueAtTime(0.001, now + idx * 0.055);
+      gain.gain.linearRampToValueAtTime(0.07, now + idx * 0.055 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.055 + 0.28);
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(now + idx * 0.055);
+      osc.stop(now + idx * 0.055 + 0.3);
+    });
+  }
+
+  public playCrySound(): void {
+    if (!this.audioCtx || !this.masterGain) return;
+    const now = this.audioCtx.currentTime;
+    // Gentle teardrop minor descent
+    const tears = [659.25, 587.33, 523.25, 440.0]; // E5, D5, C5, A4
+    tears.forEach((freq, idx) => {
+      if (!this.audioCtx || !this.masterGain) return;
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.14);
+      gain.gain.setValueAtTime(0.001, now + idx * 0.14);
+      gain.gain.linearRampToValueAtTime(0.045, now + idx * 0.14 + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.14 + 0.45);
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(now + idx * 0.14);
+      osc.stop(now + idx * 0.14 + 0.46);
+    });
+  }
+
+  public playSadSound(): void {
+    if (!this.audioCtx || !this.masterGain) return;
+    const now = this.audioCtx.currentTime;
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(440, now);
+    osc.frequency.exponentialRampToValueAtTime(329.63, now + 0.5); // Soft sigh down to E4
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.05, now + 0.1);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.65);
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.66);
+  }
+
+  public playAngrySound(): void {
+    if (!this.audioCtx || !this.masterGain) return;
+    const now = this.audioCtx.currentTime;
+    // Cute cartoon pout squeak: quick low-to-high puff
+    const osc = this.audioCtx.createOscillator();
+    const gain = this.audioCtx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(260, now);
+    osc.frequency.exponentialRampToValueAtTime(480, now + 0.08);
+    osc.frequency.exponentialRampToValueAtTime(220, now + 0.18);
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.065, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.23);
+  }
+
+  public playInLoveSound(): void {
+    if (!this.audioCtx || !this.masterGain) return;
+    const now = this.audioCtx.currentTime;
+    // Heartbeat double thud: lub-dub with soft warm sine
+    [0, 0.18].forEach((offset) => {
+      if (!this.audioCtx || !this.masterGain) return;
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(110, now + offset);
+      osc.frequency.exponentialRampToValueAtTime(65, now + offset + 0.12);
+      gain.gain.setValueAtTime(0.001, now + offset);
+      gain.gain.linearRampToValueAtTime(0.09, now + offset + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.16);
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(now + offset);
+      osc.stop(now + offset + 0.17);
+    });
+  }
 }
 
 export const audioEngine = new UniverseAudioEngine();

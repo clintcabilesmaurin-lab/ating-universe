@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CloudRain, Sparkles, Heart, Snowflake, Flame, Flower2, ChevronRight } from 'lucide-react';
 import { audioEngine } from '../utils/audioEngine';
+import { lumiSync } from '../utils/lumiSyncBus';
 
 export type WeatherMoodId =
   | 'heart-rain'
@@ -397,6 +398,7 @@ export const CosmicWeather: React.FC<CosmicWeatherProps> = ({
     if (onMoodChange) {
       onMoodChange(mood.id);
     }
+    lumiSync.notifyWeather(mood.id);
     setIsMenuOpen(false);
     try {
       localStorage.setItem('cosmic_weather_mood', mood.id);

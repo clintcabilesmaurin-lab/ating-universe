@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Music2, Disc3, ChevronDown, ChevronUp } from 'lucide-react';
 import { audioEngine } from '../utils/audioEngine';
 import { AudioTrack } from '../types';
+import { lumiSync } from '../utils/lumiSyncBus';
 
 export const AudioPlayerWidget: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -16,6 +17,9 @@ export const AudioPlayerWidget: React.FC = () => {
       setIsPlaying(state.isPlaying);
       setTrack(state.track);
       setVolume(state.volume);
+
+      // Auto-sync Lumi with real-time audio playback & track changes
+      lumiSync.notifyAudio(state.isPlaying, state.track.title, state.track.artist);
     });
     return unsub;
   }, []);

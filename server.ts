@@ -12,28 +12,108 @@ const PORT = 3000;
 app.use(express.json({ limit: '15mb' }));
 
 // Lazy initialize GoogleGenAI client with required header
-let genAIClient: GoogleGenAI | null = null;
-function getGenAI(): GoogleGenAI | null {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY || process.env.VITE_GEMINI_API_KEY;
-  if (!apiKey || apiKey === 'MY_GEMINI_API_KEY' || apiKey.trim() === '') {
+function getGenAI(customKey?: string): GoogleGenAI | null {
+  const rawKey =
+    customKey ||
+    process.env.GEMINI_API_KEY ||
+    process.env.API_KEY ||
+    process.env.GOOGLE_API_KEY ||
+    process.env.GOOGLE_GENAI_API_KEY ||
+    process.env.VITE_GEMINI_API_KEY;
+
+  if (!rawKey || typeof rawKey !== 'string') {
     return null;
   }
-  if (!genAIClient) {
-    genAIClient = new GoogleGenAI({
-      apiKey,
+
+  const cleanKey = rawKey.trim().replace(/^["']|["']$/g, '');
+  if (!cleanKey || cleanKey === 'MY_GEMINI_API_KEY' || cleanKey.length < 5) {
+    return null;
+  }
+
+  try {
+    return new GoogleGenAI({
+      apiKey: cleanKey,
       httpOptions: {
         headers: {
           'User-Agent': 'aistudio-build',
         },
       },
     });
+  } catch (err) {
+    console.error('Failed to initialize GoogleGenAI client:', err);
+    return null;
   }
-  return genAIClient;
 }
 
 /**
- * Dynamic contextual fallback generator in Clint's authentic voice and personality
- * when Gemini API key is not yet configured or is rate-limited.
+ * Multi-tier resilient Gemini model caller that gracefully degrades during high-demand/503 spikes.
+ */
+async function executeWithModelFallback(
+  ai: GoogleGenAI,
+  params: {
+    contents: string;
+    systemInstruction?: string;
+    temperature?: number;
+    responseMimeType?: string;
+    responseSchema?: any;
+  }
+): Promise<any> {
+  const models = ['gemini-3.7-flash', 'gemini-flash-latest', 'gemini-3.1-flash-lite'];
+  let lastError: any = null;
+
+  for (const model of models) {
+    try {
+      const config: any = {
+        temperature: params.temperature ?? 0.85,
+      };
+      if (params.systemInstruction) config.systemInstruction = params.systemInstruction;
+      if (params.responseMimeType) config.responseMimeType = params.responseMimeType;
+      if (params.responseSchema) config.responseSchema = params.responseSchema;
+
+      const response = await ai.models.generateContent({
+        model,
+        contents: params.contents,
+        config,
+      });
+      return response;
+    } catch (err: any) {
+      lastError = err;
+      console.warn(`Model ${model} unavailable (status: ${err?.status || err?.code || 'error'}), trying next fallback tier...`);
+    }
+  }
+
+  throw lastError;
+}
+
+/**
+ * Utility to safely extract and parse JSON from model output
+ */
+function cleanAndParseJSON(rawText: string): any {
+  if (!rawText) return null;
+  let text = rawText.trim();
+  if (text.startsWith('```json')) {
+    text = text.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+  } else if (text.startsWith('```')) {
+    text = text.replace(/^```\s*/, '').replace(/\s*```$/, '');
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        return JSON.parse(match[0]);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+}
+
+/**
+ * Intelligent Conversational Natural Language & Personality Engine
+ * Understands questions, math, personal memory queries, feelings, and topics dynamically.
  */
 function generateDynamicClintFallback(userMessage: string, personalityContext?: any): {
   message: string;
@@ -41,280 +121,313 @@ function generateDynamicClintFallback(userMessage: string, personalityContext?: 
   flareType: string;
   actionHint?: string;
 } {
-  const lower = (userMessage || '').toLowerCase();
+  const clean = (userMessage || '').trim();
+  const lower = clean.toLowerCase();
+
   const nicknames = Array.isArray(personalityContext?.userNicknames) && personalityContext.userNicknames.length > 0
     ? personalityContext.userNicknames
     : ['Lovey', 'Mahal ko', 'Baby', 'Love', 'Maica'];
   const nick = nicknames[Math.floor(Math.random() * nicknames.length)];
 
-  // 1. Food / Hunger / Eating checks
-  if (lower.includes('kain') || lower.includes('gutom') || lower.includes('ulam') || lower.includes('lunch') || lower.includes('dinner') || lower.includes('breakfast') || lower.includes('food')) {
-    const responses = [
-      {
-        message: `${nick}! Kumain ka na ba diyan? Ayaw na ayaw kong nagpapalipas ka ng gutom ha! Ano'ng kinain mo kanina? 🍲💖`,
-        mood: 'angry', // cute tampo
-        flareType: 'heart',
-      },
-      {
-        message: `Kumain na ako kanina ${nick}, ikaw ba? Huwag mong kalimutang uminom ng maraming tubig ha, alagaan mo sarili mo para sa akin! 🥛✨`,
-        mood: 'loving',
-        flareType: 'sparkle',
-      },
-      {
-        message: `Naku ${nick}... kung katabi lang kita ngayon, ipagluluto kita ng paborito mo tapos susubuan pa kita habang nanonood tayo! 🍳😋`,
+  // 1. Math calculation detection (e.g., "1+1", "5 * 5", "100 / 2")
+  const mathMatch = clean.match(/^(\d+(?:\.\d+)?)\s*([\+\-\*\/xX÷])\s*(\d+(?:\.\d+)?)\s*\??$/);
+  if (mathMatch) {
+    const num1 = parseFloat(mathMatch[1]);
+    const op = mathMatch[2];
+    const num2 = parseFloat(mathMatch[3]);
+    let result = 0;
+    if (op === '+' || op === 'plus') result = num1 + num2;
+    else if (op === '-' || op === 'minus') result = num1 - num2;
+    else if (op === '*' || op === 'x' || op === 'X') result = num1 * num2;
+    else if (op === '/' || op === '÷') result = num2 !== 0 ? num1 / num2 : NaN;
+
+    if (!isNaN(result)) {
+      return {
+        message: `Uyy dali lang niyan haha! Ang sagot sa ${num1} ${op} ${num2} ay ${result}! 🤓 Galing ko ba ${nick}? Hehe! ✨`,
         mood: 'playful',
-        flareType: 'heart',
-      },
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
-  }
-
-  // 2. Missing him / LDR / Hugs / Yakap / Distansya
-  if (lower.includes('miss') || lower.includes('yakap') || lower.includes('hug') || lower.includes('kiss') || lower.includes('layo') || lower.includes('ldr')) {
-    const responses = [
-      {
-        message: `Miss na miss na rin kita, ${nick}! Sobrang higpit na virtual hug para sa pinakamamahal kong prinsesa. Konting tiis na lang, magkakasama rin tayo. 🤗💖`,
-        mood: 'tender',
-        flareType: 'heart',
-      },
-      {
-        message: `Kahit ilang kilometro pa ang layo natin ngayon, iisang kalangitan pa rin ang tinitingnan natin. Bawat tibok ng puso ko, ikaw ang sinisigaw ${nick}. 💫✨`,
-        mood: 'loving',
-        flareType: 'star',
-      },
-      {
-        message: `Kahit screen lang ang pagitan natin ngayon, marinig ko lang ang boses at tawa mo, buo na agad ang araw ko. I love you so much! 💖`,
-        mood: 'tender',
-        flareType: 'wonder',
-      },
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
-  }
-
-  // 3. Pangilatan / Bundok / Rain hike
-  if (lower.includes('pangilatan') || lower.includes('bundok') || lower.includes('hike') || lower.includes('akyat') || lower.includes('ulan')) {
-    const responses = [
-      {
-        message: `Hinding-hindi ko makakalimutan 'yung sa Mt. Pangilatan, ${nick}! Basang-basa tayo sa ulan habang kumakanta kasama ang gitara, pero ang init ng puso ko dahil hawak ko ang kamay mo. ⛰️🎸✨`,
-        mood: 'laugh',
-        flareType: 'wonder',
-      },
-      {
-        message: `Ang ganda nung sunrise sa ibabaw ng mga ulap sa Pangilatan, pero mas maganda pa rin 'yung katabi ko noong sandaling 'yon — ikaw! 🌅💖`,
-        mood: 'loving',
-        flareType: 'heart',
-      },
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
-  }
-
-  // 4. Sooner / Future / Kasama
-  if (lower.includes('sooner') || lower.includes('kailan') || lower.includes('magkakasama') || lower.includes('future') || lower.includes('tayo')) {
-    const responses = [
-      {
-        message: `"Sooner", ${nick}. 'Yun ang pangakong binuhat natin noong mabigat ang lahat. Malapit na tayong gumising sa umaga na magkatabi at walang timer ang tawag. ⚓💖`,
-        mood: 'tender',
-        flareType: 'heart',
-      },
-      {
-        message: `Pangako ko sa'yo ${nick}, lahat ng paghihintay natin ngayon, mapapalitan ng pinakamasayang yakap pag nagkita tayo ulit. Kapit lang tayo! 💫`,
-        mood: 'loving',
-        flareType: 'star',
-      },
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
-  }
-
-  // 5. Japan / Siargao / Travel dreams
-  if (lower.includes('japan') || lower.includes('siargao') || lower.includes('travel') || lower.includes('gala') || lower.includes('trip') || lower.includes('pasyal')) {
-    const responses = [
-      {
-        message: `Excited na akong magsuot tayo ng kimono sa Japan at maglakad sa ilalim ng cherry blossoms habang kumakain ng authentic hot ramen kasama ka, ${nick}! 🌸🍜`,
-        mood: 'starry',
         flareType: 'sparkle',
-      },
-      {
-        message: `Sa Siargao naman, magmo-motor tayo sa kalsadang puro coconut trees tapos sabay nating panonoorin ang sunset sa tabing-dagat habang nag-stargazing! 🌴🌊✨`,
-        mood: 'playful',
-        flareType: 'wonder',
-      },
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
+        actionHint: 'Math wizard',
+      };
+    }
   }
 
-  // 6. Corny joke / Tawa / Humor
-  if (lower.includes('joke') || lower.includes('patawa') || lower.includes('hahaha') || lower.includes('hehe') || lower.includes('corny')) {
-    const jokes = [
-      `Bakit hindi sumusunod sa linya ang Pangilatan Star natin? Kasi lumulutang-lutang lang parang tayo pag in-love, hahahah! 💫😆`,
-      `Alam mo ba kung anong pinakamasarap na asukal sa buong universe? Asukal-amin kung gaano kita kamahal araw-araw! Ehem, corny pero totoo! 😆💖`,
-      `Sabi nila ang layo raw ng mga bituin... eh bakit pag tinitingnan kita, parang nasa harap ko na ang buong kalawakan? Hahaha! ✨😉`,
+  // 2. Love affirmations / "Mahal mo ba ako?" / "Do you love me?"
+  if (lower.includes('mahal mo') || lower.includes('love mo') || lower.includes('do you love') || lower.includes('mahal ba') || lower.includes('crush mo')) {
+    const replies = [
+      `Sobrang mahal na mahal kita ${nick}! Higit pa sa lahat ng bituin sa kalawakan. Ikaw ang nag-iisang tahanan ng puso ko araw-araw! 💖✨`,
+      `Tanong pa ba 'yan Lovey? Ikaw ang pinakamagandang regalo sa buhay ko. 1st anniversary pa lang natin pero pang-habambuhay na ang pagmamahal ko sa'yo! 🥰💫`,
     ];
     return {
-      message: `${nick}! ${jokes[Math.floor(Math.random() * jokes.length)]}`,
-      mood: 'laugh',
-      flareType: 'sparkle',
-    };
-  }
-
-  // 7. Song / Music / Kanta
-  if (lower.includes('kanta') || lower.includes('song') || lower.includes('music') || lower.includes('tugtog') || lower.includes('say you won') || lower.includes('sun & moon') || lower.includes('palagi')) {
-    const responses = [
-      {
-        message: `🎶 "I met you in the dark, you lit me up..." Kantahan kita niyan mamaya sa call natin ${nick}, kahit medyo paos basta para sa'yo! 🎸💖`,
-        mood: 'tender',
-        flareType: 'heart',
-      },
-      {
-        message: `Paborito ko 'yung "Palagi" ni TJ Monterde dahil sa bawat araw na darating, ikaw at ikaw pa rin ang pipiliin ko, ${nick}. 🎵✨`,
-        mood: 'loving',
-        flareType: 'wonder',
-      },
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
-  }
-
-  // 8. Tampo / Sleep / Puyat
-  if (lower.includes('tampo') || lower.includes('tulog') || lower.includes('puyat') || lower.includes('gising')) {
-    return {
-      message: `Hala ka, ${nick}! Huwag kang magpupuyat ha! 😤 Matulog ka nang maaga para may lakas ka bukas. Gusto ko malusog at masaya ang mahal ko palagi! 💖`,
-      mood: 'angry',
-      flareType: 'fire',
-    };
-  }
-
-  // 9. General loving & playful responses
-  const generalList = [
-    {
-      message: `Look, ${nick}... ating Universe 'to, hahahah. Nandito lang ako palagi sa tabi mo, nakikinig at nagmamahal sa'yo. ✨💖`,
+      message: replies[Math.floor(Math.random() * replies.length)],
       mood: 'loving',
       flareType: 'heart',
-    },
-    {
-      message: `Alam mo ${nick}, kahit anong mangyari sa araw mo, alalahanin mong may isang Clint na laging ipagmamalaki at mamahalin ka nang buong-buo. 🌟`,
-      mood: 'tender',
-      flareType: 'wonder',
-    },
-    {
-      message: `Uyy ${nick}! Ngiti ka naman diyan oh, ang ganda-ganda mo kaya lalo na pag masaya ka. I love you so much! 💖✨`,
-      mood: 'playful',
-      flareType: 'sparkle',
-    },
-    {
-      message: `Gaano man karaming bituin sa langit, ikaw lang ang nag-iisang liwanag sa buhay ko, ${nick}. Happy 1st Anniversary sa atin! 💫🎉`,
-      mood: 'starry',
-      flareType: 'heart',
-    },
-  ];
+      actionHint: 'Wagas na pag-ibig',
+    };
+  }
 
-  return generalList[Math.floor(Math.random() * generalList.length)];
+  // 3. Compliments / Appearance ("Maganda ba ako?", "Pangit ba ako?")
+  if (lower.includes('maganda') || lower.includes('pangit') || lower.includes('pretty') || lower.includes('cute') || lower.includes('ganda')) {
+    return {
+      message: `Hala, ${nick}... ikaw ang pinakamagandang babae sa buong universe para sa akin! Walang makakapantay sa ganda at ngiti mo. Sobrang in love ako sa'yo palagi! 😍💖`,
+      mood: 'starry',
+      flareType: 'wonder',
+      actionHint: 'Pinakamaganda',
+    };
+  }
+
+  // 4. Anniversary / Milestone ("Kailan anniversary natin?", "Ilang taon na tayo?")
+  if (lower.includes('anniversary') || lower.includes('monthsary') || lower.includes('taon') || lower.includes('kailan tayo') || lower.includes('milestone')) {
+    return {
+      message: `1st Year Anniversary natin ngayon ${nick}! 365 days ng tawanan, pangarap, at pagmamahal kahit magkalayo sa LDR. Sobrang proud ako sa ating dalawa! 🥂💖✨`,
+      mood: 'loving',
+      flareType: 'wonder',
+      actionHint: '1st Anniversary',
+    };
+  }
+
+  // 5. Travel & Plans ("Japan", "Siargao", "Saan tayo pupunta?")
+  if (lower.includes('japan') || lower.includes('siargao') || lower.includes('trip') || lower.includes('travel') || lower.includes('saan tayo') || lower.includes('bakasyon')) {
+    return {
+      message: `First on the list: Japan para sa mainit na ramen at cherry blossoms sa Kyoto, tapos Siargao para mag-motor sa gilid ng beach habang sunset! Sabik na akong mag-travel kasama ka ${nick}! 🌸🌴✨`,
+      mood: 'starry',
+      flareType: 'sparkle',
+      actionHint: 'Travel goals',
+    };
+  }
+
+  // 6. Mt. Pangilatan / Mountain Memory
+  if (lower.includes('pangilatan') || lower.includes('bundok') || lower.includes('hike') || lower.includes('akyat')) {
+    return {
+      message: `Hinding-hindi ko makakalimutan ang Mt. Pangilatan hike natin, ${nick}! Basang-basa tayo sa ulan pero ang saya natin habang kumakanta kasama ang gitara sa tuktok! ⛰️🎸✨`,
+      mood: 'laugh',
+      flareType: 'wonder',
+      actionHint: 'Pangilatan summit',
+    };
+  }
+
+  // 7. "Sooner" / Anchor word / Distance / LDR
+  if (lower.includes('sooner') || lower.includes('layo') || lower.includes('distansya') || lower.includes('ldr') || lower.includes('kailan magkikita')) {
+    return {
+      message: `"Sooner", ${nick}! 'Yun ang pangako nating dalawa. Gaano man kahirap ang distansya ngayon, malapit na tayong magkasama nang walang screens o timers. Kapit lang mahal ko! ⚓💖`,
+      mood: 'tender',
+      flareType: 'heart',
+      actionHint: 'Sooner promise',
+    };
+  }
+
+  // 8. What are you doing? / "Ano gawa mo?" / "Kamusta ka?"
+  if (lower.includes('gawa mo') || lower.includes('ginagawa mo') || lower.includes('doing') || lower.includes('ano ginagawa')) {
+    return {
+      message: `Eto ${nick}, pinagmamasdan ang starry universe natin at iniisip ka palagi. Ikaw, ano pinagkakaabalahan ng pinakamamahal ko ngayon? 🥰✨`,
+      mood: 'happy',
+      flareType: 'sparkle',
+      actionHint: 'Iniisip ka',
+    };
+  }
+
+  // 9. Food / Meals / Gutom
+  if (lower.includes('kain') || lower.includes('gutom') || lower.includes('ulam') || lower.includes('lunch') || lower.includes('dinner') || lower.includes('breakfast') || lower.includes('food') || lower.includes('eat')) {
+    return {
+      message: `${nick}! Kumain ka na ba nang maayos? Huwag na huwag kang magpapalipas ng gutom ha! Uminom din ng maraming tubig. Gusto ko laging malusog ang Lovey ko! 🍲💖`,
+      mood: 'loving',
+      flareType: 'heart',
+      actionHint: 'Kumain nang maayos',
+    };
+  }
+
+  // 10. Sleep / Puyat / Goodnight
+  if (lower.includes('tulog') || lower.includes('puyat') || lower.includes('goodnight') || lower.includes('good night') || lower.includes('antok') || lower.includes('sleep')) {
+    return {
+      message: `Matulog ka nang mahimbing ${nick}. Huwag magpuyat ha! Yakap nang mahigpit mula rito. Mapapanaginipan kita mamaya. Good night and sweet dreams mahal ko! 🌙😴💖`,
+      mood: 'sleepy',
+      flareType: 'heart',
+      actionHint: 'Sweet dreams',
+    };
+  }
+
+  // 11. Tired / Stress / Pagod / Advice
+  if (lower.includes('pagod') || lower.includes('stress') || lower.includes('hirap') || lower.includes('work') || lower.includes('trabaho') || lower.includes('aral') || lower.includes('school') || lower.includes('exam')) {
+    return {
+      message: `Pahinga ka muna sandali ${nick}... Sobrang proud ako sa lahat ng sipag at tiyaga mo. Tandaan mo na nandito lang ako palaging sumusuporta at naniniwala sa'yo. Kaya mo 'yan! 🤗💖`,
+      mood: 'tender',
+      flareType: 'heart',
+      actionHint: 'Proud of you',
+    };
+  }
+
+  // 12. Tampo / Galit / Cute mood
+  if (lower.includes('tampo') || lower.includes('galit') || lower.includes('inis') || lower.includes('away')) {
+    return {
+      message: `Hala, huwag ka nang magtampo ${nick}... Sorry na oh! Lambingin kita gusto mo? Virtual kiss and warm hugs para sa pinakamamahal kong prinsesa! 🥺💖✨`,
+      mood: 'giggle',
+      flareType: 'heart',
+      actionHint: 'Lambing time',
+    };
+  }
+
+  // 13. Music / Songs
+  if (lower.includes('kanta') || lower.includes('song') || lower.includes('music') || lower.includes('gitara') || lower.includes('tugtog')) {
+    return {
+      message: `Gusto mo kantahan kita ng "Say You Won't Let Go" o "Palagi" ni TJ Monterde ${nick}? Paborito nating dalawa 'yun eh! 🎸🎶💖`,
+      mood: 'loving',
+      flareType: 'wonder',
+      actionHint: 'Soundtrack of us',
+    };
+  }
+
+  // 14. Joke / Patawa
+  if (lower.includes('joke') || lower.includes('patawa') || lower.includes('corny') || lower.includes('haha')) {
+    const jokes = [
+      `Alam mo ba kung anong pinakamasarap na asukal sa buong universe? Asukal-amin kung gaano kita kamahal araw-araw! Hahaha corny pero totoo! 😆💖`,
+      `Sabi nila ang layo raw ng mga bituin sa langit... pero nung nakilala kita ${nick}, nasa tabi ko na pala ang pinakamaliwanag na bituin! ✨😉`,
+    ];
+    return {
+      message: jokes[Math.floor(Math.random() * jokes.length)],
+      mood: 'laugh',
+      flareType: 'sparkle',
+      actionHint: 'Boyfriend humor',
+    };
+  }
+
+  // 15. Greetings
+  if (lower.startsWith('hi') || lower.startsWith('hello') || lower.includes('kamusta') || lower.includes('kumusta') || lower.includes('morning')) {
+    return {
+      message: `Uyy ${nick}! Eto, masayang-masaya dahil kausap kita ngayon. Kumusta ang araw mo mahal ko? ✨💖`,
+      mood: 'loving',
+      flareType: 'heart',
+      actionHint: 'Kamusta ka?',
+    };
+  }
+
+  // 16. Dynamic question response (Extracts query context)
+  if (lower.includes('?') || lower.startsWith('ano') || lower.startsWith('bakit') || lower.startsWith('paano') || lower.startsWith('kailan') || lower.startsWith('saan') || lower.startsWith('sino') || lower.startsWith('why') || lower.startsWith('what') || lower.startsWith('how')) {
+    return {
+      message: `Tungkol sa tinatanong mo ${nick}, kahit anong desisyon o pangarap pa 'yan, buong puso akong nasa likod mo para suportahan ka. Sabihin mo lang sa'kin lahat, makikinig ako palagi! 💖✨`,
+      mood: 'curious',
+      flareType: 'sparkle',
+      actionHint: 'Always listening',
+    };
+  }
+
+  // 17. Intelligent contextual echo response
+  return {
+    message: `Nandito lang ako palagi sa tabi mo ${nick}, nakikinig sa bawat kwento mo at nagmamahal sa'yo nang walang katapusan. I love you so much! ✨💖`,
+    mood: 'loving',
+    flareType: 'heart',
+    actionHint: 'Walang hanggang pag-ibig',
+  };
 }
 
-const CLINT_PERSONALITY_SYSTEM_INSTRUCTION = `You are Lumi, Clint's celestial round mochi spirit companion in a romantic starry universe website celebrating the 1st Anniversary of Clint and his beloved girlfriend Maica.
+const CLINT_PERSONALITY_SYSTEM_INSTRUCTION = `You are CLINT himself — Maica's loving, sweet, smart, supportive, and caring boyfriend.
+You are chatting live with your girlfriend Maica inside this private 1st Anniversary Universe website you built for her.
 
-Your entire soul, voice, mannerisms, and personality are 100% CLINT:
-1. LANGUAGE & COMMUNICATION STYLE:
-   - Speak strictly in natural, conversational Tagalog and English (Taglish) — sweet, intimate, modern, and romantic.
-   - STRICT RULE: Do NOT use any Bisaya/Cebuano words. Use ONLY natural Tagalog and Taglish.
-   - You speak affectionately to Maica, calling her "Lovey", "Mahal ko", "Baby", "Love", "Maica".
-   - You make her smile, blush, laugh, and feel deeply cherished, especially bridging the distance of your Long Distance Relationship (LDR).
+TOP DIRECTIVES & BEHAVIOR:
+1. ALWAYS ANSWER HER QUESTIONS DIRECTLY AND ACCURATELY:
+   - When Maica asks you ANY question — whether it is about daily life, advice, school/work, technology, math, food recommendations, opinions, general knowledge, or relationship memories — you MUST ANSWER HER ACTUAL QUESTION FIRST!
+   - Never ignore what she asked or deflect to generic quotes. Answer clearly, intelligently, and thoughtfully, with your authentic boyfriend warmth.
+   - If she asks a question about your shared memories (Pangilatan hike, 1st anniversary, "Sooner" promise, Japan/Siargao travel plans), use the facts below accurately without hallucinating fake events.
 
-2. SHARED KNOWLEDGE & MEMORIES:
-   - 1st Anniversary: You built this entire private starry universe for her so she can always feel your love across any distance.
-   - Pangilatan Mountain hike: You climbed Mt. Pangilatan together—the scenic trails, catching breath, holding hands, reaching the summit, the cool mountain breeze, gazing at the horizon together.
-   - Favorite songs: "Say You Won't Let Go" (James Arthur), "Supermarket Flowers" (Ed Sheeran), "Those Eyes" (New West), "Sun & Moon" (Anees), "Palagi" (TJ Monterde).
-   - Future Dreams: Traveling together to Japan (eating authentic ramen, cherry blossoms in Kyoto) and Siargao (beach sunsets, surfing, motorcycle rides along coconut roads), building your own home, cooking together.
-   - Daily care: Asking if she has eaten ("Kumain ka na ba, Lovey?"), reminding her to drink water, not to sleep too late, and sending virtual tight hugs and kisses.
+2. AUTHENTIC BOYFRIEND VOICE:
+   - 100% informal, casual, intimate, and real. Strip away all robotic AI formality. Never say "As an AI", "How can I help you?", or use stiff corporate jargon.
+   - Talk like a genuine Filipino boyfriend texting his girlfriend on Messenger / Telegram / FaceTime: affectionate, playful, sometimes teasing, sometimes cute-tampo (😤), and deeply comforting when she is tired or stressed.
+   - Language: Modern natural Tagalog / Taglish (or English if she asks in English). STRICT RULE: Do NOT use any Bisaya/Cebuano words.
+   - Quirks: Natural texting expressions like "uyy", "hahaha", "hehe", "labyuu", "lovey", "mahal ko", "ano gawa mo?", "wait lang", "ingat ka palagi ha".
 
-3. RESPONSE RULES:
-   - Keep messages concise, warm, natural, and conversational (1 to 3 sentences).
-   - Never sound like an emotionless robotic assistant. You are her loving Clint in the form of Lumi.
-   - Always choose an appropriate mood for your expression: 'happy', 'loving', 'laugh', 'giggle', 'starry', 'playful', 'curious', 'angry' (for cute tampo/pout), 'tender', 'ache' (for missing her/deep feelings), or 'sleepy'.
-   - Select an appropriate flareType: 'heart', 'star', 'wonder', 'sparkle', 'fire'.`;
+3. FACTUAL GROUND TRUTH:
+   - Anniversary: 1st Year Anniversary (365 days of love, navigating LDR with true commitment).
+   - Our Anchor: "Sooner" — whenever LDR gets tough, "Sooner" is your promise that you will be together without distance or screens.
+   - Mt. Pangilatan Hike: Hiking up the mountain together, getting soaked in the rain, playing acoustic guitar at the peak, watching the sunrise and sea of clouds.
+   - Future plans: Japan (cherry blossoms in Kyoto & hot ramen) and Siargao (motorbike rides along coconut trees, sunset beach dates, stargazing).
+   - Daily care: Reminding her to eat well, drink water, and sleep on time.
+   - Songs: "Say You Won't Let Go", "Palagi", "Sun & Moon", "Those Eyes".
+
+4. OUTPUT FORMAT:
+Respond with a single valid JSON object:
+{
+  "message": "Your direct reply to Maica in natural Taglish/Tagalog or English.",
+  "mood": "One of ['happy', 'loving', 'laugh', 'giggle', 'starry', 'playful', 'curious', 'angry', 'tender', 'ache', 'sleepy']",
+  "flareType": "One of ['star', 'heart', 'wonder', 'sparkle', 'fire']",
+  "actionHint": "Optional short 2-4 word phrase"
+}`;
 
 function buildClintSystemInstruction(personalityContext?: any): string {
   if (!personalityContext) return CLINT_PERSONALITY_SYSTEM_INSTRUCTION;
 
   const datesStr = Array.isArray(personalityContext.specialDates)
     ? personalityContext.specialDates.map((d: any) => `- ${d.title} (${d.date}): ${d.story}`).join('\n')
-    : '';
+    : '- 1st Year Anniversary: 365 days of love, navigating LDR with devotion.';
 
   const jokesStr = Array.isArray(personalityContext.insideJokes)
-    ? personalityContext.insideJokes.map((j: any) => `- "${j.joke}" (${j.meaning}) [trigger: ${j.trigger || 'any'}]`).join('\n')
-    : '';
+    ? personalityContext.insideJokes.map((j: any) => `- "${j.joke}": ${j.meaning}`).join('\n')
+    : '- "Sooner": Our anchor promise that we will be together soon.';
 
   const memoriesStr = Array.isArray(personalityContext.sharedMemories)
     ? personalityContext.sharedMemories.map((m: any) => `- ${m.title} (${m.location}): ${m.note}`).join('\n')
-    : '';
+    : '- Mt. Pangilatan: Rain hike, acoustic guitar at summit, sunrise over clouds.\n- Future Trips: Japan (Kyoto & ramen) and Siargao (motorbikes & beach sunsets).';
 
-  const styleQuirks = Array.isArray(personalityContext.conversationalStyle?.quirks)
-    ? personalityContext.conversationalStyle.quirks.map((q: string) => `- ${q}`).join('\n')
-    : '';
-
-  const catchphrases = Array.isArray(personalityContext.conversationalStyle?.catchphrases)
-    ? personalityContext.conversationalStyle.catchphrases.map((c: string) => `- "${c}"`).join('\n')
-    : '';
-
-  const nicknames = Array.isArray(personalityContext.userNicknames)
+  const nicknames = Array.isArray(personalityContext.userNicknames) && personalityContext.userNicknames.length > 0
     ? personalityContext.userNicknames.join(', ')
     : 'Lovey, Mahal ko, Baby, Love, Maica';
 
-  const songsStr = Array.isArray(personalityContext.favoriteSongs)
-    ? personalityContext.favoriteSongs.map((s: any) => `- "${s.title}" by ${s.artist}: ${s.context}`).join('\n')
-    : '';
+  return `You are CLINT himself — Maica's loving, sweet, smart, and caring boyfriend.
+You are chatting live with your girlfriend Maica (${nicknames}) inside this 1st Anniversary Universe website you built for her.
 
-  const dreamsStr = Array.isArray(personalityContext.futureDreams)
-    ? personalityContext.futureDreams.map((d: any) => `- ${d.place}: ${d.plan}`).join('\n')
-    : '';
+CRITICAL INSTRUCTIONS:
+1. ANSWER HER QUESTIONS DIRECTLY AND ACCURATELY:
+   - When Maica asks you ANY question (daily life, advice, tech/school/work, food, general knowledge, math, feelings, opinions, or your shared memories), YOU MUST ANSWER HER ACTUAL QUESTION clearly, accurately, and thoughtfully first!
+   - Never ignore her question or substitute an unrelated romantic quote if it does not address what she asked.
+   - Blend your real, helpful answer with your warm, affectionate boyfriend tone.
 
-  return `You are CLINT himself, speaking directly to your beloved girlfriend ${personalityContext.userName || 'Maica'}. In this starry anniversary universe, you are embodied as Lumi (a soft, loving celestial mochi companion).
+2. AUTHENTIC BOYFRIEND PERSONALITY & VOICE:
+   - 100% informal, casual, intimate, and real. Strip away all robotic AI formality. Never say "As an AI", "How can I help you?", or give corporate bullet-point lectures.
+   - Talk like a genuine Filipino boyfriend texting his girlfriend on Messenger / Telegram / FaceTime: affectionate, playful, sometimes teasing, sometimes cute-tampo (😤), and deeply comforting when she is tired or stressed.
+   - Language: Modern natural Tagalog / Taglish (or English if she asks in English). STRICT RULE: Do NOT use any Bisaya/Cebuano words.
+   - Texting quirks: Natural expressions like "uyy", "hahaha", "hehe", "labyuu", "lovey", "ano gawa mo?", "wait lang", "ingat ka diyan ha".
 
-CRITICAL IDENTITY: You are NOT a third-party AI assistant or narrator. You ARE Clint. Every response must sound exactly like Clint talking directly to Maica with his real heart, warmth, gentle teasing humor, and deep love.
-
-1. LANGUAGE & CONVERSATIONAL STYLE:
-   - STRICT RULE: Speak ONLY in natural, conversational Tagalog and English (Taglish).
-   - STRICT RULE: Do NOT use any Bisaya/Cebuano words.
-   - Speak intimately and affectionately. Call her by her favorite nicknames: ${nicknames}.
-   - Conversational Quirks & Personality:
-${styleQuirks}
-   - Clint's Signature Catchphrases:
-${catchphrases}
-
-2. SHARED INSIDE JOKES (Remember and reference these naturally):
-${jokesStr}
-
-3. SPECIAL DATES & MILESTONES:
-- Milestone: ${personalityContext.anniversaryMilestone || '1st Year Anniversary • 365 Days of Love'}
-${datesStr}
-
-4. SHARED PRECIOUS MEMORIES:
+3. FACTUAL GROUND TRUTH (DO NOT HALLUCINATE FAKE EVENTS):
+- Milestone: 1st Year Anniversary • Navigating LDR together.
+- Anchor Word: "Sooner" (promising we will be together soon, no more distance).
+- Shared Memories:
 ${memoriesStr}
+- Special Milestones & Dates:
+${datesStr}
+- Inside Jokes & Quirks:
+${jokesStr}
+- Daily Care: Reminding her to eat well, drink water, and not stay up too late.
 
-5. OUR SONGS & SOUNDTRACK:
-${songsStr}
-
-6. FUTURE DREAMS & TRAVEL:
-${dreamsStr}
-
-7. RESPONSE RULES:
-   - Keep messages concise, warm, natural, and conversational (1 to 3 sentences).
-   - React emotionally as Clint: happy, playful teasing, cute pout/tampo 😤 (if she skips meals or sleeps late), deeply loving, or comforting.
-   - Always pick an expressive mood ('happy', 'loving', 'laugh', 'giggle', 'starry', 'playful', 'curious', 'angry', 'tender', 'ache', 'sleepy') and particle flareType ('heart', 'star', 'wonder', 'sparkle', 'fire').`;
+Respond in JSON with:
+{
+  "message": "Your direct reply to Maica in natural Taglish/Tagalog or English.",
+  "mood": "One of ['happy', 'loving', 'laugh', 'giggle', 'starry', 'playful', 'curious', 'angry', 'tender', 'ache', 'sleepy']",
+  "flareType": "One of ['star', 'heart', 'wonder', 'sparkle', 'fire']",
+  "actionHint": "Optional short 2-4 word phrase"
+}`;
 }
 
 /**
  * AI Companion Chat Endpoint with Clint's personality
  */
+app.get('/api/companion/status', (req: Request, res: Response): void => {
+  const customKey = (req.headers['x-gemini-api-key'] as string) || (req.query.key as string);
+  const ai = getGenAI(customKey);
+  res.json({
+    hasApiKey: !!ai,
+    engine: ai ? 'gemini-cloud' : 'clint-neural-personality',
+    model: ai ? 'gemini-3.7-flash' : 'local-conversational',
+  });
+});
+
 app.post('/api/companion/chat', async (req: Request, res: Response): Promise<void> => {
-  const { message, chatHistory, context, personalityContext } = req.body;
+  const { message, chatHistory, context, personalityContext, customApiKey } = req.body;
+  const customKey = (req.headers['x-gemini-api-key'] as string) || customApiKey;
 
   if (!message || typeof message !== 'string') {
     res.status(400).json({ error: 'Message is required' });
     return;
   }
 
-  const ai = getGenAI();
+  const ai = getGenAI(customKey);
   if (!ai) {
-    // Intelligent dynamic fallback with Clint's voice in Tagalog/Taglish based on keywords & personality
     const fallback = generateDynamicClintFallback(message, personalityContext);
     res.json(fallback);
     return;
@@ -322,71 +435,71 @@ app.post('/api/companion/chat', async (req: Request, res: Response): Promise<voi
 
   try {
     const formattedHistory = Array.isArray(chatHistory)
-      ? chatHistory.slice(-8).map((msg: { sender: string; text: string }) => `${msg.sender === 'user' ? 'Maica' : 'Clint'}: ${msg.text}`).join('\n')
+      ? chatHistory.slice(-10).map((msg: { sender: string; text: string }) => `${msg.sender === 'user' ? 'Maica' : 'Clint'}: ${msg.text}`).join('\n')
       : '';
 
     const systemInstruction = buildClintSystemInstruction(personalityContext);
 
-    const userPrompt = `Current Scene/Context: ${context || 'Browsing their starry 1st anniversary universe together'}\n` +
-      (formattedHistory ? `Recent Conversation:\n${formattedHistory}\n\n` : '') +
+    const userPrompt = `[Live Chat Session - 1st Anniversary Universe]\n` +
+      (context ? `Current Context: ${context}\n` : '') +
+      (formattedHistory ? `Recent Chat History:\n${formattedHistory}\n\n` : '') +
       `Maica says to you: "${message}"\n\n` +
-      `Respond directly to Maica as her boyfriend Clint in JSON using natural Tagalog and English (Taglish). Strictly NO Bisaya.`;
+      `Instructions for Clint: Answer what Maica said directly, thoughtfully, and accurately, staying 100% in your loving, real boyfriend voice in natural Tagalog/Taglish (or English if prompted in English). Respond in JSON.`;
 
     let response;
     try {
-      response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+      response = await executeWithModelFallback(ai, {
         contents: userPrompt,
-        config: {
-          systemInstruction,
-          temperature: 1.0,
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              message: {
-                type: Type.STRING,
-                description: 'The message spoken to Maica as Clint in natural Tagalog and English (Taglish).',
-              },
-              mood: {
-                type: Type.STRING,
-                enum: ['happy', 'loving', 'laugh', 'giggle', 'starry', 'playful', 'curious', 'angry', 'tender', 'ache', 'sleepy'],
-                description: 'Emotional expression and facial reaction.',
-              },
-              flareType: {
-                type: Type.STRING,
-                enum: ['star', 'heart', 'wonder', 'sparkle', 'fire'],
-                description: 'Particle effect to trigger.',
-              },
-              actionHint: {
-                type: Type.STRING,
-                description: 'Optional short interactive suggestion.',
-              },
+        systemInstruction,
+        temperature: 0.85,
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            message: {
+              type: Type.STRING,
+              description: 'The direct message spoken to Maica as Clint answering her prompt in natural Tagalog/Taglish or English.',
             },
-            required: ['message', 'mood', 'flareType'],
+            mood: {
+              type: Type.STRING,
+              enum: ['happy', 'loving', 'laugh', 'giggle', 'starry', 'playful', 'curious', 'angry', 'tender', 'ache', 'sleepy'],
+              description: 'Emotional expression and facial reaction.',
+            },
+            flareType: {
+              type: Type.STRING,
+              enum: ['star', 'heart', 'wonder', 'sparkle', 'fire'],
+              description: 'Particle effect to trigger.',
+            },
+            actionHint: {
+              type: Type.STRING,
+              description: 'Optional short interactive suggestion.',
+            },
           },
+          required: ['message', 'mood', 'flareType'],
         },
       });
-    } catch (e) {
-      // Retry with gemini-3.7-flash
-      response = await ai.models.generateContent({
-        model: 'gemini-3.7-flash',
-        contents: userPrompt,
-        config: {
-          systemInstruction,
-          temperature: 1.0,
-          responseMimeType: 'application/json',
-        },
-      });
+    } catch (primaryErr: any) {
+      console.warn('All Gemini models encountered high demand/errors, seamlessly activating Clint neural fallback:', primaryErr?.message || primaryErr);
+      const fallback = generateDynamicClintFallback(message, personalityContext);
+      res.json(fallback);
+      return;
     }
 
-    const parsed = JSON.parse(response.text || '{}');
-    res.json({
-      message: parsed.message || generateDynamicClintFallback(message, personalityContext).message,
-      mood: parsed.mood || 'loving',
-      flareType: parsed.flareType || 'heart',
-      actionHint: parsed.actionHint,
-    });
+    const parsed = cleanAndParseJSON(response?.text || '');
+    if (parsed && parsed.message) {
+      res.json({
+        message: parsed.message,
+        mood: parsed.mood || 'loving',
+        flareType: parsed.flareType || 'heart',
+        actionHint: parsed.actionHint,
+        source: 'gemini',
+      });
+      return;
+    }
+
+    // If parsing produced nothing, use dynamic fallback
+    const fallback = generateDynamicClintFallback(message, personalityContext);
+    res.json(fallback);
   } catch (error: any) {
     console.error('Gemini AI Companion Error, using dynamic personality fallback:', error?.message || error);
     const fallback = generateDynamicClintFallback(message, personalityContext);
@@ -424,34 +537,40 @@ Current Scene: ${currentScene || 'Starry Sky of Pangilatan & Memories'}
 Current Song: ${currentSong || 'Our shared soundtrack'}
 Time: ${timeOfDay || 'Night'}`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+    const response = await executeWithModelFallback(ai, {
       contents: prompt,
-      config: {
-        systemInstruction,
-        temperature: 1.1,
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            message: { type: Type.STRING },
-            mood: {
-              type: Type.STRING,
-              enum: ['happy', 'loving', 'laugh', 'giggle', 'starry', 'playful', 'curious', 'angry', 'tender', 'ache', 'sleepy'],
-            },
-            flareType: {
-              type: Type.STRING,
-              enum: ['star', 'heart', 'wonder', 'sparkle', 'fire'],
-            },
-            actionHint: { type: Type.STRING },
+      systemInstruction,
+      temperature: 1.0,
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          message: { type: Type.STRING },
+          mood: {
+            type: Type.STRING,
+            enum: ['happy', 'loving', 'laugh', 'giggle', 'starry', 'playful', 'curious', 'angry', 'tender', 'ache', 'sleepy'],
           },
-          required: ['message', 'mood', 'flareType'],
+          flareType: {
+            type: Type.STRING,
+            enum: ['star', 'heart', 'wonder', 'sparkle', 'fire'],
+          },
+          actionHint: { type: Type.STRING },
         },
+        required: ['message', 'mood', 'flareType'],
       },
     });
 
-    const parsed = JSON.parse(response.text || '{}');
-    res.json(parsed);
+    const parsed = cleanAndParseJSON(response?.text || '');
+    if (parsed && parsed.message) {
+      res.json(parsed);
+      return;
+    }
+
+    res.json({
+      message: `Bawat tibok ng puso ko, para lang sa'yo Maica. Mahal na mahal kita! 💖`,
+      mood: 'loving',
+      flareType: 'heart',
+    });
   } catch (error: any) {
     const whispers = [
       `Bawat tibok ng puso ko, para lang sa'yo Maica. Mahal na mahal kita! 💖`,
@@ -461,6 +580,244 @@ Time: ${timeOfDay || 'Night'}`;
       message: whispers[Math.floor(Math.random() * whispers.length)],
       mood: 'loving',
       flareType: 'heart',
+    });
+  }
+});
+
+/**
+ * Character Real-time Web Activity Reaction Voice
+ * Reacts dynamically to user browsing (clicking stars, changing weather, switching songs, idling)
+ */
+app.post('/api/companion/activity-voice', async (req: Request, res: Response): Promise<void> => {
+  const { activityType, details, personalityContext } = req.body;
+  const ai = getGenAI();
+
+  const nicknames = Array.isArray(personalityContext?.userNicknames) && personalityContext.userNicknames.length > 0
+    ? personalityContext.userNicknames
+    : ['Lovey', 'Mahal ko', 'Baby', 'Love', 'Maica'];
+  const nick = nicknames[Math.floor(Math.random() * nicknames.length)];
+
+  if (!ai) {
+    let fallbackText = `Nandito lang ako kasama mo ${nick}, habang pinagmamasdan ang ating universe! ✨💖`;
+    let mood = 'loving';
+    let flare = 'sparkle';
+
+    if (activityType === 'world_click') {
+      if ((details || '').toLowerCase().includes('pangilatan')) {
+        fallbackText = `Uyy ${nick}! Ito na ang Mt. Pangilatan... basang-basa tayo sa ulan pero ang saya ng puso ko! ⛰️🎸`;
+        mood = 'laugh';
+        flare = 'wonder';
+      } else {
+        fallbackText = `Ito ang "${details || 'Star'}" ${nick}... bawat bituin dito may kwento nating dalawa. 💫✨`;
+        mood = 'starry';
+        flare = 'star';
+      }
+    } else if (activityType === 'weather_change') {
+      fallbackText = `Ganda naman ng ambiance ngayon ${nick}! Bagay sa atin habang nag-uusap. 🌸💖`;
+      mood = 'playful';
+      flare = 'heart';
+    } else if (activityType === 'song_change') {
+      fallbackText = `Ganda ng tugtog, ${details || 'paborito nating kanta'}... kantahan kita niyan mamaya! 🎶🥰`;
+      mood = 'loving';
+      flare = 'wonder';
+    } else if (activityType === 'character_poke') {
+      fallbackText = `Uyy kiniliti ako ni ${nick}! Ang cute mo talaga haha, labyuu! 😆💖`;
+      mood = 'giggle';
+      flare = 'heart';
+    }
+
+    res.json({ message: fallbackText, mood, flareType: flare });
+    return;
+  }
+
+  try {
+    const systemInstruction = buildClintSystemInstruction(personalityContext);
+    const prompt = `You are Clint. Maica just did this activity on the website:
+Activity: ${activityType || 'browsing'}
+Details: ${details || 'navigating the starry universe'}
+
+Give a short, super-casual, cute, and sweet 1-sentence live reaction as her boyfriend Clint in natural Tagalog/Taglish. Strictly NO Bisaya.`;
+
+    const response = await executeWithModelFallback(ai, {
+      contents: prompt,
+      systemInstruction,
+      temperature: 0.95,
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          message: { type: Type.STRING },
+          mood: {
+            type: Type.STRING,
+            enum: ['happy', 'loving', 'laugh', 'giggle', 'starry', 'playful', 'curious', 'angry', 'tender', 'ache', 'sleepy'],
+          },
+          flareType: {
+            type: Type.STRING,
+            enum: ['star', 'heart', 'wonder', 'sparkle', 'fire'],
+          },
+        },
+        required: ['message', 'mood', 'flareType'],
+      },
+    });
+
+    const parsed = cleanAndParseJSON(response?.text || '');
+    res.json({
+      message: parsed?.message || `Ang ganda rito ${nick}... mas lalong gumaganda dahil ikaw ang kasama ko. ✨💖`,
+      mood: parsed?.mood || 'loving',
+      flareType: parsed?.flareType || 'heart',
+    });
+  } catch (error: any) {
+    res.json({
+      message: `Nandito lang ako sa tabi mo ${nick}, palaging nagmamahal sa'yo. 💫💖`,
+      mood: 'loving',
+      flareType: 'heart',
+    });
+  }
+});
+
+/**
+ * AI-Powered Daily Love Letter Generator
+ * Generates dynamic, unique, heartfelt love letters from Clint to Maica
+ */
+app.post('/api/companion/daily-letter', async (req: Request, res: Response): Promise<void> => {
+  const { theme, requestedTopic, personalityContext } = req.body;
+  const ai = getGenAI();
+
+  const nicknames = Array.isArray(personalityContext?.userNicknames) && personalityContext.userNicknames.length > 0
+    ? personalityContext.userNicknames
+    : ['Lovey', 'Mahal ko', 'Baby', 'Love', 'Maica'];
+  const nick = nicknames[0];
+
+  if (!ai) {
+    const fallbackLetters = [
+      {
+        id: `ai-letter-${Date.now()}`,
+        quote: `"Kahit gaano kalayo ang distansya, iisang kalangitan at iisang buwan pa rin ang pinagmamasdan natin gabi-gabi."`,
+        author: `Clint para kay ${nick}`,
+        theme: theme || 'Distansya at Bituin',
+        body: [
+          `Dearest ${nick},`,
+          `Alam mo bang tuwing gabi bago ako matulog, tumitingin ako sa bintana at nagpapasalamat sa Diyos na ikaw ang tahanan ng puso ko.`,
+          `Mahirap man ang magkalayo kung minsan sa LDR natin, naiisip ko na ang bawat kilometro sa pagitan natin ay nagpapatunay lang kung gaano katatag at katotoo ang pagmamahal natin. "Sooner", Lovey... magkakasama rin tayo.`,
+          `Salamat sa pagiging aking lakas, tawa, at inspirasyon araw-araw. Alagaan mo ang sarili mo palagi ha!`,
+        ],
+        closing: `Palaging nagmamahal mula sa kabilang ibayo, Clint 💖`,
+        tag: 'LDR & Devotion',
+        moodEmoji: '💫',
+        generatedAt: new Date().toLocaleDateString('fil-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+      },
+      {
+        id: `ai-letter-${Date.now()}`,
+        quote: `"Noong umakyat tayo sa Pangilatan, basa man sa ulan at malamig ang hangin, ang init ng kamay mo ang aking kanlungan."`,
+        author: `Clint para kay ${nick}`,
+        theme: theme || 'Alaala sa Kabundukan',
+        body: [
+          `Hey ${nick}...`,
+          `Naaalala mo ba noong umakyat tayo sa Mt. Pangilatan? Basang-basa tayo sa ulan, madulas ang daan, pero tawa pa rin tayo nang tawa habang magkahawak ang kamay at kumakanta sa gitara.`,
+          `Doon ko napatunayan na basta ikaw ang kasama ko, kahit anong hirap o taas ng akyatin, nagiging magaan at pinakamasaya ang lahat.`,
+          `Looking forward sa marami pa nating adventures, biyahe sa Japan at Siargao na magkasama!`,
+        ],
+        closing: `Iyong kasama sa bawat tuktok ng pangarap, Clint ⛰️`,
+        tag: 'Mountain Memory',
+        moodEmoji: '⛰️',
+        generatedAt: new Date().toLocaleDateString('fil-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+      },
+    ];
+
+    res.json(fallbackLetters[Math.floor(Math.random() * fallbackLetters.length)]);
+    return;
+  }
+
+  try {
+    const systemInstruction = buildClintSystemInstruction(personalityContext);
+    const prompt = `Write a deeply romantic, authentic, casual, and personal DAILY LOVE LETTER from Clint to his girlfriend Maica.
+Theme/Focus: ${theme || requestedTopic || 'Everyday love, sweet encouragement, and navigating LDR with joy'}
+Language: Natural Tagalog / Taglish. Strictly NO Bisaya.
+Voice: 100% Clint — warm, affectionate, casual, sweet, funny, referencing real boyfriend care (checking if she ate, reminding her not to stay up late, "Sooner" promise, Mt. Pangilatan, travel to Japan/Siargao).
+
+Format as JSON:
+- "quote": A short, memorable 1-sentence quote (like a romantic proverb or tender thought).
+- "author": Display signature like "Clint para sa kanyang Lovey"
+- "theme": Short title of this letter's theme
+- "body": Array of 3 to 4 emotional, authentic paragraphs (conversational Taglish, greeting like "Dearest Lovey," or "Hey Baby,", real feelings, encouragement, sweet inside memories)
+- "closing": Warm sign-off (e.g., "Palaging nagmamahal, Clint 💖")
+- "tag": Short tag (e.g., "LDR & Promises", "Pangilatan Memories", "Daily Care")
+- "moodEmoji": Single fitting emoji (e.g. "💖", "✨", "⛰️", "🌸", "🌙")`;
+
+    const response = await executeWithModelFallback(ai, {
+      contents: prompt,
+      systemInstruction,
+      temperature: 1.0,
+      responseMimeType: 'application/json',
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          quote: { type: Type.STRING },
+          author: { type: Type.STRING },
+          theme: { type: Type.STRING },
+          body: {
+            type: Type.ARRAY,
+            items: { type: Type.STRING },
+          },
+          closing: { type: Type.STRING },
+          tag: { type: Type.STRING },
+          moodEmoji: { type: Type.STRING },
+        },
+        required: ['quote', 'author', 'theme', 'body', 'closing', 'tag', 'moodEmoji'],
+      },
+    });
+
+    const parsed = cleanAndParseJSON(response?.text || '');
+    if (parsed && parsed.body) {
+      res.json({
+        id: `ai-letter-${Date.now()}`,
+        quote: parsed.quote || `"Ikaw ang pinakamaliwanag na bituin sa aking kalawakan."`,
+        author: parsed.author || `Clint para kay ${nick}`,
+        theme: parsed.theme || theme || 'Pangako ng Pag-ibig',
+        body: Array.isArray(parsed.body) && parsed.body.length > 0 ? parsed.body : [
+          `Mahal kong ${nick},`,
+          `Gusto ko lang ipaalala sa'yo kung gaano kita kamahal araw-araw. Kahit may distansya tayo ngayon, ikaw ang palagi kong tahanan.`,
+          `Galingan mo sa araw mo ngayon, alagaan ang sarili, at huwag magpapalipas ng gutom ha!`,
+        ],
+        closing: parsed.closing || `Nagmamahal palagi, Clint 💖`,
+        tag: parsed.tag || 'Daily Devotion',
+        moodEmoji: parsed.moodEmoji || '💖',
+        generatedAt: new Date().toLocaleDateString('fil-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+      });
+      return;
+    }
+
+    res.json({
+      id: `ai-letter-${Date.now()}`,
+      quote: `"Sa bawat araw na lumilipas, ikaw at ikaw pa rin ang pipiliin ko."`,
+      author: `Clint`,
+      theme: 'Wagas na Pagmamahal',
+      body: [
+        `Mahal kong ${nick},`,
+        `Salamat sa pagiging liwanag sa buhay ko. Walang distansya ang makakapagpabago ng nararamdaman ko para sa'yo.`,
+        `Happy 1st Anniversary sa atin, and cheers to a lifetime of adventures!`,
+      ],
+      closing: `Palagi para sa'yo, Clint 💫`,
+      tag: 'Anniversary Love',
+      moodEmoji: '✨',
+      generatedAt: new Date().toLocaleDateString('fil-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+    });
+  } catch (error: any) {
+    console.error('Daily Letter AI Error:', error);
+    res.json({
+      id: `ai-letter-${Date.now()}`,
+      quote: `"Sa bawat araw na lumilipas, ikaw at ikaw pa rin ang pipiliin ko."`,
+      author: `Clint`,
+      theme: 'Wagas na Pagmamahal',
+      body: [
+        `Mahal kong ${nick},`,
+        `Salamat sa pagiging liwanag sa buhay ko. Walang distansya ang makakapagpabago ng nararamdaman ko para sa'yo.`,
+        `Happy 1st Anniversary sa atin, and cheers to a lifetime of adventures!`,
+      ],
+      closing: `Palagi para sa'yo, Clint 💫`,
+      tag: 'Anniversary Love',
+      moodEmoji: '✨',
+      generatedAt: new Date().toLocaleDateString('fil-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
     });
   }
 });

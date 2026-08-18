@@ -20,6 +20,7 @@ import { WorldStar, PersonalityContext } from './types';
 import { DEFAULT_PERSONALITY_CONTEXT } from './data/personalityData';
 import { readState, recordVisitStart, resetVisitState } from './utils/storage';
 import { audioEngine } from './utils/audioEngine';
+import { lumiSync } from './utils/lumiSyncBus';
 import { Sparkles, RotateCcw, Heart, Image as ImageIcon, MessageCircle } from 'lucide-react';
 
 export default function App() {
@@ -266,6 +267,7 @@ export default function App() {
       () => {
         setPangilatanSpokenLine(line);
         setIsPangilatanOpen(true);
+        lumiSync.notifyModal('pangilatan', true);
         speak(line);
       }
     );
@@ -286,6 +288,7 @@ export default function App() {
       () => {
         setSelectedWorld(world);
         setPreviewedIds((prev) => new Set([...prev, world.id]));
+        lumiSync.notifyModal(world.name, true);
       }
     );
   };
@@ -522,7 +525,10 @@ export default function App() {
       {/* 6. Dedicated Interactive AI Copy Chat Box with Clint */}
       <CharacterChatModal
         isOpen={isChatModalOpen}
-        onClose={() => setIsChatModalOpen(false)}
+        onClose={() => {
+          setIsChatModalOpen(false);
+          lumiSync.notifyModal('chat', false);
+        }}
         personalityContext={personalityContext}
         onUpdatePersonalityContext={setPersonalityContext}
         onTriggerReaction={(mood: LumiMood, flare: LumiFlareType) => {
@@ -535,7 +541,10 @@ export default function App() {
         isSkyReady={hasEntered}
         manualSpawnTrigger={spawnPhotoTrigger}
         onSpeak={(line) => speak(line)}
-        onOpenPhotoManager={() => setIsPhotoManagerOpen(true)}
+        onOpenPhotoManager={() => {
+          setIsPhotoManagerOpen(true);
+          lumiSync.notifyModal('photos', true);
+        }}
       />
 
       {/* 7. Ambient Romantic Audio Player Widget */}
@@ -544,6 +553,7 @@ export default function App() {
       {/* 7.5 Floating Origami Daily Love Letter */}
       <DailyLetter
         hasEntered={hasEntered}
+        personalityContext={personalityContext}
         onLetterOpen={() => {
           triggerCompanionReaction('heart');
           speak("May munting liham ako para sa'yo ngayon, Lovey... 💌✨");
@@ -553,9 +563,15 @@ export default function App() {
       {/* 8. Pangilatan Mountain Signature Photo Modal */}
       <PangilatanModal
         isOpen={isPangilatanOpen}
-        onClose={() => setIsPangilatanOpen(false)}
+        onClose={() => {
+          setIsPangilatanOpen(false);
+          lumiSync.notifyModal('pangilatan', false);
+        }}
         spokenLine={pangilatanSpokenLine}
-        onOpenPhotoManager={() => setIsPhotoManagerOpen(true)}
+        onOpenPhotoManager={() => {
+          setIsPhotoManagerOpen(true);
+          lumiSync.notifyModal('photos', true);
+        }}
         onNavigateWorld={handleSelectWorld}
       />
 
@@ -564,7 +580,10 @@ export default function App() {
         world={selectedWorld}
         onClose={() => setSelectedWorld(null)}
         onSpeak={(text, ache) => speak(text, ache)}
-        onOpenPhotoManager={() => setIsPhotoManagerOpen(true)}
+        onOpenPhotoManager={() => {
+          setIsPhotoManagerOpen(true);
+          lumiSync.notifyModal('photos', true);
+        }}
         onNavigateWorld={handleSelectWorld}
         onOpenPangilatan={handleOpenPangilatan}
       />
@@ -572,7 +591,10 @@ export default function App() {
       {/* 10. Shooting Star / Meteor Wish Modal */}
       <MeteorWishModal
         isOpen={isWishModalOpen}
-        onClose={() => setIsWishModalOpen(false)}
+        onClose={() => {
+          setIsWishModalOpen(false);
+          lumiSync.notifyModal('wish', false);
+        }}
         onWishGranted={(wish) => {
           triggerCompanionReaction('star');
           speak(wish);
@@ -582,7 +604,10 @@ export default function App() {
       {/* 11. Photo & Google Drive Link Manager Modal */}
       <PhotoManagerModal
         isOpen={isPhotoManagerOpen}
-        onClose={() => setIsPhotoManagerOpen(false)}
+        onClose={() => {
+          setIsPhotoManagerOpen(false);
+          lumiSync.notifyModal('photos', false);
+        }}
       />
 
       {/* 12. Cosmic World Portal Warp Transition Layer */}

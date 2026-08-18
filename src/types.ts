@@ -79,6 +79,7 @@ export interface DailyQuoteLetter {
   closing: string;
   tag: string;
   moodEmoji: string;
+  generatedAt?: string;
 }
 
 export interface SpecialDateItem {

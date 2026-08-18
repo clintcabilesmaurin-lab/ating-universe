@@ -243,7 +243,21 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
                 {/* Clint Avatar & Presence */}
                 <div className="relative">
                   <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400/30 via-rose-400/20 to-purple-500/30 border border-amber-300/40 flex items-center justify-center text-xl shadow-[0_0_15px_rgba(244,213,141,0.4)]">
-                    {currentMood === 'loving' ? '💖' : currentMood === 'laugh' || currentMood === 'giggle' ? '😄' : currentMood === 'angry' ? '😤' : currentMood === 'playful' ? '😜' : '✨'}
+                    {currentMood === 'loving' || currentMood === 'inlove'
+                      ? '👻💖'
+                      : currentMood === 'laugh'
+                      ? '👻🤣'
+                      : currentMood === 'giggle'
+                      ? '👻😆'
+                      : currentMood === 'cry'
+                      ? '👻💧'
+                      : currentMood === 'sad'
+                      ? '👻🥺'
+                      : currentMood === 'angry'
+                      ? '👻😤'
+                      : currentMood === 'playful'
+                      ? '👻😜'
+                      : '👻✨'}
                   </div>
                   <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 ring-2 ring-slate-950 animate-pulse" />
                 </div>
@@ -255,7 +269,7 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
                       <Sparkles className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
                     </h3>
                     <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-200 text-[10px] font-sans font-medium border border-amber-400/30">
-                      AI Copy of Clint
+                      Lumi Ghost • Clint
                     </span>
                   </div>
                   <p className="text-xs text-amber-200/70 font-serif italic mt-0.5">
@@ -319,7 +333,19 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
                       <div className="flex items-end gap-2 max-w-[88%] sm:max-w-[80%]">
                         {msg.sender === 'clint' && (
                           <div className="w-7 h-7 rounded-full bg-amber-400/20 border border-amber-300/30 shrink-0 flex items-center justify-center text-xs shadow-sm mb-1">
-                            {msg.mood === 'loving' ? '💖' : msg.mood === 'laugh' ? '😄' : msg.mood === 'angry' ? '😤' : '✨'}
+                            {msg.mood === 'loving' || msg.mood === 'inlove'
+                              ? '💖'
+                              : msg.mood === 'laugh'
+                              ? '🤣'
+                              : msg.mood === 'giggle'
+                              ? '😆'
+                              : msg.mood === 'cry'
+                              ? '💧'
+                              : msg.mood === 'sad'
+                              ? '🥺'
+                              : msg.mood === 'angry'
+                              ? '😤'
+                              : '✨'}
                           </div>
                         )}
 
@@ -338,7 +364,20 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
                         <span className="text-[10px] text-slate-400 font-sans">{msg.time}</span>
                         {msg.sender === 'clint' && msg.mood && (
                           <span className="text-[10px] text-amber-300/70 font-sans italic">
-                            &bull; {msg.mood === 'loving' ? 'malambing' : msg.mood === 'laugh' ? 'natatawa' : msg.mood === 'angry' ? 'nag-tampo 😤' : 'masaya'}
+                            &bull;{' '}
+                            {msg.mood === 'loving' || msg.mood === 'inlove'
+                              ? 'malambing 🥰'
+                              : msg.mood === 'laugh'
+                              ? 'natatawa 🤣'
+                              : msg.mood === 'giggle'
+                              ? 'kinikilig 😆'
+                              : msg.mood === 'cry'
+                              ? 'umiiyak sa miss 💧'
+                              : msg.mood === 'sad'
+                              ? 'malungkot 🥺'
+                              : msg.mood === 'angry'
+                              ? 'nag-tampo 😤'
+                              : 'masaya ✨'}
                           </span>
                         )}
                       </div>
