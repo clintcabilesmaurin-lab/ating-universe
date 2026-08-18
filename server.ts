@@ -6,8 +6,8 @@ import { createServer as createViteServer } from 'vite';
 
 dotenv.config();
 
-const app = express();
-const PORT = 3000;
+export const app = express();
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 app.use(express.json({ limit: '15mb' }));
 
@@ -1051,4 +1051,6 @@ async function startServer() {
   });
 }
 
-startServer();
+if (!process.env.NETLIFY && !process.env.LAMBDA_TASK_ROOT && !process.env.VERCEL) {
+  startServer();
+}
