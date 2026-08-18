@@ -441,6 +441,54 @@ class UniverseAudioEngine {
       chimeOsc.stop(now + 0.2 + idx * 0.1 + 0.7);
     });
   }
+
+  public playMessageSentChime(): void {
+    if (!this.audioCtx || !this.masterGain) return;
+    const now = this.audioCtx.currentTime;
+    const notes = [440, 659.25]; // A4, E5 (soft ascending chime)
+
+    notes.forEach((freq, idx) => {
+      if (!this.audioCtx || !this.masterGain) return;
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+
+      gain.gain.setValueAtTime(0.001, now + idx * 0.06);
+      gain.gain.linearRampToValueAtTime(0.05, now + idx * 0.06 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.06 + 0.35);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+
+      osc.start(now + idx * 0.06);
+      osc.stop(now + idx * 0.06 + 0.35);
+    });
+  }
+
+  public playMessageReceivedChime(): void {
+    if (!this.audioCtx || !this.masterGain) return;
+    const now = this.audioCtx.currentTime;
+    const notes = [587.33, 783.99, 1046.50]; // D5, G5, C6 (sparkling heart reply)
+
+    notes.forEach((freq, idx) => {
+      if (!this.audioCtx || !this.masterGain) return;
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+
+      gain.gain.setValueAtTime(0.001, now + idx * 0.07);
+      gain.gain.linearRampToValueAtTime(0.07, now + idx * 0.07 + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.07 + 0.65);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+
+      osc.start(now + idx * 0.07);
+      osc.stop(now + idx * 0.07 + 0.65);
+    });
+  }
 }
 
 export const audioEngine = new UniverseAudioEngine();

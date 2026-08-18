@@ -14,11 +14,13 @@ import { PhotoManagerModal } from './components/PhotoManagerModal';
 import { PortalTransition, PortalConfig } from './components/PortalTransition';
 import { CosmicWeather, WeatherMoodId } from './components/CosmicWeather';
 import { DailyLetter } from './components/DailyLetter';
-import { LumiFlareType } from './components/LumiCompanion';
-import { WorldStar } from './types';
+import { CharacterChatModal } from './components/CharacterChatModal';
+import { LumiFlareType, LumiMood } from './components/LumiCompanion';
+import { WorldStar, PersonalityContext } from './types';
+import { DEFAULT_PERSONALITY_CONTEXT } from './data/personalityData';
 import { readState, recordVisitStart, resetVisitState } from './utils/storage';
 import { audioEngine } from './utils/audioEngine';
-import { Sparkles, RotateCcw, Heart, Image as ImageIcon } from 'lucide-react';
+import { Sparkles, RotateCcw, Heart, Image as ImageIcon, MessageCircle } from 'lucide-react';
 
 export default function App() {
   const [hasEntered, setHasEntered] = useState(false);
@@ -28,6 +30,7 @@ export default function App() {
   const [selectedWorld, setSelectedWorld] = useState<WorldStar | null>(null);
   const [isPangilatanOpen, setIsPangilatanOpen] = useState(false);
   const [isPhotoManagerOpen, setIsPhotoManagerOpen] = useState(false);
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [pangilatanSpokenLine, setPangilatanSpokenLine] = useState('');
   const [isWishModalOpen, setIsWishModalOpen] = useState(false);
   const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null);
@@ -36,6 +39,26 @@ export default function App() {
   const [zoneShift, setZoneShift] = useState(0.2);
   const [visitCount, setVisitCount] = useState(1);
   const [spawnPhotoTrigger, setSpawnPhotoTrigger] = useState(0);
+
+  // Personality context state with local persistence
+  const [personalityContext, setPersonalityContext] = useState<PersonalityContext>(() => {
+    try {
+      const saved = localStorage.getItem('universe_personality_context_v1');
+      return saved ? JSON.parse(saved) : DEFAULT_PERSONALITY_CONTEXT;
+    } catch {
+      return DEFAULT_PERSONALITY_CONTEXT;
+    }
+  });
+
+  // Save personalityContext to localStorage on updates
+  useEffect(() => {
+    try {
+      localStorage.setItem('universe_personality_context_v1', JSON.stringify(personalityContext));
+    } catch (e) {
+      console.warn('Failed to persist personality context to localStorage:', e);
+    }
+  }, [personalityContext]);
+
   const [floatingHearts, setFloatingHearts] = useState<Array<{
     id: number;
     x: number;
@@ -189,7 +212,7 @@ export default function App() {
 
     // After 2.8s when sky has built in, speak the sky reveal line
     setTimeout(() => {
-      speak("Look, Lovey... ato ning Universe, hahahah.");
+      speak("Look, Lovey... ating Universe 'to, hahahah.");
     }, 3000);
   };
 
@@ -413,6 +436,20 @@ export default function App() {
 
           <div className="flex items-center gap-2 pointer-events-auto">
             <button
+              id="btn-open-clint-chat"
+              onClick={() => {
+                triggerCompanionReaction('heart');
+                setIsChatModalOpen(true);
+              }}
+              title="Kausapin si Clint (AI Copy)"
+              className="flex items-center gap-1.5 text-xs bg-gradient-to-r from-amber-400/25 via-rose-400/25 to-amber-300/25 hover:from-amber-400/35 hover:to-rose-400/35 backdrop-blur-md border border-amber-300/60 px-3.5 py-1.5 rounded-full text-amber-100 font-serif font-semibold transition-all shadow-[0_0_16px_rgba(244,213,141,0.3)] hover:scale-105"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <MessageCircle className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+              <span>Kausapin si Clint</span>
+            </button>
+
+            <button
               id="btn-open-photo-manager"
               onClick={() => setIsPhotoManagerOpen(true)}
               title="Ayusin o I-upload ang mga Larawan"
@@ -459,6 +496,11 @@ export default function App() {
         weatherMood={weatherMood}
         externalFlareTrigger={companionFlareTrigger}
         externalFlareType={companionFlareType}
+        personalityContext={personalityContext}
+        onOpenFullChat={() => {
+          triggerCompanionReaction('heart');
+          setIsChatModalOpen(true);
+        }}
         onOpenPangilatan={() => {
           triggerCompanionReaction('heart');
           handleOpenPangilatan("Uyy, ito na siya... Pangilatan. Ang paborito nating tagpuan sa ibabaw ng mga ulap! ⛰️✨");
@@ -474,6 +516,17 @@ export default function App() {
         onTriggerHearts={(count) => {
           triggerCompanionReaction('heart');
           triggerFloatingHearts(count || 16);
+        }}
+      />
+
+      {/* 6. Dedicated Interactive AI Copy Chat Box with Clint */}
+      <CharacterChatModal
+        isOpen={isChatModalOpen}
+        onClose={() => setIsChatModalOpen(false)}
+        personalityContext={personalityContext}
+        onUpdatePersonalityContext={setPersonalityContext}
+        onTriggerReaction={(mood: LumiMood, flare: LumiFlareType) => {
+          triggerCompanionReaction(flare);
         }}
       />
 
@@ -493,7 +546,7 @@ export default function App() {
         hasEntered={hasEntered}
         onLetterOpen={() => {
           triggerCompanionReaction('heart');
-          speak("Naa koy gamay nga sinulat para sa'yo karon, Lovey... 💌✨");
+          speak("May munting liham ako para sa'yo ngayon, Lovey... 💌✨");
         }}
       />
 
