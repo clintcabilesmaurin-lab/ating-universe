@@ -6,6 +6,7 @@ import { SoulEmotion, LumiMood, LumiBehaviorState } from './types';
 import { ProceduralFaceTextureCache } from './faceRenderer';
 import { createGhostBodyGeometry } from './ghostGeometry';
 import { createCurvedFaceGeometry } from './curvedFaceGeometry';
+import { performanceManager } from '../../utils/performanceManager';
 
 interface Lumi22ThreeBodyProps {
   mood?: LumiMood | SoulEmotion;
@@ -146,8 +147,8 @@ export const Lumi22ThreeBody: React.FC<Lumi22ThreeBodyProps> = ({
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  // 1. Cute Ghost Body Geometry (Dome head + wavy skirt hem)
-  const ghostGeo = useMemo(() => createGhostBodyGeometry(0.82, 0.96, 1.55, 48, 36, 6, 0.12), []);
+  // 1. Cute Ghost Body Geometry (Dome head + wavy skirt hem - optimized polycount)
+  const ghostGeo = useMemo(() => createGhostBodyGeometry(0.82, 0.96, 1.55, 32, 24, 6, 0.12), []);
   const baseGeometryPositions = useMemo(() => {
     return new Float32Array(ghostGeo.attributes.position.array);
   }, [ghostGeo]);
@@ -155,6 +156,15 @@ export const Lumi22ThreeBody: React.FC<Lumi22ThreeBodyProps> = ({
   // 2. Curved Face Geometry for the front head dome
   const curvedFaceGeo = useMemo(() => createCurvedFaceGeometry(1.05, 0.95, 0.85), []);
   const starJewelGeo = useMemo(() => createMiniStarGeo(0.045), []);
+
+  // Dispose 3D Geometries on unmount
+  useEffect(() => {
+    return () => {
+      ghostGeo.dispose();
+      curvedFaceGeo.dispose();
+      starJewelGeo.dispose();
+    };
+  }, [ghostGeo, curvedFaceGeo, starJewelGeo]);
 
   // 10 Orbiting Celestial Stars Metadata
   const starOrbits = useMemo(() => {
@@ -233,6 +243,7 @@ export const Lumi22ThreeBody: React.FC<Lumi22ThreeBodyProps> = ({
 
   // Frame Loop: Fluttering Skirt Wavy Ripples, Harmonic Figure-8 Sway, Spring Mouse Gaze, Real-Time Music Dance & Behavior Synced Kinematics
   useFrame((state) => {
+    if (!performanceManager.getIsTabVisible()) return;
     const t = state.clock.getElapsedTime();
     if (!rootGroupRef.current) return;
 

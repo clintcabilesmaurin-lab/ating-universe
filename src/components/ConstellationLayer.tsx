@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { WORLDS, PANGILATAN_LINES } from '../data/universeData';
 import { WorldStar } from '../types';
 import { Sparkles, Heart, Compass, Image as ImageIcon, Mail, Lock, ExternalLink, Globe } from 'lucide-react';
 import { World3DIcon } from './World3DIcon';
 import { audioEngine } from '../utils/audioEngine';
+import { performanceManager } from '../utils/performanceManager';
 
 interface ConstellationLayerProps {
   onSelectWorld: (world: WorldStar) => void;
@@ -118,7 +119,7 @@ const CONSTELLATION_LINKS = [
   { id: 'link-2-pangilatan', from: 'memory-gallery', to: 'pangilatan', label: 'Alaala • Pangilatan', color1: '#c084fc', color2: '#9dbf9a', curve: 0.08 },
 ];
 
-export const ConstellationLayer: React.FC<ConstellationLayerProps> = ({
+export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
   onSelectWorld,
   onSpeak,
   onOpenPangilatan,
@@ -142,32 +143,38 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = ({
   // Random safe, non-overlapping position generated per refresh
   const [pangilatanPos] = useState(() => getRandomPangilatanPosition());
 
-  // Track mouse coordinates for foreground constellation parallax
+  // Track mouse coordinates for foreground constellation parallax (throttled & tab-aware)
   useEffect(() => {
     let animFrame: number;
     let targetX = 0;
     let targetY = 0;
-    let currentX = 0;
-    let currentY = 0;
+    let lastX = 0;
+    let lastY = 0;
+    let isScheduled = false;
 
     const handleMouseMove = (e: MouseEvent) => {
       targetX = (e.clientX / window.innerWidth - 0.5) * 2;
       targetY = (e.clientY / window.innerHeight - 0.5) * 2;
-    };
 
-    const updateLoop = () => {
-      currentX += (targetX - currentX) * 0.06;
-      currentY += (targetY - currentY) * 0.06;
-      setMouseParallax({ x: currentX, y: currentY });
-      animFrame = requestAnimationFrame(updateLoop);
+      if (!isScheduled && performanceManager.getIsTabVisible()) {
+        isScheduled = true;
+        animFrame = requestAnimationFrame(() => {
+          isScheduled = false;
+          // Only trigger React state update if delta exceeds threshold to save CPU
+          if (Math.abs(targetX - lastX) > 0.02 || Math.abs(targetY - lastY) > 0.02) {
+            lastX = targetX;
+            lastY = targetY;
+            setMouseParallax({ x: targetX, y: targetY });
+          }
+        });
+      }
     };
 
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    animFrame = requestAnimationFrame(updateLoop);
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
-      cancelAnimationFrame(animFrame);
+      if (animFrame) cancelAnimationFrame(animFrame);
     };
   }, []);
 
@@ -695,4 +702,6 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = ({
       </div>
     </div>
   );
-};
+});
+
+ConstellationLayer.displayName = 'ConstellationLayer';

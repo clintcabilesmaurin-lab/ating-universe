@@ -6,6 +6,7 @@ import { Lumi22ThreeBody } from './lumi22/Lumi22ThreeBody';
 import { LumiMood, SoulEmotion, LumiFlareType, LumiBehaviorState } from './lumi22/types';
 import { WeatherMoodId } from './CosmicWeather';
 import { audioEngine } from '../utils/audioEngine';
+import { getAtmosphereSnapshot, TimeOfDayId, SeasonId } from '../utils/atmosphereEngine';
 
 export type { LumiMood, SoulEmotion, LumiFlareType, LumiBehaviorState };
 
@@ -44,6 +45,8 @@ interface LumiCompanionProps {
   mood?: LumiMood | SoulEmotion;
   behavior?: LumiBehaviorState;
   weatherMood?: WeatherMoodId;
+  timeOfDayOverride?: TimeOfDayId;
+  seasonOverride?: SeasonId;
   flareTrigger?: number;
   flareType?: LumiFlareType;
   isBouncing?: boolean;
@@ -60,6 +63,8 @@ export const LumiCompanion: React.FC<LumiCompanionProps> = memo(({
   mood = 'idle',
   behavior = 'floating',
   weatherMood,
+  timeOfDayOverride,
+  seasonOverride,
   flareTrigger = 0,
   flareType = 'heart',
   isBouncing = false,
@@ -77,10 +82,15 @@ export const LumiCompanion: React.FC<LumiCompanionProps> = memo(({
   const [loveHearts, setLoveHearts] = useState<FloatingLoveHeart[]>([]);
   const [emotionParticles, setEmotionParticles] = useState<FloatingEmotionParticle[]>([]);
 
+  // Real-time atmosphere engine snapshot
+  const atmosphere = useMemo(() => {
+    return getAtmosphereSnapshot(undefined, timeOfDayOverride, seasonOverride);
+  }, [timeOfDayOverride, seasonOverride]);
+
   const isHovered = externalHovered || internalHovered;
   const isLoveMode = mood === 'loving' || mood === 'inlove' || mood === 'heart-eyes';
 
-  // Dynamic Aura Glow Color according to emotion
+  // Dynamic Aura Glow Color according to emotion and atmosphere
   const auraGlowColor = useMemo(() => {
     switch (mood) {
       case 'loving':
@@ -101,11 +111,11 @@ export const LumiCompanion: React.FC<LumiCompanionProps> = memo(({
       case 'starry':
         return '#c084fc';
       default:
-        return '#38bdf8';
+        return atmosphere.lumiAuraGlowColor;
     }
-  }, [mood]);
+  }, [mood, atmosphere.lumiAuraGlowColor]);
 
-  // Audio feedback and particle trigger on mood change
+  // Audio feedback on mood change
   const prevMoodRef = useRef(mood);
   useEffect(() => {
     if (prevMoodRef.current !== mood) {
@@ -158,7 +168,7 @@ export const LumiCompanion: React.FC<LumiCompanionProps> = memo(({
     return () => clearInterval(interval);
   }, [isLoveMode]);
 
-  // Continuous Emotion Particles (Cry Tears, Giggle/Laugh Sparkles, Angry Sparks)
+  // Continuous Emotion Particles
   useEffect(() => {
     if (mood !== 'cry' && mood !== 'laugh' && mood !== 'giggle' && mood !== 'angry') {
       setEmotionParticles([]);
@@ -175,7 +185,7 @@ export const LumiCompanion: React.FC<LumiCompanionProps> = memo(({
       if (mood === 'cry') {
         symbol = '💧';
         color = '#60a5fa';
-        driftY = 40 + Math.random() * 30; // Tears falling downward
+        driftY = 40 + Math.random() * 30;
       } else if (mood === 'angry') {
         symbol = Math.random() > 0.5 ? '💢' : '🔥';
         color = '#ef4444';
@@ -206,7 +216,7 @@ export const LumiCompanion: React.FC<LumiCompanionProps> = memo(({
     return () => clearInterval(interval);
   }, [mood]);
 
-  // Spring physics for smooth pointer tracking
+  // Spring physics for pointer tracking
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
   const springX = useSpring(mouseX, { stiffness: 180, damping: 20 });
@@ -228,7 +238,6 @@ export const LumiCompanion: React.FC<LumiCompanionProps> = memo(({
     setInternalHovered(false);
   };
 
-  // 19. Clicking 22 Interactive Reaction & Particle Spawn
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
@@ -243,8 +252,6 @@ export const LumiCompanion: React.FC<LumiCompanionProps> = memo(({
     };
 
     setClickHearts((prev) => [...prev.slice(-8), newHeart]);
-
-    // Audio chime feedback
     audioEngine.playChime(580 + Math.random() * 180, 0.4);
 
     if (onIncrementInteraction) onIncrementInteraction();
@@ -268,13 +275,26 @@ export const LumiCompanion: React.FC<LumiCompanionProps> = memo(({
       whileTap={{ scale: 0.94 }}
       className={`relative flex items-center justify-center cursor-pointer select-none ${className}`}
     >
-      {/* 23. Spawn Materialization Celestial Aura */}
+      {/* Spawn Materialization Celestial Aura */}
       {isSpawned && (
         <motion.div
           initial={{ scale: 0.4, opacity: 0.9, rotate: 0 }}
           animate={{ scale: [0.4, 2.2, 3.0], opacity: [0.9, 0.4, 0], rotate: 180 }}
           transition={{ duration: 1.4, ease: 'easeOut' }}
           className="absolute inset-0 rounded-full bg-gradient-to-tr from-cyan-400/50 via-pink-400/40 to-amber-300/40 blur-2xl pointer-events-none"
+        />
+      )}
+
+      {/* Seasonal Special Shimmer Effect (Winter Ice / Summer Solar / Spring Blossom / Autumn Gold) */}
+      {atmosphere.season === 'winter' && (
+        <motion.div
+          animate={{
+            scale: [1, 1.22, 1],
+            opacity: [0.3, 0.6, 0.3],
+            rotate: [0, 90, 180],
+          }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'linear' }}
+          className="absolute -inset-3 rounded-full border border-cyan-200/30 bg-radial from-cyan-100/10 to-transparent blur-sm pointer-events-none"
         />
       )}
 
@@ -291,17 +311,31 @@ export const LumiCompanion: React.FC<LumiCompanionProps> = memo(({
         }}
       />
 
-      {/* 3D React-Three-Fiber Canvas Stage */}
+      {/* 3D React-Three-Fiber Canvas Stage with Dynamic Atmospheric Lighting */}
       <div className="w-full h-full pointer-events-auto">
         <Canvas
-          dpr={[1, 2]}
+          dpr={[1, Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, 1.5)]}
           camera={{ position: [0, 0, 3.3], fov: 42 }}
-          gl={{ alpha: true, antialias: true, powerPreference: 'high-performance' }}
+          gl={{
+            alpha: true,
+            antialias: true,
+            powerPreference: 'high-performance',
+            preserveDrawingBuffer: false,
+            depth: true,
+          }}
         >
-          {/* Balanced Luminous Celestial Lighting */}
-          <ambientLight intensity={2.2} />
-          <directionalLight position={[3, 5, 4]} intensity={2.4} color="#ffffff" />
-          <directionalLight position={[-3, 2, -2]} intensity={1.5} color="#bae6fd" />
+          {/* Dynamic Ambient & Directional Lighting based on Real-Time Atmosphere */}
+          <ambientLight intensity={atmosphere.ambientIntensity} color={atmosphere.ambientLightColor} />
+          <directionalLight
+            position={[3, 5, 4]}
+            intensity={atmosphere.sunDirIntensity}
+            color={atmosphere.sunDirLightColor}
+          />
+          <directionalLight
+            position={[-3, 2, -2]}
+            intensity={1.5}
+            color={atmosphere.secondaryLightColor}
+          />
           <pointLight position={[0, -0.2, 1.8]} color="#fda4af" intensity={1.8} distance={5} />
           <pointLight position={[0, 1.2, 1.5]} color="#fef08a" intensity={1.2} distance={4} />
 
@@ -324,7 +358,7 @@ export const LumiCompanion: React.FC<LumiCompanionProps> = memo(({
         </Canvas>
       </div>
 
-      {/* 19. Interactive Click Heart Particles */}
+      {/* Interactive Click Heart Particles */}
       <AnimatePresence>
         {clickHearts.map((heart) => (
           <motion.div
@@ -348,7 +382,7 @@ export const LumiCompanion: React.FC<LumiCompanionProps> = memo(({
         ))}
       </AnimatePresence>
 
-      {/* 20. Love Mode Floating Heart Field */}
+      {/* Love Mode Floating Heart Field */}
       <AnimatePresence>
         {loveHearts.map((lh) => (
           <motion.div
@@ -373,23 +407,24 @@ export const LumiCompanion: React.FC<LumiCompanionProps> = memo(({
         ))}
       </AnimatePresence>
 
-      {/* Dynamic Emotion Ambient Particles (Tears, Giggle Sparkles, Laugh Stars, Angry Flames) */}
+      {/* Dynamic Emotion Ambient Particles */}
       <AnimatePresence>
         {emotionParticles.map((ep) => (
           <motion.div
             key={ep.id}
-            initial={{ scale: 0, x: ep.x, y: ep.y, opacity: 0, rotate: 0 }}
+            initial={{ scale: 0, x: ep.x, y: ep.y, opacity: 0 }}
             animate={{
               scale: [0, 1.3, 0.9],
               x: ep.x + ep.driftX,
               y: ep.y + ep.driftY,
-              opacity: [0, 0.95, 0],
+              opacity: [0, 0.9, 0],
               rotate: ep.rotation,
             }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 1.4, ease: 'easeOut' }}
-            className="absolute pointer-events-none z-10 select-none text-base"
+            transition={{ duration: 1.5, ease: 'easeOut' }}
+            className="absolute pointer-events-none z-10 select-none text-xs font-bold"
             style={{
+              color: ep.color,
               filter: `drop-shadow(0 0 6px ${ep.color})`,
             }}
           >
@@ -400,3 +435,5 @@ export const LumiCompanion: React.FC<LumiCompanionProps> = memo(({
     </motion.div>
   );
 });
+
+LumiCompanion.displayName = 'LumiCompanion';

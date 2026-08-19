@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { RANDOM_MEMORY_PHOTOS } from '../data/universeData';
 import { RandomPhotoMemory } from '../types';
 import { Sparkles, Heart, X, MapPin, Calendar, Eye, Compass, Camera, RefreshCw } from 'lucide-react';
 import { audioEngine } from '../utils/audioEngine';
 import { CelestialMemoryVisual } from './CelestialMemoryVisual';
+import { performanceManager } from '../utils/performanceManager';
 import {
   loadCustomPhotos,
   getDriveThumbnailUrl,
@@ -34,7 +35,7 @@ interface RandomMemoriesDrifterProps {
   onOpenPhotoManager?: () => void;
 }
 
-export const RandomMemoriesDrifter: React.FC<RandomMemoriesDrifterProps> = ({
+export const RandomMemoriesDrifter: React.FC<RandomMemoriesDrifterProps> = memo(({
   isSkyReady,
   onSpeak,
   manualSpawnTrigger,
@@ -170,7 +171,7 @@ export const RandomMemoriesDrifter: React.FC<RandomMemoriesDrifterProps> = ({
     const scheduleNext = () => {
       const randomInterval = 8500 + Math.random() * 9500; // 8.5-18 seconds
       spawnTimerRef.current = window.setTimeout(() => {
-        if (!isHoveringAny && !inspectedMemory) {
+        if (!isHoveringAny && !inspectedMemory && performanceManager.getIsTabVisible()) {
           spawnRandomMemory();
         }
         scheduleNext();
@@ -465,4 +466,6 @@ export const RandomMemoriesDrifter: React.FC<RandomMemoriesDrifterProps> = ({
       </AnimatePresence>
     </>
   );
-};
+});
+
+RandomMemoriesDrifter.displayName = 'RandomMemoriesDrifter';

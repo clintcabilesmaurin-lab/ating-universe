@@ -1,8 +1,10 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, memo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { CloudRain, Sparkles, Heart, Snowflake, Flame, Flower2, ChevronRight } from 'lucide-react';
+import { CloudRain, Sparkles, Heart, Snowflake, Flame, Flower2, ChevronRight, Clock, Sun, Moon, Sunrise, Sunset, Calendar } from 'lucide-react';
 import { audioEngine } from '../utils/audioEngine';
 import { lumiSync } from '../utils/lumiSyncBus';
+import { getAtmosphereSnapshot, AtmosphereState } from '../utils/atmosphereEngine';
+import { performanceManager } from '../utils/performanceManager';
 
 export type WeatherMoodId =
   | 'heart-rain'
@@ -107,7 +109,7 @@ interface CosmicWeatherProps {
   onSpeakMood?: (text: string) => void;
 }
 
-export const CosmicWeather: React.FC<CosmicWeatherProps> = ({
+export const CosmicWeather: React.FC<CosmicWeatherProps> = memo(({
   activeMoodId: activeMoodIdProp,
   onMoodChange,
   onSpeakMood,
@@ -123,6 +125,22 @@ export const CosmicWeather: React.FC<CosmicWeatherProps> = ({
     }
     return getDailyMood();
   });
+
+  const [atmosphere, setAtmosphere] = useState<AtmosphereState>(() => getAtmosphereSnapshot());
+  const [currentTimeFormatted, setCurrentTimeFormatted] = useState<string>('');
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setAtmosphere(getAtmosphereSnapshot(now));
+      setCurrentTimeFormatted(
+        now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      );
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 10000);
+    return () => clearInterval(interval);
+  }, []);
 
   const currentMoodId = activeMoodIdProp || internalMoodId;
 
@@ -140,7 +158,8 @@ export const CosmicWeather: React.FC<CosmicWeatherProps> = ({
   useEffect(() => {
     const width = window.innerWidth;
     const height = window.innerHeight;
-    const count = currentMood.particleCount;
+    const multiplier = performanceManager.getParticleMultiplier();
+    const count = Math.round(currentMood.particleCount * multiplier);
     const list: Particle[] = [];
 
     for (let i = 0; i < count; i++) {
@@ -169,13 +188,13 @@ export const CosmicWeather: React.FC<CosmicWeatherProps> = ({
 
         case 'stardust-embers':
           vx = (Math.random() - 0.5) * 0.5;
-          vy = -(0.35 + Math.random() * 0.75); // float upward
+          vy = -(0.35 + Math.random() * 0.75);
           size = 2.5 + Math.random() * 4;
           color = Math.random() < 0.4 ? '#fde047' : Math.random() < 0.8 ? '#fbbf24' : '#f59e0b';
           break;
 
         case 'sakura-breeze':
-          vx = 0.7 + Math.random() * 1.1; // drift across with wind
+          vx = 0.7 + Math.random() * 1.1;
           vy = 0.4 + Math.random() * 0.8;
           size = 6 + Math.random() * 8;
           rotSpeed = (Math.random() - 0.5) * 0.06;
@@ -227,154 +246,74 @@ export const CosmicWeather: React.FC<CosmicWeatherProps> = ({
 
     window.addEventListener('resize', handleResize);
 
-    const drawHeart = (c: CanvasRenderingContext2D, size: number, color: string, alpha: number) => {
-      c.save();
-      c.fillStyle = color;
-      c.globalAlpha = alpha;
-      c.beginPath();
-      const topCurveHeight = size * 0.3;
-      c.moveTo(0, topCurveHeight);
-      // top left curve
-      c.bezierCurveTo(0, 0, -size / 2, 0, -size / 2, topCurveHeight);
-      // bottom left curve
-      c.bezierCurveTo(-size / 2, (size + topCurveHeight) / 2, 0, (size + topCurveHeight) / 1.4, 0, size);
-      // bottom right curve
-      c.bezierCurveTo(0, (size + topCurveHeight) / 1.4, size / 2, (size + topCurveHeight) / 2, size / 2, topCurveHeight);
-      // top right curve
-      c.bezierCurveTo(size / 2, 0, 0, 0, 0, topCurveHeight);
-      c.closePath();
-      c.fill();
-
-      // Soft glow
-      c.shadowColor = color;
-      c.shadowBlur = 8;
-      c.fill();
-      c.restore();
-    };
-
-    const drawSnowflake = (c: CanvasRenderingContext2D, size: number, color: string, alpha: number) => {
-      c.save();
-      c.fillStyle = color;
-      c.globalAlpha = alpha;
-      c.beginPath();
-      c.arc(0, 0, size, 0, Math.PI * 2);
-      c.fill();
-
-      // Diamond halo cross
-      c.strokeStyle = color;
-      c.lineWidth = 0.8;
-      c.globalAlpha = alpha * 0.8;
-      c.beginPath();
-      c.moveTo(-size * 1.6, 0);
-      c.lineTo(size * 1.6, 0);
-      c.moveTo(0, -size * 1.6);
-      c.lineTo(0, size * 1.6);
-      c.stroke();
-      c.restore();
-    };
-
-    const drawEmber = (c: CanvasRenderingContext2D, size: number, color: string, alpha: number) => {
-      c.save();
-      c.globalAlpha = alpha;
-      const grad = c.createRadialGradient(0, 0, 0, 0, 0, size * 2.2);
-      grad.addColorStop(0, '#ffffff');
-      grad.addColorStop(0.3, color);
-      grad.addColorStop(1, 'transparent');
-      c.fillStyle = grad;
-      c.beginPath();
-      c.arc(0, 0, size * 2.2, 0, Math.PI * 2);
-      c.fill();
-      c.restore();
-    };
-
-    const drawPetal = (c: CanvasRenderingContext2D, size: number, color: string, alpha: number) => {
-      c.save();
-      c.fillStyle = color;
-      c.globalAlpha = alpha;
-      c.beginPath();
-      c.moveTo(0, -size);
-      c.quadraticCurveTo(size * 0.7, 0, 0, size);
-      c.quadraticCurveTo(-size * 0.7, 0, 0, -size);
-      c.closePath();
-      c.fill();
-      c.restore();
-    };
-
-    const drawAuroraMist = (c: CanvasRenderingContext2D, size: number, color: string, alpha: number) => {
-      c.save();
-      c.globalAlpha = alpha;
-      const grad = c.createRadialGradient(0, 0, 0, 0, 0, size * 2.5);
-      grad.addColorStop(0, color);
-      grad.addColorStop(0.5, `${color}66`);
-      grad.addColorStop(1, 'transparent');
-      c.fillStyle = grad;
-      c.beginPath();
-      c.arc(0, 0, size * 2.5, 0, Math.PI * 2);
-      c.fill();
-      c.restore();
-    };
-
-    let lastTime = performance.now();
-
-    const render = (time: number) => {
-      const dt = Math.min(0.05, (time - lastTime) / 1000);
-      lastTime = time;
+    const render = () => {
+      if (!performanceManager.getIsTabVisible()) {
+        animFrameRef.current = requestAnimationFrame(render);
+        return;
+      }
 
       ctx.clearRect(0, 0, width, height);
 
-      const moodId = currentMood.id;
-      const particles = particlesRef.current;
+      const list = particlesRef.current;
+      for (let i = 0; i < list.length; i++) {
+        const p = list[i];
 
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-
-        // Update wobble & sway
-        p.wobblePhase += p.wobbleSpeed * dt;
-        const wobbleX = Math.sin(p.wobblePhase) * 18 * dt;
-
-        p.x += p.vx * 60 * dt + wobbleX;
-        p.y += p.vy * 60 * dt;
+        p.x += p.vx;
+        p.y += p.vy;
         p.rotation += p.rotSpeed;
+        p.wobblePhase += 0.02 * p.wobbleSpeed;
 
-        // Twinkle subtle alpha breathing
-        p.alpha = p.baseAlpha * (0.8 + Math.sin(p.wobblePhase * 1.5) * 0.2);
+        if (p.x > width + 20) p.x = -20;
+        if (p.x < -20) p.x = width + 20;
+        if (p.y > height + 20) p.y = -20;
+        if (p.y < -20) p.y = height + 20;
 
-        // Viewport wrap boundaries
-        if (p.vy > 0 && p.y > height + 25) {
-          p.y = -20;
-          p.x = Math.random() * width;
-        } else if (p.vy < 0 && p.y < -25) {
-          p.y = height + 20;
-          p.x = Math.random() * width;
-        }
-
-        if (p.x > width + 30) {
-          p.x = -25;
-        } else if (p.x < -30) {
-          p.x = width + 25;
-        }
-
-        // Draw particle
         ctx.save();
         ctx.translate(p.x, p.y);
-        ctx.rotate(p.rotation);
+        ctx.rotate(p.rotation + Math.sin(p.wobblePhase) * 0.15);
 
-        switch (moodId) {
-          case 'heart-rain':
-            drawHeart(ctx, p.size, p.color, p.alpha);
-            break;
-          case 'soft-snow':
-            drawSnowflake(ctx, p.size, p.color, p.alpha);
-            break;
-          case 'stardust-embers':
-            drawEmber(ctx, p.size, p.color, p.alpha);
-            break;
-          case 'sakura-breeze':
-            drawPetal(ctx, p.size, p.color, p.alpha);
-            break;
-          case 'aurora-mist':
-            drawAuroraMist(ctx, p.size, p.color, p.alpha);
-            break;
+        if (currentMood.id === 'heart-rain') {
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha * (0.85 + Math.sin(p.wobblePhase) * 0.15);
+          const s = p.size;
+          ctx.beginPath();
+          ctx.moveTo(0, s * 0.3);
+          ctx.bezierCurveTo(-s * 0.5, -s * 0.3, -s, s * 0.1, 0, s);
+          ctx.bezierCurveTo(s, s * 0.1, s * 0.5, -s * 0.3, 0, s * 0.3);
+          ctx.fill();
+        } else if (currentMood.id === 'soft-snow') {
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha;
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (currentMood.id === 'stardust-embers') {
+          const pulse = 0.6 + Math.sin(p.wobblePhase * 3) * 0.4;
+          ctx.globalAlpha = p.alpha * pulse;
+          const radGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, p.size * 2);
+          radGrad.addColorStop(0, '#ffffff');
+          radGrad.addColorStop(0.4, p.color);
+          radGrad.addColorStop(1, 'rgba(251, 191, 36, 0)');
+          ctx.fillStyle = radGrad;
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size * 2, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (currentMood.id === 'sakura-breeze') {
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha * 0.85;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, p.size, p.size * 0.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (currentMood.id === 'aurora-mist') {
+          const pulse = 0.5 + Math.sin(p.wobblePhase * 2) * 0.5;
+          ctx.globalAlpha = p.alpha * pulse * 0.4;
+          const aGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, p.size * 8);
+          aGrad.addColorStop(0, p.color);
+          aGrad.addColorStop(1, 'rgba(167, 139, 250, 0)');
+          ctx.fillStyle = aGrad;
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size * 8, 0, Math.PI * 2);
+          ctx.fill();
         }
 
         ctx.restore();
@@ -422,8 +361,8 @@ export const CosmicWeather: React.FC<CosmicWeatherProps> = ({
         className="fixed inset-0 w-full h-full pointer-events-none z-[4] mix-blend-screen"
       />
 
-      {/* Atmospheric Weather Mood Badge (Top-Left Pill in Sky) */}
-      <div className="fixed top-3 left-3 sm:top-4 sm:left-4 z-40">
+      {/* Atmospheric Weather & Real-Time Atmosphere Badge (Top-Left Pill in Sky) */}
+      <div className="fixed top-3 left-3 sm:top-4 sm:left-4 z-40 flex items-center gap-2">
         <div className="relative">
           <motion.button
             id="btn-cosmic-weather-toggle"
@@ -436,7 +375,7 @@ export const CosmicWeather: React.FC<CosmicWeatherProps> = ({
               borderColor: currentMood.badgeBorder,
               color: '#ffffff',
             }}
-            title="Baguhin ang Panahon ng Ating Uniberso"
+            title="Kasalukuyang Panahon & Oras ng Ating Uniberso"
           >
             <span
               className="p-1 rounded-full flex items-center justify-center animate-pulse"
@@ -447,6 +386,11 @@ export const CosmicWeather: React.FC<CosmicWeatherProps> = ({
             <span className="font-serif italic font-medium hidden xs:inline text-slate-100">
               {currentMood.name}
             </span>
+            <span className="text-[10px] text-cyan-300/80 font-mono hidden sm:inline pl-1 border-l border-white/15 flex items-center gap-1">
+              <span>{atmosphere.timeEmoji}</span>
+              <span>{atmosphere.seasonEmoji}</span>
+              {currentTimeFormatted && <span>{currentTimeFormatted}</span>}
+            </span>
             <ChevronRight
               className={`w-3 h-3 text-slate-400 group-hover:text-white transition-transform duration-200 ${
                 isMenuOpen ? 'rotate-90' : ''
@@ -454,7 +398,7 @@ export const CosmicWeather: React.FC<CosmicWeatherProps> = ({
             />
           </motion.button>
 
-          {/* Dropdown Menu to Choose Cosmic Weather */}
+          {/* Dropdown Menu to Choose Cosmic Weather & View Real-Time Status */}
           <AnimatePresence>
             {isMenuOpen && (
               <motion.div
@@ -462,11 +406,28 @@ export const CosmicWeather: React.FC<CosmicWeatherProps> = ({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -8, scale: 0.95 }}
                 transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="absolute top-full left-0 mt-2 w-64 p-2 rounded-2xl bg-slate-950/90 border border-white/15 backdrop-blur-xl shadow-2xl z-50 space-y-1"
+                className="absolute top-full left-0 mt-2 w-72 p-2.5 rounded-2xl bg-slate-950/95 border border-white/15 backdrop-blur-xl shadow-2xl z-50 space-y-2"
               >
-                <div className="px-2.5 py-1.5 border-b border-white/10 flex items-center justify-between">
+                {/* Real-time Atmosphere Info Panel */}
+                <div className="p-2 rounded-xl bg-gradient-to-r from-cyan-950/40 via-purple-950/40 to-pink-950/40 border border-white/10 text-xs">
+                  <div className="flex items-center justify-between text-cyan-200 font-serif font-semibold mb-1">
+                    <span className="flex items-center gap-1.5">
+                      <span>{atmosphere.timeEmoji}</span>
+                      <span>{atmosphere.timeLabel}</span>
+                    </span>
+                    <span className="flex items-center gap-1 text-pink-200">
+                      <span>{atmosphere.seasonEmoji}</span>
+                      <span>{atmosphere.seasonLabel}</span>
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-300 font-serif italic leading-relaxed">
+                    {atmosphere.tagline}
+                  </p>
+                </div>
+
+                <div className="px-2 py-1 border-b border-white/10 flex items-center justify-between">
                   <span className="text-[10px] uppercase font-mono tracking-widest text-slate-400">
-                    Panahon Ngayong Araw
+                    Cosmic Weather Themes
                   </span>
                   <span className="text-[10px] text-amber-300 font-sans">Araw-araw nagbabago</span>
                 </div>
@@ -511,4 +472,6 @@ export const CosmicWeather: React.FC<CosmicWeatherProps> = ({
       </div>
     </>
   );
-};
+});
+
+CosmicWeather.displayName = 'CosmicWeather';

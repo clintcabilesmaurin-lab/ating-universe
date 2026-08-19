@@ -1,5 +1,12 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, useMemo, memo } from 'react';
 import { audioEngine } from '../utils/audioEngine';
+import {
+  AtmosphereState,
+  getAtmosphereSnapshot,
+  TimeOfDayId,
+  SeasonId,
+} from '../utils/atmosphereEngine';
+import { performanceManager } from '../utils/performanceManager';
 
 type RgbTuple = [number, number, number];
 
@@ -12,8 +19,8 @@ interface Star {
   twinkleSpeed: number;
   twinklePhase: number;
   glow: boolean;
-  coolRgb: RgbTuple; // Crystalline ice-blue / diamond white at zenith indigo
-  warmRgb: RgbTuple; // Deeply saturated gold / rose / violet / amber at dusk purple
+  coolRgb: RgbTuple;
+  warmRgb: RgbTuple;
   saturationFactor: number;
 }
 
@@ -29,6 +36,7 @@ interface Meteor {
 }
 
 interface Ripple {
+  active: boolean;
   x: number;
   y: number;
   radius: number;
@@ -36,15 +44,33 @@ interface Ripple {
   alpha: number;
 }
 
+interface SeasonalParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+  rotation: number;
+  rotSpeed: number;
+  wobblePhase: number;
+  wobbleSpeed: number;
+  alpha: number;
+  baseAlpha: number;
+  type: 'sakura' | 'firefly' | 'amber-leaf' | 'snowflake';
+  color: string;
+}
+
 interface SkyCanvasProps {
   zoneShift?: number; // 0 (deep indigo) to 1 (dusk purple)
   onMeteorClick?: () => void;
   isBuiltIn?: boolean;
+  timeOfDayOverride?: TimeOfDayId;
+  seasonOverride?: SeasonId;
 }
 
 interface MountainPoint {
-  x: number; // 0 to 1 fraction across screen width
-  y: number; // 0 to 1 normalized height fraction of tier band
+  x: number;
+  y: number;
 }
 
 interface MountainTierNatural {
@@ -62,9 +88,11 @@ interface MountainTierNatural {
   mistWarm: RgbTuple;
 }
 
-const STAR_COUNT = 125;
+const BASE_STAR_COUNT = 145;
+const BASE_SEASONAL_PARTICLE_COUNT = 32;
+const MAX_RIPPLES = 16;
 
-// Defined Natural Smooth Mountain Range Tiers (Distant Cordillera, Mount Pangilatan Massif, Gentle Rolling Foothills)
+// Smooth Mountain Range Tiers
 const NATURAL_MOUNTAIN_TIERS: MountainTierNatural[] = [
   {
     depth: 0.85,
@@ -104,13 +132,12 @@ const NATURAL_MOUNTAIN_TIERS: MountainTierNatural[] = [
     rimWarm: [250, 160, 120],
     mistCool: [18, 26, 46],
     mistWarm: [38, 14, 42],
-    // Featuring natural rounded Mount Pangilatan peak around x=0.34
     points: [
       { x: -0.12, y: 0.28 },
       { x: 0.02, y: 0.55 },
       { x: 0.14, y: 0.42 },
       { x: 0.24, y: 0.75 },
-      { x: 0.34, y: 0.98 }, // Mount Pangilatan Smooth Summit
+      { x: 0.34, y: 0.98 }, // Mount Pangilatan Summit
       { x: 0.44, y: 0.68 },
       { x: 0.56, y: 0.84 },
       { x: 0.68, y: 0.52 },
@@ -132,7 +159,6 @@ const NATURAL_MOUNTAIN_TIERS: MountainTierNatural[] = [
     rimWarm: [220, 120, 90],
     mistCool: [12, 16, 28],
     mistWarm: [22, 8, 24],
-    // Gentle rolling front hills
     points: [
       { x: -0.15, y: 0.20 },
       { x: -0.02, y: 0.48 },
@@ -158,6 +184,14 @@ const interpolateRgb = (c1: RgbTuple, c2: RgbTuple, t: number): string => {
   return `rgb(${r}, ${g}, ${b})`;
 };
 
+const interpolateRgbTuple = (c1: RgbTuple, c2: RgbTuple, t: number): RgbTuple => {
+  const clampedT = Math.max(0, Math.min(1, t));
+  const r = Math.round(c1[0] + (c2[0] - c1[0]) * clampedT);
+  const g = Math.round(c1[1] + (c2[1] - c1[1]) * clampedT);
+  const b = Math.round(c1[2] + (c2[2] - c1[2]) * clampedT);
+  return [r, g, b];
+};
+
 const interpolateRgba = (c1: RgbTuple, c2: RgbTuple, t: number, alpha: number): string => {
   const clampedT = Math.max(0, Math.min(1, t));
   const r = Math.round(c1[0] + (c2[0] - c1[0]) * clampedT);
@@ -166,39 +200,60 @@ const interpolateRgba = (c1: RgbTuple, c2: RgbTuple, t: number, alpha: number): 
   return `rgba(${r}, ${g}, ${b}, ${Math.max(0, Math.min(1, alpha))})`;
 };
 
-export const SkyCanvas: React.FC<SkyCanvasProps> = ({
+export const SkyCanvas: React.FC<SkyCanvasProps> = memo(({
   zoneShift = 0,
   onMeteorClick,
   isBuiltIn = true,
+  timeOfDayOverride,
+  seasonOverride,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const starsRef = useRef<Star[]>([]);
+  const seasonalParticlesRef = useRef<SeasonalParticle[]>([]);
   const meteorRef = useRef<Meteor | null>(null);
-  const ripplesRef = useRef<Ripple[]>([]);
+  
+  // Pre-allocated object pool for ripples (prevents garbage collection spikes)
+  const ripplePoolRef = useRef<Ripple[]>(
+    Array.from({ length: MAX_RIPPLES }, () => ({
+      active: false,
+      x: 0,
+      y: 0,
+      radius: 0,
+      maxRadius: 45,
+      alpha: 0,
+    }))
+  );
+  
   const lastMeteorCheckRef = useRef<number>(0);
   const meteorLingerStartRef = useRef<number>(Date.now());
   const [canCatchMeteor, setCanCatchMeteor] = useState(false);
 
-  // Mouse & Scroll Parallax Coordinates (smoothed via lerp)
+  // Parallax Coordinates
   const targetMouseRef = useRef({ x: 0, y: 0 });
   const currentMouseRef = useRef({ x: 0, y: 0 });
 
-  // Initialize star field with chromatic palettes for zoneShift
+  // Get current atmosphere snapshot
+  const atmosphere = useMemo(() => {
+    return getAtmosphereSnapshot(undefined, timeOfDayOverride, seasonOverride);
+  }, [timeOfDayOverride, seasonOverride]);
+
+  // Initialize stars with performance multiplier
   const initStars = useCallback(() => {
     const list: Star[] = [];
+    const multiplier = performanceManager.getParticleMultiplier();
+    const starCount = Math.round(BASE_STAR_COUNT * multiplier);
 
-    // Distinct cool & warm color pairings for deep indigo -> dusk purple
     const colorPairings: { cool: RgbTuple; warm: RgbTuple }[] = [
-      { cool: [255, 255, 255], warm: [255, 230, 160] }, // Pure Diamond -> Celestial Gold
-      { cool: [210, 235, 255], warm: [255, 185, 95] },  // Ice Azure -> Solar Amber
-      { cool: [195, 225, 255], warm: [255, 140, 180] }, // Crystalline Blue -> Romantic Rose
-      { cool: [225, 240, 255], warm: [225, 155, 255] }, // Starlight White -> Cosmic Lavender
-      { cool: [180, 220, 255], warm: [248, 115, 215] }, // Deep Cyan -> Radiant Magenta
-      { cool: [240, 248, 255], warm: [255, 205, 130] }, // Stellar Pearl -> Warm Topaz
+      { cool: [255, 255, 255], warm: [255, 230, 160] },
+      { cool: [210, 235, 255], warm: [255, 185, 95] },
+      { cool: [195, 225, 255], warm: [255, 140, 180] },
+      { cool: [225, 240, 255], warm: [225, 155, 255] },
+      { cool: [180, 220, 255], warm: [248, 115, 215] },
+      { cool: [240, 248, 255], warm: [255, 205, 130] },
     ];
 
-    for (let i = 0; i < STAR_COUNT; i++) {
-      const isBand = i < STAR_COUNT * 0.38;
+    for (let i = 0; i < starCount; i++) {
+      const isBand = i < starCount * 0.38;
       let xFrac = Math.random();
       let yFrac = Math.random() * 0.88;
 
@@ -229,6 +284,32 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
     starsRef.current = list;
   }, []);
 
+  // Initialize seasonal floating particles with adaptive pooling
+  const initSeasonalParticles = useCallback((seasonType: 'sakura' | 'firefly' | 'amber-leaf' | 'snowflake', color: string) => {
+    const list: SeasonalParticle[] = [];
+    const multiplier = performanceManager.getParticleMultiplier();
+    const particleCount = Math.round(BASE_SEASONAL_PARTICLE_COUNT * multiplier);
+
+    for (let i = 0; i < particleCount; i++) {
+      list.push({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        vx: seasonType === 'snowflake' ? (Math.random() - 0.5) * 0.4 : seasonType === 'firefly' ? (Math.random() - 0.5) * 0.8 : 0.6 + Math.random() * 0.8,
+        vy: seasonType === 'snowflake' ? 0.8 + Math.random() * 0.9 : seasonType === 'firefly' ? (Math.random() - 0.5) * 0.7 : 0.4 + Math.random() * 0.6,
+        size: seasonType === 'sakura' ? 6 + Math.random() * 5 : seasonType === 'amber-leaf' ? 8 + Math.random() * 6 : seasonType === 'firefly' ? 3 + Math.random() * 3 : 2.5 + Math.random() * 3.5,
+        rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.04,
+        wobblePhase: Math.random() * Math.PI * 2,
+        wobbleSpeed: 0.8 + Math.random() * 1.2,
+        alpha: 0.3 + Math.random() * 0.6,
+        baseAlpha: 0.3 + Math.random() * 0.6,
+        type: seasonType,
+        color,
+      });
+    }
+    seasonalParticlesRef.current = list;
+  }, []);
+
   // Spawn a meteor
   const spawnMeteor = (width: number, height: number, now: number) => {
     const fromLeft = Math.random() < 0.5;
@@ -254,10 +335,19 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
 
   useEffect(() => {
     initStars();
+    initSeasonalParticles(atmosphere.seasonalParticleType, atmosphere.seasonalParticleColor);
     meteorLingerStartRef.current = Date.now();
-  }, [initStars]);
 
-  // Global mousemove listener for 3D parallax tracking
+    // Re-tune particles if device tier changes
+    const unsub = performanceManager.subscribe(() => {
+      initStars();
+      initSeasonalParticles(atmosphere.seasonalParticleType, atmosphere.seasonalParticleColor);
+    });
+
+    return () => unsub();
+  }, [initStars, initSeasonalParticles, atmosphere.seasonalParticleType, atmosphere.seasonalParticleColor]);
+
+  // Global mousemove parallax listener (passive)
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const nx = (e.clientX / window.innerWidth - 0.5) * 2;
@@ -273,7 +363,7 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: false });
     if (!ctx) return;
 
     let animId: number;
@@ -286,96 +376,258 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
       height = canvas.height = window.innerHeight;
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', handleResize, { passive: true });
 
     const render = () => {
+      // Record FPS for adaptive quality adjustment
+      performanceManager.recordFrame();
+
+      // Pause/skip rendering if browser tab is backgrounded
+      if (!performanceManager.getIsTabVisible()) {
+        animId = requestAnimationFrame(render);
+        return;
+      }
+
       const now = Date.now();
       const clampedShift = Math.max(0, Math.min(1, zoneShift));
 
-      // Smooth lerp mouse parallax offset
       currentMouseRef.current.x += (targetMouseRef.current.x - currentMouseRef.current.x) * 0.05;
       currentMouseRef.current.y += (targetMouseRef.current.y - currentMouseRef.current.y) * 0.05;
       const mouseOffset = currentMouseRef.current;
 
-      ctx.clearRect(0, 0, width, height);
-
-      // 1. Draw atmospheric background gradient (Continuous smooth transition from deep indigo to dusk purple)
+      // =====================================================================
+      // 1. DYNAMIC ATMOSPHERE SKY GRADIENT (Day/Night + ZoneShift)
+      // =====================================================================
       const grad = ctx.createLinearGradient(0, 0, 0, height);
-      
-      // Zenith Top
-      grad.addColorStop(0, interpolateRgb([6, 8, 22], [12, 6, 30], clampedShift));
-      
-      // Upper Atmosphere
-      grad.addColorStop(0.35, interpolateRgb([18, 26, 62], [42, 18, 74], clampedShift));
-      
-      // Mid Horizon Glow
-      grad.addColorStop(0.68, interpolateRgb([36, 48, 96], [116, 42, 92], clampedShift));
-      
-      // Horizon Base Ember
-      grad.addColorStop(1, interpolateRgb([60, 74, 126], [222, 108, 72], clampedShift));
+
+      const zenithRgb = interpolateRgbTuple(atmosphere.skyZenithRgb, [12, 6, 30], clampedShift * 0.4);
+      const upperRgb = interpolateRgbTuple(atmosphere.skyUpperRgb, [42, 18, 74], clampedShift * 0.4);
+      const midRgb = interpolateRgbTuple(atmosphere.skyMidRgb, [116, 42, 92], clampedShift * 0.5);
+      const horizonRgb = interpolateRgbTuple(atmosphere.skyHorizonRgb, [222, 108, 72], clampedShift * 0.6);
+
+      grad.addColorStop(0, `rgb(${zenithRgb[0]}, ${zenithRgb[1]}, ${zenithRgb[2]})`);
+      grad.addColorStop(0.35, `rgb(${upperRgb[0]}, ${upperRgb[1]}, ${upperRgb[2]})`);
+      grad.addColorStop(0.68, `rgb(${midRgb[0]}, ${midRgb[1]}, ${midRgb[2]})`);
+      grad.addColorStop(1, `rgb(${horizonRgb[0]}, ${horizonRgb[1]}, ${horizonRgb[2]})`);
 
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, width, height);
 
-      // 2. Draw Milky Way diffuse glow with zoneShift tinting & saturation
-      const milkySteps = 8;
-      const bandBaseX = width * 0.22 + mouseOffset.x * 25;
-      const bandBaseY = mouseOffset.y * 15;
-      
-      // Milky Way shifts from cool celestial cyan-violet to warm saturated magenta-lavender
-      const coolMilkyRgb: RgbTuple = [185, 210, 255];
-      const warmMilkyRgb: RgbTuple = [240, 145, 225];
-      const milkyAlphaCore = 0.07 + clampedShift * 0.06;
-      const milkyAlphaEdge = 0.02 + clampedShift * 0.03;
+      // =====================================================================
+      // 2. CELESTIAL BODIES (Soft Volumetric Ambient Sun & Luminous Moon)
+      // =====================================================================
+      const isDayOrDuskOrDawn = atmosphere.timeOfDay !== 'night';
+      const isNightOrDawnOrDusk = atmosphere.timeOfDay !== 'day';
 
-      for (let i = 0; i < milkySteps; i++) {
-        const t = i / (milkySteps - 1);
-        const y = height * t + bandBaseY;
-        const x = bandBaseX + Math.sin(t * Math.PI) * width * 0.14;
-        const r = width * 0.25 * (0.6 + Math.sin(t * Math.PI) * 0.5);
+      // A. VOLUMETRIC HORIZON AMBIENT BLOOM (Soft background warmth)
+      if (isDayOrDuskOrDawn) {
+        const horizonBloomHeight = height * 0.45;
+        const horizonBloom = ctx.createLinearGradient(0, height - horizonBloomHeight, 0, height);
+        if (atmosphere.timeOfDay === 'dusk') {
+          horizonBloom.addColorStop(0, 'rgba(244, 63, 94, 0)');
+          horizonBloom.addColorStop(0.5, 'rgba(251, 146, 60, 0.12)');
+          horizonBloom.addColorStop(1, 'rgba(238, 112, 68, 0.28)');
+        } else if (atmosphere.timeOfDay === 'dawn') {
+          horizonBloom.addColorStop(0, 'rgba(254, 215, 170, 0)');
+          horizonBloom.addColorStop(0.5, 'rgba(251, 146, 60, 0.10)');
+          horizonBloom.addColorStop(1, 'rgba(252, 175, 120, 0.24)');
+        } else {
+          horizonBloom.addColorStop(0, 'rgba(125, 211, 252, 0)');
+          horizonBloom.addColorStop(0.6, 'rgba(255, 224, 130, 0.09)');
+          horizonBloom.addColorStop(1, 'rgba(255, 248, 231, 0.22)');
+        }
+        ctx.fillStyle = horizonBloom;
+        ctx.fillRect(0, height - horizonBloomHeight, width, horizonBloomHeight);
+      }
 
-        const mGrad = ctx.createRadialGradient(x, y, 0, x, y, r);
-        mGrad.addColorStop(0, interpolateRgba(coolMilkyRgb, warmMilkyRgb, clampedShift, milkyAlphaCore));
-        mGrad.addColorStop(0.5, interpolateRgba(coolMilkyRgb, warmMilkyRgb, clampedShift, milkyAlphaEdge));
-        mGrad.addColorStop(1, interpolateRgba(coolMilkyRgb, warmMilkyRgb, clampedShift, 0));
+      // B. RENDER NATURAL VOLUMETRIC SUN (During Dawn, Day, or Dusk)
+      if (isDayOrDuskOrDawn && atmosphere.sunAltitude > 0) {
+        const sunX = width * atmosphere.sunAzimuth + mouseOffset.x * 20;
+        const sunY = height * (1 - atmosphere.sunAltitude * 0.72) + mouseOffset.y * 15;
+        
+        // Multi-tier radii for soft ambient radial diffusion
+        const coreRadius = atmosphere.timeOfDay === 'day' ? 44 : 52;
+        const coronaRadius = coreRadius * 2.8;
+        const atmosphericBloomRadius = coreRadius * 6.8;
 
-        ctx.fillStyle = mGrad;
+        // Layer 1: Wide Volumetric Atmospheric Flare / Sky Bloom
+        const wideSkyBloom = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, atmosphericBloomRadius);
+        if (atmosphere.timeOfDay === 'dawn') {
+          wideSkyBloom.addColorStop(0, 'rgba(254, 215, 170, 0.32)');
+          wideSkyBloom.addColorStop(0.35, 'rgba(251, 146, 60, 0.16)');
+          wideSkyBloom.addColorStop(0.7, 'rgba(244, 114, 182, 0.05)');
+          wideSkyBloom.addColorStop(1, 'rgba(244, 114, 182, 0)');
+        } else if (atmosphere.timeOfDay === 'dusk') {
+          wideSkyBloom.addColorStop(0, 'rgba(251, 146, 60, 0.38)');
+          wideSkyBloom.addColorStop(0.35, 'rgba(244, 63, 94, 0.18)');
+          wideSkyBloom.addColorStop(0.7, 'rgba(168, 85, 247, 0.06)');
+          wideSkyBloom.addColorStop(1, 'rgba(168, 85, 247, 0)');
+        } else {
+          wideSkyBloom.addColorStop(0, 'rgba(255, 248, 231, 0.30)');
+          wideSkyBloom.addColorStop(0.35, 'rgba(255, 224, 130, 0.15)');
+          wideSkyBloom.addColorStop(0.68, 'rgba(125, 211, 252, 0.06)');
+          wideSkyBloom.addColorStop(1, 'rgba(125, 211, 252, 0)');
+        }
+
+        ctx.fillStyle = wideSkyBloom;
         ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.arc(sunX, sunY, atmosphericBloomRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Layer 2: Mid-tier Soft Ambient Corona Diffusion
+        const coronaGlow = ctx.createRadialGradient(sunX, sunY, coreRadius * 0.25, sunX, sunY, coronaRadius);
+        if (atmosphere.timeOfDay === 'dusk') {
+          coronaGlow.addColorStop(0, 'rgba(255, 237, 213, 0.70)');
+          coronaGlow.addColorStop(0.25, 'rgba(251, 146, 60, 0.42)');
+          coronaGlow.addColorStop(0.6, 'rgba(244, 63, 94, 0.18)');
+          coronaGlow.addColorStop(1, 'rgba(244, 63, 94, 0)');
+        } else if (atmosphere.timeOfDay === 'dawn') {
+          coronaGlow.addColorStop(0, 'rgba(255, 247, 237, 0.75)');
+          coronaGlow.addColorStop(0.28, 'rgba(254, 215, 170, 0.48)');
+          coronaGlow.addColorStop(0.62, 'rgba(251, 146, 60, 0.20)');
+          coronaGlow.addColorStop(1, 'rgba(251, 146, 60, 0)');
+        } else {
+          coronaGlow.addColorStop(0, 'rgba(255, 255, 255, 0.82)');
+          coronaGlow.addColorStop(0.22, 'rgba(255, 248, 231, 0.58)');
+          coronaGlow.addColorStop(0.52, 'rgba(255, 224, 130, 0.28)');
+          coronaGlow.addColorStop(0.82, 'rgba(255, 183, 77, 0.08)');
+          coronaGlow.addColorStop(1, 'rgba(255, 183, 77, 0)');
+        }
+
+        ctx.fillStyle = coronaGlow;
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, coronaRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Layer 3: Organic Ambient Sun Core with Zero Hard Edges
+        const coreGlow = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, coreRadius);
+        if (atmosphere.timeOfDay === 'dusk') {
+          coreGlow.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+          coreGlow.addColorStop(0.3, 'rgba(254, 215, 170, 0.85)');
+          coreGlow.addColorStop(0.65, 'rgba(251, 146, 60, 0.50)');
+          coreGlow.addColorStop(1, 'rgba(244, 63, 94, 0)');
+        } else if (atmosphere.timeOfDay === 'dawn') {
+          coreGlow.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
+          coreGlow.addColorStop(0.32, 'rgba(255, 248, 231, 0.85)');
+          coreGlow.addColorStop(0.68, 'rgba(254, 215, 170, 0.50)');
+          coreGlow.addColorStop(1, 'rgba(251, 146, 60, 0)');
+        } else {
+          coreGlow.addColorStop(0, 'rgba(255, 255, 255, 0.98)');
+          coreGlow.addColorStop(0.26, 'rgba(255, 248, 231, 0.88)');
+          coreGlow.addColorStop(0.56, 'rgba(255, 224, 130, 0.58)');
+          coreGlow.addColorStop(0.85, 'rgba(255, 183, 77, 0.22)');
+          coreGlow.addColorStop(1, 'rgba(255, 183, 77, 0)');
+        }
+
+        ctx.fillStyle = coreGlow;
+        ctx.beginPath();
+        ctx.arc(sunX, sunY, coreRadius, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // 3. Draw Stars with Parallax Depth, Dynamic Twinkle Intensity, and Color Saturation Shift
+      // C. RENDER MOON (During Night, Dawn, or Dusk)
+      if (isNightOrDawnOrDusk && atmosphere.moonAltitude > 0) {
+        const moonX = width * atmosphere.moonAzimuth + mouseOffset.x * 25;
+        const moonY = height * (1 - atmosphere.moonAltitude * 0.78) + mouseOffset.y * 18;
+        const moonRadius = 32;
+
+        // Lunar Halo Glow
+        const moonHalo = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY, moonRadius * 4.2);
+        moonHalo.addColorStop(0, 'rgba(224, 242, 254, 0.35)');
+        moonHalo.addColorStop(0.5, 'rgba(147, 197, 253, 0.15)');
+        moonHalo.addColorStop(1, 'rgba(99, 102, 241, 0)');
+
+        ctx.fillStyle = moonHalo;
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, moonRadius * 4.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Moon Base Disc with soft organic rim
+        const moonGrad = ctx.createRadialGradient(moonX - 6, moonY - 6, 2, moonX, moonY, moonRadius);
+        moonGrad.addColorStop(0, '#ffffff');
+        moonGrad.addColorStop(0.65, '#e0f2fe');
+        moonGrad.addColorStop(0.9, '#bae6fd');
+        moonGrad.addColorStop(1, 'rgba(186, 230, 253, 0.4)');
+
+        ctx.fillStyle = moonGrad;
+        ctx.beginPath();
+        ctx.arc(moonX, moonY, moonRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Soft Lunar Craters
+        const craters = [
+          { dx: -6, dy: -6, r: 5, alpha: 0.12 },
+          { dx: 7, dy: 4, r: 6.5, alpha: 0.10 },
+          { dx: 2, dy: -8, r: 4, alpha: 0.09 },
+          { dx: -8, dy: 6, r: 4.5, alpha: 0.11 },
+          { dx: 4, dy: -2, r: 3, alpha: 0.08 },
+        ];
+
+        craters.forEach((c) => {
+          ctx.fillStyle = `rgba(100, 140, 200, ${c.alpha})`;
+          ctx.beginPath();
+          ctx.arc(moonX + c.dx, moonY + c.dy, c.r, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+
+      // =====================================================================
+      // 3. MILKY WAY DIFFUSE GLOW (Visible at night/dusk)
+      // =====================================================================
+      if (atmosphere.timeOfDay === 'night' || atmosphere.timeOfDay === 'dusk') {
+        const milkySteps = 8;
+        const bandBaseX = width * 0.22 + mouseOffset.x * 25;
+        const bandBaseY = mouseOffset.y * 15;
+        const coolMilkyRgb: RgbTuple = [185, 210, 255];
+        const warmMilkyRgb: RgbTuple = [240, 145, 225];
+        const milkyAlphaCore = 0.07 + clampedShift * 0.06;
+        const milkyAlphaEdge = 0.02 + clampedShift * 0.03;
+
+        for (let i = 0; i < milkySteps; i++) {
+          const t = i / (milkySteps - 1);
+          const y = height * t + bandBaseY;
+          const x = bandBaseX + Math.sin(t * Math.PI) * width * 0.14;
+          const r = width * 0.25 * (0.6 + Math.sin(t * Math.PI) * 0.5);
+
+          const mGrad = ctx.createRadialGradient(x, y, 0, x, y, r);
+          mGrad.addColorStop(0, interpolateRgba(coolMilkyRgb, warmMilkyRgb, clampedShift, milkyAlphaCore));
+          mGrad.addColorStop(0.5, interpolateRgba(coolMilkyRgb, warmMilkyRgb, clampedShift, milkyAlphaEdge));
+          mGrad.addColorStop(1, interpolateRgba(coolMilkyRgb, warmMilkyRgb, clampedShift, 0));
+
+          ctx.fillStyle = mGrad;
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // =====================================================================
+      // 4. STARS WITH REAL-TIME DAY/NIGHT BRIGHTNESS
+      // =====================================================================
       if (isBuiltIn) {
         const elapsed = now / 1000;
+        const dayStarAlphaMultiplier =
+          atmosphere.timeOfDay === 'day' ? 0.25 : atmosphere.timeOfDay === 'dawn' ? 0.55 : atmosphere.timeOfDay === 'dusk' ? 0.85 : 1.0;
 
         starsRef.current.forEach((star) => {
-          // 3D parallax displacement based on depth
           const parallaxX = mouseOffset.x * star.depth * 35;
           const parallaxY = mouseOffset.y * star.depth * 25;
 
           const x = star.xFrac * width + parallaxX;
           const y = star.yFrac * height + parallaxY;
 
-          // Expand twinkle intensity: Deep Indigo is crisp and calm (0.18 amp), Dusk Purple twinkles vibrantly (0.75 amp)
           const twinkleAmp = 0.18 + clampedShift * 0.57;
           const speedMultiplier = 1.0 + clampedShift * 0.85;
           const harmonic = Math.sin(elapsed * star.twinkleSpeed * 2.2 * speedMultiplier + star.twinklePhase * 1.5) * (0.18 + clampedShift * 0.22);
           const primaryWave = Math.sin(elapsed * star.twinkleSpeed * speedMultiplier + star.twinklePhase);
           const twinkle = Math.max(0.06, 1 - twinkleAmp + twinkleAmp * (primaryWave * 0.75 + harmonic));
           
-          // Alpha scales gently with atmospheric depth
-          const alpha = Math.min(1, star.baseAlpha * twinkle * (0.88 + clampedShift * 0.28));
-
-          // Interpolated chromatic star color (from ice/diamond to rich saturated jewel tones)
+          const alpha = Math.min(1, star.baseAlpha * twinkle * (0.88 + clampedShift * 0.28) * dayStarAlphaMultiplier);
           const starColor = interpolateRgba(star.coolRgb, star.warmRgb, clampedShift, alpha);
 
-          // Corona / Atmospheric Bloom Halo
           if (star.glow) {
-            // Glow radius blooms wider and warmer as zoneShift increases toward dusk purple
             const glowR = star.radius * (2.8 + clampedShift * 3.4);
             const starGrad = ctx.createRadialGradient(x, y, 0, x, y, glowR);
-            
             starGrad.addColorStop(0, interpolateRgba(star.coolRgb, star.warmRgb, clampedShift, alpha));
             starGrad.addColorStop(0.4, interpolateRgba(star.coolRgb, star.warmRgb, clampedShift, alpha * (0.35 + clampedShift * 0.25)));
             starGrad.addColorStop(1, interpolateRgba(star.coolRgb, star.warmRgb, clampedShift, 0));
@@ -386,7 +638,6 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
             ctx.fill();
           }
 
-          // Star Core Disc
           ctx.fillStyle = starColor;
           ctx.beginPath();
           ctx.arc(x, y, star.radius, 0, Math.PI * 2);
@@ -394,8 +645,72 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
         });
       }
 
-      // 4. Draw Starlight Ripples
-      ripplesRef.current.forEach((rip, idx) => {
+      // =====================================================================
+      // 5. SEASONAL ATMOSPHERIC PARTICLES (Sakura, Firefly, Leaves, Snow)
+      // =====================================================================
+      seasonalParticlesRef.current.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rotation += p.rotSpeed;
+        p.wobblePhase += 0.03 * p.wobbleSpeed;
+
+        if (p.x > width + 20) p.x = -20;
+        if (p.x < -20) p.x = width + 20;
+        if (p.y > height + 20) p.y = -20;
+        if (p.y < -20) p.y = height + 20;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation + Math.sin(p.wobblePhase) * 0.2);
+
+        if (p.type === 'sakura') {
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha * 0.75;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, p.size, p.size * 0.55, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (p.type === 'firefly') {
+          const fireflyPulse = 0.5 + Math.sin(p.wobblePhase * 2.5) * 0.5;
+          ctx.globalAlpha = p.alpha * fireflyPulse;
+          const fireflyGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, p.size * 2.2);
+          fireflyGrad.addColorStop(0, '#ffffff');
+          fireflyGrad.addColorStop(0.4, p.color);
+          fireflyGrad.addColorStop(1, 'rgba(254, 240, 138, 0)');
+          ctx.fillStyle = fireflyGrad;
+          ctx.beginPath();
+          ctx.arc(0, 0, p.size * 2.2, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (p.type === 'amber-leaf') {
+          ctx.fillStyle = p.color;
+          ctx.globalAlpha = p.alpha * 0.8;
+          ctx.beginPath();
+          ctx.moveTo(0, -p.size);
+          ctx.quadraticCurveTo(p.size * 0.8, 0, 0, p.size);
+          ctx.quadraticCurveTo(-p.size * 0.8, 0, 0, -p.size);
+          ctx.fill();
+        } else {
+          ctx.strokeStyle = '#ffffff';
+          ctx.globalAlpha = p.alpha * 0.85;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(-p.size, 0);
+          ctx.lineTo(p.size, 0);
+          ctx.moveTo(0, -p.size);
+          ctx.lineTo(0, p.size);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      });
+
+      // =====================================================================
+      // 6. STARLIGHT RIPPLES (Pooled Mutation)
+      // =====================================================================
+      const ripplePool = ripplePoolRef.current;
+      for (let i = 0; i < ripplePool.length; i++) {
+        const rip = ripplePool[i];
+        if (!rip.active) continue;
+
         rip.radius += 1.8;
         rip.alpha -= 0.015;
 
@@ -406,37 +721,29 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
           ctx.arc(rip.x, rip.y, rip.radius, 0, Math.PI * 2);
           ctx.stroke();
         } else {
-          ripplesRef.current.splice(idx, 1);
+          rip.active = false;
         }
-      });
+      }
 
-      // 5. Draw Natural Smooth Mountain Ranges with Organic Curvature, Parallax & Atmosphere Shifting
+      // =====================================================================
+      // 7. SMOOTH MOUNTAIN RANGES
+      // =====================================================================
       NATURAL_MOUNTAIN_TIERS.forEach((tier) => {
         const horizonParallaxX = mouseOffset.x * tier.parallax * 45;
         const horizonParallaxY = mouseOffset.y * tier.parallax * 20;
         const maxPeakHeight = height * tier.heightFrac;
         const baseY = height;
 
-        // A. Atmospheric Valley Mist behind each natural tier
+        // Atmospheric Valley Mist
         const mistAlpha = 0.20 + (1 - tier.depth) * 0.18 + clampedShift * 0.12;
         const mistGrad = ctx.createLinearGradient(0, baseY - maxPeakHeight * 0.85, 0, baseY);
-        mistGrad.addColorStop(
-          0,
-          interpolateRgba(tier.mistCool, tier.mistWarm, clampedShift, 0)
-        );
-        mistGrad.addColorStop(
-          0.5,
-          interpolateRgba(tier.mistCool, tier.mistWarm, clampedShift, mistAlpha * 0.6)
-        );
-        mistGrad.addColorStop(
-          1,
-          interpolateRgba(tier.mistCool, tier.mistWarm, clampedShift, mistAlpha)
-        );
+        mistGrad.addColorStop(0, interpolateRgba(tier.mistCool, tier.mistWarm, clampedShift, 0));
+        mistGrad.addColorStop(0.5, interpolateRgba(tier.mistCool, tier.mistWarm, clampedShift, mistAlpha * 0.6));
+        mistGrad.addColorStop(1, interpolateRgba(tier.mistCool, tier.mistWarm, clampedShift, mistAlpha));
 
         ctx.fillStyle = mistGrad;
         ctx.fillRect(-30, baseY - maxPeakHeight * 0.95, width + 60, maxPeakHeight * 0.95 + 20);
 
-        // Compute screen coordinates for smooth curved mountain profile
         const screenPts = tier.points.map((pt) => ({
           x: pt.x * width + horizonParallaxX,
           y: baseY - pt.y * maxPeakHeight + horizonParallaxY,
@@ -444,16 +751,10 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
 
         if (screenPts.length < 2) return;
 
-        // B. Render Smooth Organic Mountain Body
+        // Render Smooth Organic Mountain Body
         const mountainGrad = ctx.createLinearGradient(0, baseY - maxPeakHeight, 0, baseY);
-        mountainGrad.addColorStop(
-          0,
-          interpolateRgb(tier.litCool, tier.litWarm, clampedShift)
-        );
-        mountainGrad.addColorStop(
-          0.45,
-          interpolateRgb(tier.shadedCool, tier.shadedWarm, clampedShift)
-        );
+        mountainGrad.addColorStop(0, interpolateRgb(tier.litCool, tier.litWarm, clampedShift));
+        mountainGrad.addColorStop(0.45, interpolateRgb(tier.shadedCool, tier.shadedWarm, clampedShift));
         mountainGrad.addColorStop(
           1,
           interpolateRgb(
@@ -478,45 +779,7 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
         ctx.closePath();
         ctx.fill();
 
-        // C. Soft Natural Ridge Volume Accent (Subtle undulating inner slope layer)
-        ctx.save();
-        ctx.beginPath();
-        ctx.moveTo(screenPts[0].x, screenPts[0].y);
-        for (let i = 0; i < screenPts.length - 1; i++) {
-          const xc = (screenPts[i].x + screenPts[i + 1].x) / 2;
-          const yc = (screenPts[i].y + screenPts[i + 1].y) / 2;
-          ctx.quadraticCurveTo(screenPts[i].x, screenPts[i].y, xc, yc);
-        }
-        ctx.lineTo(lastPt.x, lastPt.y);
-        ctx.lineTo(width + 80, baseY + 30);
-        ctx.lineTo(-80, baseY + 30);
-        ctx.closePath();
-        ctx.clip();
-
-        // Soft diagonal natural starlight slope illumination
-        const slopeGrad = ctx.createLinearGradient(
-          width * 0.2,
-          baseY - maxPeakHeight * 1.2,
-          width * 0.8,
-          baseY
-        );
-        slopeGrad.addColorStop(
-          0,
-          interpolateRgba(tier.rimCool, tier.rimWarm, clampedShift, 0.16)
-        );
-        slopeGrad.addColorStop(
-          0.5,
-          interpolateRgba(tier.litCool, tier.litWarm, clampedShift, 0.08)
-        );
-        slopeGrad.addColorStop(
-          1,
-          interpolateRgba(tier.shadedCool, tier.shadedWarm, clampedShift, 0)
-        );
-        ctx.fillStyle = slopeGrad;
-        ctx.fillRect(-30, baseY - maxPeakHeight * 1.1, width + 60, maxPeakHeight * 1.1 + 30);
-        ctx.restore();
-
-        // D. Ethereal Mountain Crest Rim Highlight (Smooth, soft starlight edge)
+        // Rim Highlight
         ctx.strokeStyle = interpolateRgba(
           tier.rimCool,
           tier.rimWarm,
@@ -534,7 +797,9 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
         ctx.stroke();
       });
 
-      // 6. Meteor Check & Rendering
+      // =====================================================================
+      // 8. METEOR SYSTEM
+      // =====================================================================
       if (isBuiltIn) {
         if (!meteorRef.current && now - lastMeteorCheckRef.current > 4500) {
           lastMeteorCheckRef.current = now;
@@ -564,7 +829,6 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
             const tailX = headX - (m.vx / dirLen) * m.trailLen;
             const tailY = headY - (m.vy / dirLen) * m.trailLen;
 
-            // Draw streak with atmospheric tint
             const trailGrad = ctx.createLinearGradient(tailX, tailY, headX, headY);
             trailGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
             trailGrad.addColorStop(0.7, interpolateRgba([200, 230, 255], [255, 215, 140], clampedShift, 0.45 * fade));
@@ -578,7 +842,6 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
             ctx.lineTo(headX, headY);
             ctx.stroke();
 
-            // Head bright dot
             const headGrad = ctx.createRadialGradient(headX, headY, 0, headX, headY, 6);
             headGrad.addColorStop(0, `rgba(255, 255, 255, ${fade})`);
             headGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
@@ -599,26 +862,32 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animId);
     };
-  }, [zoneShift, isBuiltIn]);
+  }, [zoneShift, isBuiltIn, atmosphere]);
 
-  // Touch/Click to make starlight ripples
-  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+  // Pointer down ripple with pre-allocated pool assignment
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    ripplesRef.current.push({
-      x,
-      y,
-      radius: 4,
-      maxRadius: 45,
-      alpha: 0.7,
-    });
+    // Find available ripple from pre-allocated pool
+    const pool = ripplePoolRef.current;
+    let slot = pool.find((r) => !r.active);
+    if (!slot) {
+      slot = pool[0];
+    }
+    if (slot) {
+      slot.active = true;
+      slot.x = x;
+      slot.y = y;
+      slot.radius = 4;
+      slot.maxRadius = 45;
+      slot.alpha = 0.7;
+    }
 
     audioEngine.playStarGazeChime();
 
-    // Check if clicked near active meteor
     if (meteorRef.current && onMeteorClick) {
       const now = Date.now();
       const m = meteorRef.current;
@@ -633,7 +902,7 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
         onMeteorClick();
       }
     }
-  };
+  }, [onMeteorClick]);
 
   return (
     <div className="fixed inset-0 pointer-events-auto z-0 overflow-hidden select-none">
@@ -643,6 +912,7 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
         onPointerDown={handlePointerDown}
         className="w-full h-full block cursor-crosshair"
       />
+
       {canCatchMeteor && (
         <div
           id="meteor-hint"
@@ -654,4 +924,6 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = ({
       )}
     </div>
   );
-};
+});
+
+SkyCanvas.displayName = 'SkyCanvas';

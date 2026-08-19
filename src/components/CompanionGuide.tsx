@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import gsap from 'gsap';
 import {
@@ -21,6 +21,8 @@ import {
   Moon,
   Sun,
   Activity,
+  Calendar,
+  CloudSun,
 } from 'lucide-react';
 import { LumiCompanion, LumiMood, SoulEmotion, LumiFlareType, LumiBehaviorState } from './LumiCompanion';
 import { EMOTION_TITLES } from './lumi22/types';
@@ -28,11 +30,20 @@ import { WeatherMoodId } from './CosmicWeather';
 import { PersonalityContext } from '../types';
 import { audioEngine } from '../utils/audioEngine';
 import { lumiSync, LumiSyncEvent } from '../utils/lumiSyncBus';
+import {
+  getAtmosphereSnapshot,
+  getContextualGreeting,
+  getSeasonalWhisper,
+  TimeOfDayId,
+  SeasonId,
+} from '../utils/atmosphereEngine';
 
 interface CompanionGuideProps {
   currentLine: string | null;
   isAche?: boolean;
   weatherMood?: WeatherMoodId;
+  timeOfDayOverride?: TimeOfDayId;
+  seasonOverride?: SeasonId;
   externalFlareTrigger?: number;
   externalFlareType?: LumiFlareType;
   personalityContext?: PersonalityContext;
@@ -43,14 +54,15 @@ interface CompanionGuideProps {
   onTriggerHearts?: (count?: number) => void;
 }
 
+// Safe bounds waypoints preventing boundary clipping
 const FLOATING_WAYPOINTS = [
-  { x: 84, y: 68, label: 'Bottom Right' },
-  { x: 86, y: 30, label: 'Upper Right' },
-  { x: 70, y: 16, label: 'Top Horizon' },
-  { x: 16, y: 22, label: 'Top Left' },
-  { x: 14, y: 64, label: 'Mid Left' },
-  { x: 50, y: 72, label: 'Bottom Center' },
-  { x: 82, y: 66, label: 'Home Base' },
+  { x: 74, y: 62, label: 'Bottom Right' },
+  { x: 76, y: 34, label: 'Upper Right' },
+  { x: 58, y: 26, label: 'Top Horizon' },
+  { x: 26, y: 30, label: 'Top Left' },
+  { x: 24, y: 58, label: 'Mid Left' },
+  { x: 50, y: 64, label: 'Bottom Center' },
+  { x: 72, y: 60, label: 'Home Base' },
 ];
 
 const EMOTION_QUICK_RESPONSES: Record<
@@ -115,10 +127,12 @@ const EMOTION_QUICK_RESPONSES: Record<
   },
 };
 
-export const CompanionGuide: React.FC<CompanionGuideProps> = ({
+export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
   currentLine,
   isAche = false,
   weatherMood,
+  timeOfDayOverride,
+  seasonOverride,
   externalFlareTrigger = 0,
   externalFlareType = 'heart',
   personalityContext,
@@ -142,9 +156,20 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = ({
   const [internalFlareTrigger, setInternalFlareTrigger] = useState(0);
   const [internalFlareType, setInternalFlareType] = useState<LumiFlareType>('heart');
 
+  // Atmosphere state calculation
+  const atmosphere = useMemo(() => {
+    return getAtmosphereSnapshot(undefined, timeOfDayOverride, seasonOverride);
+  }, [timeOfDayOverride, seasonOverride]);
+
   // Viewport position in %
-  const [position, setPosition] = useState({ x: 84, y: 68 });
+  const [position, setPosition] = useState({ x: 74, y: 62 });
   const [isFreeFloating, setIsFreeFloating] = useState(true);
+
+  // Live viewport size for strict boundary mathematics
+  const [windowSize, setWindowSize] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1200,
+    height: typeof window !== 'undefined' ? window.innerHeight : 800,
+  });
 
   const guideContainerRef = useRef<HTMLDivElement>(null);
   const waypointIndexRef = useRef<number>(0);
@@ -153,6 +178,19 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = ({
   const idleTimerRef = useRef<number | null>(null);
   const lastUserActivityRef = useRef<number>(Date.now());
   const isIdleRef = useRef<boolean>(false);
+  const hasSpokenInitialGreetingRef = useRef<boolean>(false);
+
+  // Keep windowSize synchronized
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+    window.addEventListener('resize', handleResize, { passive: true });
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const triggerBounce = useCallback((flare: LumiFlareType = 'wonder') => {
     setIsBouncing(true);
@@ -168,6 +206,19 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = ({
       setActiveSpeech(null);
     }, duration);
   }, []);
+
+  // Time-of-day contextual greeting upon initial load
+  useEffect(() => {
+    if (!hasSpokenInitialGreetingRef.current) {
+      hasSpokenInitialGreetingRef.current = true;
+      const timer = setTimeout(() => {
+        const contextual = getContextualGreeting(atmosphere);
+        displaySpeech(contextual.greeting + ' ' + contextual.subtitle, 8500);
+        triggerBounce('heart');
+      }, 2400);
+      return () => clearTimeout(timer);
+    }
+  }, [atmosphere, displaySpeech, triggerBounce]);
 
   // Trigger dedicated emotion reaction
   const triggerEmotionState = useCallback((emotionKey: string) => {
@@ -191,7 +242,7 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = ({
     }
   }, [displaySpeech, triggerBounce, onTriggerHearts]);
 
-  // Real-Time Event Bus Subscription: Auto-Sync emotions and behaviors instantaneously
+  // Real-Time Event Bus Subscription
   useEffect(() => {
     const unsubscribe = lumiSync.subscribe((event: LumiSyncEvent) => {
       switch (event.type) {
@@ -295,7 +346,7 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = ({
     return unsubscribe;
   }, [displaySpeech, triggerBounce]);
 
-  // Real-Time Inactivity & Idle Auto-Sync Detector (Auto Sleep & Wakeup)
+  // Real-Time Inactivity & Idle Detector
   useEffect(() => {
     const handleUserInteraction = () => {
       lastUserActivityRef.current = Date.now();
@@ -327,7 +378,7 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = ({
     };
   }, [isMenuOpen, activeSpeech]);
 
-  // Real-Time Cursor Proximity Detection (Reactive micro-expressions when pointer nears Lumi)
+  // Real-Time Cursor Proximity
   useEffect(() => {
     const handlePointerProximity = (e: MouseEvent) => {
       if (!guideContainerRef.current) return;
@@ -356,24 +407,30 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = ({
     return () => window.removeEventListener('mousemove', handlePointerProximity);
   }, [isProximityActive, guideBehavior]);
 
-  // Real-Time Time of Day Awareness (Late Night vs Morning care routines)
+  // Late night routine check and seasonal whispers
   useEffect(() => {
     const checkTimeOfDay = () => {
       const currentHour = new Date().getHours();
       if (currentHour >= 23 || currentHour < 4) {
-        // Late night care check
         if (Math.random() < 0.35 && !activeSpeech && !isIdleRef.current) {
           setGuideMood('angry');
           setGuideBehavior('pouting');
           triggerBounce('sparkle');
           displaySpeech("Lovey, late night na ah... bawal magpuyat ang prinsesa ko! Yakap muna bago sleep? 🥺💖", 8000);
         }
+      } else {
+        // Occasional seasonal reflection
+        if (Math.random() < 0.25 && !activeSpeech && !isIdleRef.current) {
+          const seasonalText = getSeasonalWhisper(atmosphere.season);
+          displaySpeech(seasonalText, 8000);
+          triggerBounce('wonder');
+        }
       }
     };
 
     const timer = setInterval(checkTimeOfDay, 45000);
     return () => clearInterval(timer);
-  }, [activeSpeech, displaySpeech, triggerBounce]);
+  }, [activeSpeech, displaySpeech, triggerBounce, atmosphere.season]);
 
   // Sync Lumi mood with Cosmic Weather
   useEffect(() => {
@@ -408,11 +465,11 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = ({
   // Handle external flare triggers
   useEffect(() => {
     if (externalFlareTrigger > 0) {
-      triggerBounce(externalFlareType);
+      triggerBounce(externalFlareType as LumiFlareType);
     }
   }, [externalFlareTrigger, externalFlareType, triggerBounce]);
 
-  // Autonomous wandering & AI spontaneous whispers
+  // Autonomous wandering
   useEffect(() => {
     if (!isFreeFloating) return;
 
@@ -428,7 +485,6 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = ({
         const nextWaypoint = FLOATING_WAYPOINTS[waypointIndexRef.current];
         flyTo(nextWaypoint.x, nextWaypoint.y);
 
-        // Occasional AI spontaneous whisper
         if (Math.random() < 0.65 && !activeSpeech) {
           try {
             const res = await fetch('/api/companion/spontaneous', {
@@ -461,11 +517,14 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = ({
   }, [isFreeFloating, activeSpeech, personalityContext, displaySpeech, triggerBounce]);
 
   const flyTo = (targetX: number, targetY: number) => {
+    const safeX = Math.max(22, Math.min(76, targetX));
+    const safeY = Math.max(24, Math.min(70, targetY));
+
     setIsFlying(true);
     setGuideBehavior('following');
     gsap.to(position, {
-      x: targetX,
-      y: targetY,
+      x: safeX,
+      y: safeY,
       duration: 3.2,
       ease: 'power2.inOut',
       onUpdate: () => setPosition({ x: position.x, y: position.y }),
@@ -484,7 +543,6 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = ({
     triggerBounce('heart');
   };
 
-  // Trigger quick action reaction from AI
   const handleQuickAction = async (actionName: string, promptText: string) => {
     setIsMenuOpen(false);
     setIsThinking(true);
@@ -519,12 +577,79 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = ({
 
   const emotionTitle = EMOTION_TITLES[guideMood] || EMOTION_TITLES.happy;
 
-  // Responsive Dialogue Placement (Left vs Right vs Above)
-  const isRightSide = position.x > 65;
-  const isLeftSide = position.x < 35;
+  // STRICT VIEWPORT-CONTAINED MATHEMATICAL COORDINATE ENGINE
+  const bounds = useMemo(() => {
+    const PADDING = 16;
+    const vw = windowSize.width;
+    const vh = windowSize.height;
+
+    const lumiPxX = (position.x / 100) * vw;
+    const lumiPxY = (position.y / 100) * vh;
+
+    // 1. SPEECH BUBBLE
+    const bubbleWidth = Math.min(290, vw - PADDING * 2);
+    const idealBubbleLeft = lumiPxX - bubbleWidth / 2;
+    const minBubbleLeft = PADDING;
+    const maxBubbleLeft = vw - bubbleWidth - PADDING;
+    const clampedBubbleLeft = Math.max(minBubbleLeft, Math.min(maxBubbleLeft, idealBubbleLeft));
+
+    const rawArrowX = lumiPxX - clampedBubbleLeft;
+    const clampedArrowX = Math.max(22, Math.min(bubbleWidth - 22, rawArrowX));
+
+    const isBubbleBelow = lumiPxY < 240;
+    const bubbleTop = isBubbleBelow ? Math.min(vh - 160, lumiPxY + 56) : undefined;
+    const bubbleBottom = !isBubbleBelow ? Math.min(vh - 160, vh - lumiPxY + 56) : undefined;
+
+    // 2. EMOTION PALETTE BAR
+    const paletteWidth = Math.min(330, vw - PADDING * 2);
+    const idealPaletteLeft = lumiPxX - paletteWidth / 2;
+    const minPaletteLeft = PADDING;
+    const maxPaletteLeft = vw - paletteWidth - PADDING;
+    const clampedPaletteLeft = Math.max(minPaletteLeft, Math.min(maxPaletteLeft, idealPaletteLeft));
+
+    const isPaletteAbove = lumiPxY > vh - 170;
+    const paletteTop = !isPaletteAbove ? Math.min(vh - 80, lumiPxY + 62) : undefined;
+    const paletteBottom = isPaletteAbove ? Math.min(vh - 80, vh - lumiPxY + 62) : undefined;
+
+    // 3. RADIAL ACTION BUTTONS (VIEWPORT-SAFE)
+    const chatBtnLeft = Math.max(75, Math.min(vw - 75, lumiPxX));
+    const chatBtnTop = Math.max(24, Math.min(vh - 60, lumiPxY - 62));
+
+    const hugFlipped = lumiPxX > vw - 75;
+    const hugBtnLeft = hugFlipped ? lumiPxX - 58 : lumiPxX + 58;
+    const hugBtnTop = Math.max(24, Math.min(vh - 24, lumiPxY));
+
+    const flyFlipped = lumiPxX < 75;
+    const flyBtnLeft = flyFlipped ? lumiPxX + 58 : lumiPxX - 58;
+    const flyBtnTop = Math.max(24, Math.min(vh - 24, lumiPxY));
+
+    return {
+      PADDING,
+      lumiPxX,
+      lumiPxY,
+      bubbleWidth,
+      clampedBubbleLeft,
+      clampedArrowX,
+      isBubbleBelow,
+      bubbleTop,
+      bubbleBottom,
+      paletteWidth,
+      clampedPaletteLeft,
+      isPaletteAbove,
+      paletteTop,
+      paletteBottom,
+      chatBtnLeft,
+      chatBtnTop,
+      hugBtnLeft,
+      hugBtnTop,
+      flyBtnLeft,
+      flyBtnTop,
+    };
+  }, [position.x, position.y, windowSize.width, windowSize.height]);
 
   return (
     <>
+      {/* 1. FLOATING LUMI 3D CHARACTER CONTAINER */}
       <div
         ref={guideContainerRef}
         id="living-companion-guide-container"
@@ -536,144 +661,6 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = ({
         }}
       >
         <div className="relative pointer-events-auto flex flex-col items-center">
-          {/* Celestial Attached Dialogue UI */}
-          <AnimatePresence>
-            {(activeSpeech || isThinking) && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.88, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 8 }}
-                transition={{ type: 'spring', damping: 22, stiffness: 280 }}
-                className={`absolute z-50 w-64 sm:w-76 max-w-[85vw] p-4 rounded-2xl bg-slate-950/92 backdrop-blur-xl border border-cyan-400/35 text-cyan-50 shadow-[0_12px_45px_rgba(0,0,0,0.8),0_0_25px_rgba(56,189,248,0.25)] ${
-                  isRightSide
-                    ? 'bottom-full sm:bottom-auto sm:right-full sm:mr-4 mb-3.5 sm:mb-0'
-                    : isLeftSide
-                    ? 'bottom-full sm:bottom-auto sm:left-full sm:ml-4 mb-3.5 sm:mb-0'
-                    : 'bottom-full mb-3.5'
-                }`}
-              >
-                {/* Header Tag with Emotion-Specific Title */}
-                <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs">{emotionTitle.icon}</span>
-                    <span
-                      className="text-[11px] font-serif font-semibold tracking-wide"
-                      style={{ color: emotionTitle.themeColor }}
-                    >
-                      {emotionTitle.title}
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => setActiveSpeech(null)}
-                    className="text-slate-400 hover:text-white transition-colors"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                {/* Content Body */}
-                {isThinking ? (
-                  <div className="flex items-center gap-2 text-xs font-serif text-cyan-200/80 py-1">
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-cyan-400" />
-                    <span>Iniisip ka ni Clint... ✨</span>
-                  </div>
-                ) : (
-                  <p className="font-serif text-[13px] leading-relaxed text-cyan-50">
-                    {activeSpeech}
-                  </p>
-                )}
-
-                {/* Footer Quick Chat Shortcut */}
-                <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
-                  <span className="text-cyan-300/75 font-serif font-medium">Lumi • Celestial Guide</span>
-                  <button
-                    onClick={() => {
-                      setActiveSpeech(null);
-                      if (onOpenFullChat) onOpenFullChat();
-                    }}
-                    className="text-cyan-300 hover:text-cyan-100 font-serif font-medium flex items-center gap-0.5 underline transition-colors"
-                  >
-                    <span>Kausapin si Clint &rarr;</span>
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Radial Action Wheel and Emotion Palette when Menu is Opened */}
-          <AnimatePresence>
-            {isMenuOpen && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-                className="absolute -inset-20 z-30 pointer-events-auto flex flex-col items-center justify-between"
-              >
-                {/* 1. Kausapin si Clint (Chatbot) */}
-                <button
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    if (onOpenFullChat) onOpenFullChat();
-                  }}
-                  className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500 via-rose-500 to-pink-500 text-white font-serif text-xs font-semibold shadow-[0_4px_20px_rgba(244,63,94,0.45)] hover:scale-110 active:scale-95 transition-all flex items-center gap-1.5 border border-white/30 whitespace-nowrap z-40"
-                  title="Mag-usap tayo sa Chat"
-                >
-                  <MessageCircle className="w-3.5 h-3.5" />
-                  <span>Kausapin si Clint</span>
-                </button>
-
-                {/* 2. Magpa-hug / Lambing */}
-                <button
-                  onClick={() => {
-                    if (onTriggerHearts) onTriggerHearts(18);
-                    handleQuickAction('hug', 'Maica requested a warm virtual hug');
-                  }}
-                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-2 p-2.5 rounded-full bg-rose-500/90 text-white shadow-lg hover:scale-110 active:scale-95 transition-all border border-rose-300/40 z-40"
-                  title="Magpa-hug kay Clint 🤗"
-                >
-                  <Heart className="w-4 h-4 fill-white" />
-                </button>
-
-                {/* 3. Lumipad sa Bituin */}
-                <button
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    waypointIndexRef.current = (waypointIndexRef.current + 2) % FLOATING_WAYPOINTS.length;
-                    const next = FLOATING_WAYPOINTS[waypointIndexRef.current];
-                    flyTo(next.x, next.y);
-                  }}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-2 p-2.5 rounded-full bg-indigo-600/90 text-white shadow-lg hover:scale-110 active:scale-95 transition-all border border-indigo-300/40 z-40"
-                  title="Lumipad sa kabilang bituin"
-                >
-                  <Navigation className="w-4 h-4" />
-                </button>
-
-                {/* 4. Interactive Emotion Palette Bar */}
-                <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-1.5 p-1.5 rounded-full bg-slate-950/95 backdrop-blur-xl border border-cyan-400/40 shadow-[0_8px_32px_rgba(0,0,0,0.8),0_0_15px_rgba(56,189,248,0.3)] whitespace-nowrap z-40">
-                  {Object.entries(EMOTION_QUICK_RESPONSES).map(([key, item]) => {
-                    const isActive = guideMood === item.mood;
-                    return (
-                      <button
-                        key={key}
-                        onClick={() => triggerEmotionState(key)}
-                        className={`px-2 py-1 rounded-full text-xs font-serif transition-all flex items-center gap-1 ${
-                          isActive
-                            ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-sm scale-105'
-                            : 'bg-white/5 hover:bg-white/15 text-slate-200 hover:scale-105'
-                        }`}
-                        title={`Lumi Emotion: ${item.label}`}
-                      >
-                        <span>{item.emoji}</span>
-                        <span className="text-[10px] hidden sm:inline">{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
           {/* Living 3D Cute Ghost Lumi */}
           <div
             className="relative cursor-pointer group"
@@ -688,11 +675,13 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = ({
               }`}
             />
 
-            {/* Living 3D Cute Ghost Lumi with Real-time Behavior and Mood */}
+            {/* Living 3D Cute Ghost Lumi with Real-time Atmospheric Lighting & Mood */}
             <LumiCompanion
               mood={guideMood}
               behavior={guideBehavior}
               weatherMood={weatherMood}
+              timeOfDayOverride={timeOfDayOverride}
+              seasonOverride={seasonOverride}
               flareTrigger={internalFlareTrigger}
               flareType={internalFlareType}
               isBouncing={isBouncing}
@@ -713,7 +702,7 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = ({
             </span>
           </div>
 
-          {/* Name Tag & Status indicator */}
+          {/* Name Tag & Status indicator with Real-Time Season badge */}
           <div className="mt-1 flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/85 backdrop-blur-md border border-cyan-400/35 shadow-md">
             <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${
               guideBehavior === 'dancing' ? 'bg-rose-400' : guideBehavior === 'sleeping' ? 'bg-indigo-400' : 'bg-pink-400'
@@ -722,11 +711,213 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = ({
               <span>✦ Lumi</span>
             </span>
             <span className="text-[10px] text-cyan-400/70 font-sans">
-              &bull; {guideBehavior === 'dancing' ? 'Dancing 🎵' : guideBehavior === 'sleeping' ? 'Resting 💤' : 'Celestial Spirit'}
+              &bull; {atmosphere.seasonEmoji} {atmosphere.seasonLabel}
             </span>
           </div>
         </div>
       </div>
+
+      {/* 2. STRICTLY VIEWPORT-CONTAINED SPEECH BUBBLE OVERLAY */}
+      <AnimatePresence>
+        {(activeSpeech || isThinking) && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.88, y: bounds.isBubbleBelow ? -10 : 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: bounds.isBubbleBelow ? -8 : 8 }}
+            transition={{ type: 'spring', damping: 24, stiffness: 300 }}
+            style={{
+              position: 'fixed',
+              left: `${bounds.clampedBubbleLeft}px`,
+              width: `${bounds.bubbleWidth}px`,
+              maxWidth: `calc(100vw - ${bounds.PADDING * 2}px)`,
+              ...(bounds.isBubbleBelow
+                ? { top: `${bounds.bubbleTop}px` }
+                : { bottom: `${bounds.bubbleBottom}px` }),
+            }}
+            className="z-50 p-4 rounded-2xl bg-slate-950/95 backdrop-blur-xl border border-cyan-400/35 text-cyan-50 shadow-[0_14px_48px_rgba(0,0,0,0.9),0_0_25px_rgba(56,189,248,0.25)] select-none pointer-events-auto"
+          >
+            {/* Dynamic Pointer Arrow Tail */}
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                left: `${bounds.clampedArrowX}px`,
+                transform: 'translateX(-50%)',
+                ...(bounds.isBubbleBelow ? { top: '-7px' } : { bottom: '-7px' }),
+              }}
+            >
+              <div
+                className={`w-3.5 h-3.5 bg-slate-950/95 border-cyan-400/35 transform rotate-45 ${
+                  bounds.isBubbleBelow
+                    ? 'border-t border-l shadow-[-2px_-2px_4px_rgba(56,189,248,0.2)]'
+                    : 'border-b border-r shadow-[2px_2px_4px_rgba(0,0,0,0.7)]'
+                }`}
+              />
+            </div>
+
+            {/* Header Tag with Emotion-Specific Title */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-2 mb-2">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs">{emotionTitle.icon}</span>
+                <span
+                  className="text-[11px] font-serif font-semibold tracking-wide"
+                  style={{ color: emotionTitle.themeColor }}
+                >
+                  {emotionTitle.title}
+                </span>
+              </div>
+              <button
+                onClick={() => setActiveSpeech(null)}
+                className="text-slate-400 hover:text-white transition-colors p-0.5 rounded-md hover:bg-white/10"
+                title="Isara"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Content Body */}
+            {isThinking ? (
+              <div className="flex items-center gap-2 text-xs font-serif text-cyan-200/80 py-1">
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+                <span>Iniisip ka ni Clint... ✨</span>
+              </div>
+            ) : (
+              <p className="font-serif text-[13px] leading-relaxed text-cyan-50 break-words">
+                {activeSpeech}
+              </p>
+            )}
+
+            {/* Footer Quick Chat Shortcut */}
+            <div className="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
+              <span className="text-cyan-300/75 font-serif font-medium">Lumi • Celestial Guide</span>
+              <button
+                onClick={() => {
+                  setActiveSpeech(null);
+                  if (onOpenFullChat) onOpenFullChat();
+                }}
+                className="text-cyan-300 hover:text-cyan-100 font-serif font-medium flex items-center gap-0.5 underline transition-colors"
+              >
+                <span>Kausapin si Clint &rarr;</span>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 3. STRICTLY VIEWPORT-CONTAINED EMOTION MENU & ACTIONS */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <div className="fixed inset-0 z-50 pointer-events-none">
+            <div
+              className="absolute inset-0 pointer-events-auto bg-black/20 backdrop-blur-[2px]"
+              onClick={() => setIsMenuOpen(false)}
+            />
+
+            {/* 1. Kausapin si Clint (Top Button) */}
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              onClick={() => {
+                setIsMenuOpen(false);
+                if (onOpenFullChat) onOpenFullChat();
+              }}
+              style={{
+                position: 'fixed',
+                left: `${bounds.chatBtnLeft}px`,
+                top: `${bounds.chatBtnTop}px`,
+                transform: 'translate(-50%, -50%)',
+              }}
+              className="pointer-events-auto px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500 via-rose-500 to-pink-500 text-white font-serif text-xs font-semibold shadow-[0_4px_20px_rgba(244,63,94,0.45)] hover:scale-110 active:scale-95 transition-all flex items-center gap-1.5 border border-white/30 whitespace-nowrap z-50"
+              title="Mag-usap tayo sa Chat"
+            >
+              <MessageCircle className="w-3.5 h-3.5" />
+              <span>Kausapin si Clint</span>
+            </motion.button>
+
+            {/* 2. Magpa-hug / Lambing (Side Button) */}
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              onClick={() => {
+                if (onTriggerHearts) onTriggerHearts(18);
+                handleQuickAction('hug', 'Maica requested a warm virtual hug');
+              }}
+              style={{
+                position: 'fixed',
+                left: `${bounds.hugBtnLeft}px`,
+                top: `${bounds.hugBtnTop}px`,
+                transform: 'translate(-50%, -50%)',
+              }}
+              className="pointer-events-auto p-2.5 rounded-full bg-rose-500/90 text-white shadow-lg hover:scale-110 active:scale-95 transition-all border border-rose-300/40 z-50"
+              title="Magpa-hug kay Clint 🤗"
+            >
+              <Heart className="w-4 h-4 fill-white" />
+            </motion.button>
+
+            {/* 3. Lumipad sa Bituin (Side Button) */}
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              onClick={() => {
+                setIsMenuOpen(false);
+                waypointIndexRef.current = (waypointIndexRef.current + 2) % FLOATING_WAYPOINTS.length;
+                const next = FLOATING_WAYPOINTS[waypointIndexRef.current];
+                flyTo(next.x, next.y);
+              }}
+              style={{
+                position: 'fixed',
+                left: `${bounds.flyBtnLeft}px`,
+                top: `${bounds.flyBtnTop}px`,
+                transform: 'translate(-50%, -50%)',
+              }}
+              className="pointer-events-auto p-2.5 rounded-full bg-indigo-600/90 text-white shadow-lg hover:scale-110 active:scale-95 transition-all border border-indigo-300/40 z-50"
+              title="Lumipad sa kabilang bituin"
+            >
+              <Navigation className="w-4 h-4" />
+            </motion.button>
+
+            {/* 4. Clamped Interactive Emotion Palette Bar */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85, y: bounds.isPaletteAbove ? 10 : -10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.85, y: bounds.isPaletteAbove ? 8 : -8 }}
+              style={{
+                position: 'fixed',
+                left: `${bounds.clampedPaletteLeft}px`,
+                width: `${bounds.paletteWidth}px`,
+                maxWidth: `calc(100vw - ${bounds.PADDING * 2}px)`,
+                ...(bounds.isPaletteAbove
+                  ? { bottom: `${bounds.paletteBottom}px` }
+                  : { top: `${bounds.paletteTop}px` }),
+              }}
+              className="pointer-events-auto z-50 flex items-center justify-between gap-1 p-1.5 rounded-full bg-slate-950/95 backdrop-blur-xl border border-cyan-400/40 shadow-[0_10px_35px_rgba(0,0,0,0.85),0_0_18px_rgba(56,189,248,0.3)] overflow-x-auto no-scrollbar"
+            >
+              {Object.entries(EMOTION_QUICK_RESPONSES).map(([key, item]) => {
+                const isActive = guideMood === item.mood;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => triggerEmotionState(key)}
+                    className={`px-2 py-1 rounded-full text-xs font-serif transition-all flex items-center gap-1 shrink-0 ${
+                      isActive
+                        ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-sm scale-105'
+                        : 'bg-white/5 hover:bg-white/15 text-slate-200 hover:scale-105'
+                    }`}
+                    title={`Lumi Emotion: ${item.label}`}
+                  >
+                    <span>{item.emoji}</span>
+                    <span className="text-[10px] hidden sm:inline">{item.label}</span>
+                  </button>
+                );
+              })}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </>
   );
-};
+});
+
+CompanionGuide.displayName = 'CompanionGuide';
