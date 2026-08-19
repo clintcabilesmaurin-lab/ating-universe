@@ -1054,3 +1054,5 @@ async function startServer() {
 if (!process.env.NETLIFY && !process.env.LAMBDA_TASK_ROOT && !process.env.VERCEL) {
   startServer();
 }
+
+export default app;
