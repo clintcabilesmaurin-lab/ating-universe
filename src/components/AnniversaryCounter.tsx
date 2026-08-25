@@ -1,78 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, Sparkles, Crown, ExternalLink, Calendar, X, Clock } from 'lucide-react';
+import { Heart, Sparkles, Crown, ExternalLink, Calendar, X, Clock, Lock } from 'lucide-react';
 import {
   OUR_FIRST_YEAR_URL,
   RELATIONSHIP_START_DATE_ISO,
   FIRST_YEAR_ANNIVERSARY_DATE_ISO,
 } from '../data/universeData';
 import { audioEngine } from '../utils/audioEngine';
+import { calculateTimeTogether, calculateCountdownToTarget } from '../utils/timeHelper';
 
 interface AnniversaryCounterProps {
   onSpeak?: (line: string) => void;
-}
-
-interface TimeBreakdown {
-  totalMs: number;
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-}
-
-interface CountdownBreakdown {
-  isReached: boolean;
-  totalMs: number;
-  days: number;
-  hours: number;
-  minutes: number;
-  seconds: number;
-}
-
-function calculateTimeTogether(startDate: Date, now: Date): TimeBreakdown {
-  const diffMs = Math.max(0, now.getTime() - startDate.getTime());
-  const totalSeconds = Math.floor(diffMs / 1000);
-  const days = Math.floor(totalSeconds / (3600 * 24));
-  const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  return {
-    totalMs: diffMs,
-    days,
-    hours,
-    minutes,
-    seconds,
-  };
-}
-
-function calculateCountdownToTarget(targetDate: Date, now: Date): CountdownBreakdown {
-  const diffMs = targetDate.getTime() - now.getTime();
-  if (diffMs <= 0) {
-    return {
-      isReached: true,
-      totalMs: 0,
-      days: 0,
-      hours: 0,
-      minutes: 0,
-      seconds: 0,
-    };
-  }
-
-  const totalSeconds = Math.floor(diffMs / 1000);
-  const days = Math.floor(totalSeconds / (3600 * 24));
-  const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-
-  return {
-    isReached: false,
-    totalMs: diffMs,
-    days,
-    hours,
-    minutes,
-    seconds,
-  };
 }
 
 export const AnniversaryCounter: React.FC<AnniversaryCounterProps> = ({ onSpeak }) => {
@@ -292,16 +230,20 @@ export const AnniversaryCounter: React.FC<AnniversaryCounterProps> = ({ onSpeak 
                     </a>
                   </div>
                 ) : (
-                  <div className="space-y-1.5 pt-1">
+                  <div className="space-y-2.5 pt-1">
                     <p className="text-xs text-slate-300 font-serif italic">
                       Konti na lang Lovey, mag-iisang taon na tayo!
                     </p>
-                    <div className="text-xs font-mono text-amber-300/90 flex items-center gap-1">
+                    <div className="text-xs font-mono text-amber-300/90 flex items-center gap-1.5 p-2 rounded-xl bg-black/40 border border-amber-400/20">
+                      <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                       <span>Countdown:</span>
-                      <span className="font-bold text-amber-200">
+                      <span className="font-bold text-amber-200 ml-auto">
                         {countdown.days}d {pad(countdown.hours)}h {pad(countdown.minutes)}m {pad(countdown.seconds)}s
                       </span>
                     </div>
+                    <p className="text-[11px] text-amber-200/70 font-sans leading-tight">
+                      🔒 Naka-lock pa ang website hanggang Setyembre 22 (9:00 PM). Sabay nating bubuksan sa ating 1st Anniversary!
+                    </p>
                   </div>
                 )}
               </div>

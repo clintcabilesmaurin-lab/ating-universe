@@ -255,11 +255,14 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
     }, duration);
   }, []);
 
-  // Periodic Contextual Yapping during World Exploration
+  // Periodic Contextual Yapping during World Exploration (Subtle & gentle, infrequent)
   useEffect(() => {
     const yappingInterval = setInterval(() => {
       const currentWorld = activeWorldRef.current;
-      if (!currentWorld || isMenuOpen) return;
+      if (!currentWorld || isMenuOpen || activeSpeech) return;
+
+      // Significantly reduced probability (35% chance every 60s) so it's not distracting
+      if (Math.random() > 0.35) return;
 
       const chatterList = WORLD_CONTINUOUS_CHATTER[currentWorld] || WORLD_CONTINUOUS_CHATTER['general-world'];
       if (!chatterList || chatterList.length === 0) return;
@@ -267,12 +270,12 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
       worldChatterIndexRef.current = (worldChatterIndexRef.current + 1) % chatterList.length;
       const nextLine = chatterList[worldChatterIndexRef.current];
 
-      displaySpeech(nextLine, 7500);
+      displaySpeech(nextLine, 6000);
       triggerBounce('heart');
-    }, 16000);
+    }, 60000);
 
     return () => clearInterval(yappingInterval);
-  }, [isMenuOpen, displaySpeech, triggerBounce]);
+  }, [isMenuOpen, activeSpeech, displaySpeech, triggerBounce]);
 
   // Time-of-day contextual greeting upon initial load
   useEffect(() => {

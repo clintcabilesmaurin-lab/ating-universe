@@ -648,6 +648,26 @@ class UniverseAudioEngine {
       osc.stop(now + offset + 0.17);
     });
   }
+
+  public playLockedSound(): void {
+    if (!this.audioCtx || !this.masterGain) return;
+    const now = this.audioCtx.currentTime;
+    // Soft double chime indicating a locked celestial relic (minor harmonic knock)
+    [320, 240].forEach((freq, idx) => {
+      if (!this.audioCtx || !this.masterGain) return;
+      const osc = this.audioCtx.createOscillator();
+      const gain = this.audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+      gain.gain.setValueAtTime(0.001, now + idx * 0.09);
+      gain.gain.linearRampToValueAtTime(0.06, now + idx * 0.09 + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.09 + 0.25);
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(now + idx * 0.09);
+      osc.stop(now + idx * 0.09 + 0.26);
+    });
+  }
 }
 
 export const audioEngine = new UniverseAudioEngine();
