@@ -12,9 +12,11 @@ import { MeteorWishModal } from './components/MeteorWishModal';
 import { RandomMemoriesDrifter } from './components/RandomMemoriesDrifter';
 import { PhotoManagerModal } from './components/PhotoManagerModal';
 import { PortalTransition, PortalConfig } from './components/PortalTransition';
-import { CosmicWeather, WeatherMoodId } from './components/CosmicWeather';
+import { CosmicWeather, CosmicWeatherToggle, WeatherMoodId } from './components/CosmicWeather';
 import { DailyLetter } from './components/DailyLetter';
 import { CharacterChatModal } from './components/CharacterChatModal';
+import { LettersSubUniverseView } from './components/LettersSubUniverseView';
+import { AnniversaryCounter } from './components/AnniversaryCounter';
 import { LumiFlareType, LumiMood } from './components/LumiCompanion';
 import { WorldStar, PersonalityContext } from './types';
 import { DEFAULT_PERSONALITY_CONTEXT } from './data/personalityData';
@@ -34,6 +36,8 @@ export default function App() {
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [pangilatanSpokenLine, setPangilatanSpokenLine] = useState('');
   const [isWishModalOpen, setIsWishModalOpen] = useState(false);
+  const [isLettersUniverseOpen, setIsLettersUniverseOpen] = useState(false);
+  const [lettersSubworldId, setLettersSubworldId] = useState<string>('constellation');
   const [portalConfig, setPortalConfig] = useState<PortalConfig | null>(null);
   const pendingDestinationRef = useRef<(() => void) | null>(null);
   const [previewedIds, setPreviewedIds] = useState<Set<string>>(new Set());
@@ -132,12 +136,12 @@ export default function App() {
 
   // Pause / resume smooth scroll when modals open/close
   useEffect(() => {
-    if (isPangilatanOpen || selectedWorld !== null || isWishModalOpen || isPhotoManagerOpen || !hasEntered) {
+    if (isPangilatanOpen || selectedWorld !== null || isWishModalOpen || isPhotoManagerOpen || isLettersUniverseOpen || !hasEntered) {
       lenisRef.current?.stop();
     } else {
       lenisRef.current?.start();
     }
-  }, [isPangilatanOpen, selectedWorld, isWishModalOpen, isPhotoManagerOpen, hasEntered]);
+  }, [isPangilatanOpen, selectedWorld, isWishModalOpen, isPhotoManagerOpen, isLettersUniverseOpen, hasEntered]);
 
   // Initialize audio and visit state on load
   useEffect(() => {
@@ -273,11 +277,39 @@ export default function App() {
     );
   };
 
+  // Open Letters Sub-Universe Landing Page with Portal Warp
+  const handleOpenLettersSubUniverse = (subworldId: string = 'constellation') => {
+    setSelectedWorld(null);
+    setIsPangilatanOpen(false);
+    triggerCompanionReaction('heart');
+    triggerWorldPortal(
+      {
+        title: 'Mundo ng mga Liham',
+        tagline: 'Liham Mula sa Kabilang Ibayo • Clint & Maica',
+        color: '#f43f5e',
+        iconName: 'mail',
+      },
+      () => {
+        setLettersSubworldId(subworldId);
+        setIsLettersUniverseOpen(true);
+        lumiSync.notifyModal('letters-universe', true);
+      }
+    );
+  };
+
   // Handle World Modal Open with Portal Warp
   const handleSelectWorld = (world: WorldStar) => {
     setIsPangilatanOpen(false);
     setSelectedWorld(null);
     triggerCompanionReaction('wonder');
+
+    // If the user selects the Letters world, portal into the Letters Sub-Universe Landing Page
+    if (world.id === 'letters') {
+      handleOpenLettersSubUniverse('constellation');
+      setPreviewedIds((prev) => new Set([...prev, world.id]));
+      return;
+    }
+
     triggerWorldPortal(
       {
         title: world.name,
@@ -415,6 +447,7 @@ export default function App() {
       {/* 2.5 Dynamic Atmospheric Cosmic Weather (Rain of Hearts, Soft Snow, Embers, Petals, Aurora) */}
       {hasEntered && (
         <CosmicWeather
+          hideToggle
           activeMoodId={weatherMood}
           onMoodChange={(mood) => {
             setWeatherMood(mood);
@@ -426,23 +459,27 @@ export default function App() {
 
       {/* 3. Top Navigation Bar */}
       {hasEntered && (
-        <header className="fixed top-0 inset-x-0 z-30 px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between pointer-events-none">
-          <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md border border-white/10 px-3.5 sm:px-4 py-1.5 rounded-full pointer-events-auto shadow-lg">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-            <span className="text-xs font-serif font-medium text-amber-100 tracking-wider">
-              Our First Year
-            </span>
-            <span className="text-[10px] text-amber-300/60 font-sans">
-              &bull; Cl &amp; Maica
-            </span>
-          </div>
+        <header className="fixed top-0 inset-x-0 z-30 px-3 sm:px-6 py-2.5 sm:py-4 flex items-center justify-between pointer-events-none gap-2">
+          {/* Left: Subtle, Elegantly Styled Live Anniversary Counter / 1st Year Portal */}
+          <AnniversaryCounter onSpeak={(text) => speak(text)} />
 
           <div className="flex items-center gap-2 pointer-events-auto">
+            {/* Cosmic Weather Atmosphere Selector Toggle Button */}
+            <CosmicWeatherToggle
+              activeMoodId={weatherMood}
+              onMoodChange={(mood) => {
+                setWeatherMood(mood);
+                triggerCompanionReaction('wonder');
+              }}
+              onSpeakMood={(text) => speak(text)}
+            />
+
             <button
               id="btn-open-clint-chat"
               onClick={() => {
                 triggerCompanionReaction('heart');
                 setIsChatModalOpen(true);
+                lumiSync.notifyModal('chat', true);
               }}
               title="Kausapin si Clint (AI Copy)"
               className="flex items-center gap-1.5 text-xs bg-gradient-to-r from-amber-400/25 via-rose-400/25 to-amber-300/25 hover:from-amber-400/35 hover:to-rose-400/35 backdrop-blur-md border border-amber-300/60 px-3.5 py-1.5 rounded-full text-amber-100 font-serif font-semibold transition-all shadow-[0_0_16px_rgba(244,213,141,0.3)] hover:scale-105"
@@ -578,7 +615,10 @@ export default function App() {
       {/* 9. World Detail Explorer Modal */}
       <WorldDetailModal
         world={selectedWorld}
-        onClose={() => setSelectedWorld(null)}
+        onClose={() => {
+          setSelectedWorld(null);
+          lumiSync.notifyModal('world-modal', false);
+        }}
         onSpeak={(text, ache) => speak(text, ache)}
         onOpenPhotoManager={() => {
           setIsPhotoManagerOpen(true);
@@ -586,7 +626,20 @@ export default function App() {
         }}
         onNavigateWorld={handleSelectWorld}
         onOpenPangilatan={handleOpenPangilatan}
+        onOpenLettersSubUniverse={handleOpenLettersSubUniverse}
       />
+
+      {/* 9.5 Dedicated Letters Sub-Universe Landing Page */}
+      {isLettersUniverseOpen && (
+        <LettersSubUniverseView
+          initialSubworldId={lettersSubworldId}
+          onBackToUniverse={() => {
+            setIsLettersUniverseOpen(false);
+            lumiSync.notifyModal('letters-universe', false);
+          }}
+          onSpeak={(line, isAche) => speak(line, isAche)}
+        />
+      )}
 
       {/* 10. Shooting Star / Meteor Wish Modal */}
       <MeteorWishModal

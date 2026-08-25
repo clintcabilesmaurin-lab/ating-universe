@@ -127,6 +127,51 @@ const EMOTION_QUICK_RESPONSES: Record<
   },
 };
 
+const WORLD_CONTINUOUS_CHATTER: Record<string, string[]> = {
+  'letters-universe': [
+    "Subukan mong i-hover 'yung mga sobre Lovey, may tactile peek 'yan na parang bubuksan mo na talaga! ✨📜",
+    "Paborito ko 'yung 11th Monthsary Secret Letter sa gitna, may kumukutitap na gintong aura! 💎💖",
+    "Kahit gaano kalayo ang distansya, sa bawat salita ni Clint ramdam na ramdam ang yakap n'ya sa'yo. 💌🌸",
+    "Alam mo bang paulit-ulit nire-read ni Clint 'yung mga sinulat n'ya para lang siguradong mapapangiti ka? 🥰",
+    "Ang bawat liham dito, patunay kung gaano ka kahalaga sa buhay n'ya. Walang kupas ang pag-ibig! 🌟💌",
+  ],
+  'pangilatan': [
+    "Naalala mo pa ba 'yung simoy ng hangin doon? Parang kayakap mo lang ang buong mundo kasama si Clint. ☁️💚",
+    "Sabi ni Clint, kahit gaano kahirap ang akyat, basta kasama ka, laging worth it ang bawat hakbang. 🥾⛰️",
+    "Ang ganda ng tanawin sa itaas ng Pangilatan, pero sabi ni Clint ikaw pa rin daw ang pinakamagandang view! 😊✨",
+    "Mag-hike daw ulit kayo sa marami pang tuktok kapag magkasama na kayo! 🌲🌄",
+  ],
+  'first-dance': [
+    "Mahigpit ang hawak sa baywang at mga ngiting hindi matapos-tapos habang umiikot ang mundo. 🎶💖",
+    "Kung pwede lang daw ihinto ang oras tuwing sumasayaw kayo, ginawa na ni Clint! 💫",
+    "Sumasabay ang tibok ng puso ni Clint sa bawat hakbang n'yong dalawa... 🥰💃",
+  ],
+  'first-meeting': [
+    "Kinakabahan daw si Clint nung unang beses kayong nagkita, pero nung ngumiti ka raw, nawala lahat ng kaba! 🥰",
+    "Mula nung araw na 'to, alam na agad ng universe na kayong dalawa ang para sa isa't isa. ✨💖",
+    "Hinding-hindi raw makakalimutan ni Clint ang araw na unang nasulyapan ang ngiti mo. 💫",
+  ],
+  'music': [
+    "Lahat ng kanta rito, paborito pakinggan ni Clint tuwing nami-miss ka n'ya habang nag-aaral o naglalakad. 🎧❤️",
+    "Kantahan ka raw ulit ni Clint ng paborito mong kanta kapag magkasama na kayo! 🎤😊",
+    "Ang sarap sumayaw at mag-soundtrip kapag ikaw ang kasama Lovey! 🎵💖",
+  ],
+  'future': [
+    "Isang magandang tahanan, masasarap na luto, at habambuhay na lambing kasama ang isa't isa. 🏡💖",
+    "Tiwala lang Lovey, bawat pangarap n'yo magkakatotoo sa tamang panahon. ✨🙏",
+    "Sooner, wala nang screen sa pagitan ninyo—magkayakap na kayo habang tinatanaw ang bukang-liwayway! 🌅🥰",
+  ],
+  'photos': [
+    "Grabe, ang ganda-ganda mo talaga sa bawat litrato Maica! Napapa-inlove na naman si Clint. 📸✨",
+    "Bawat ngiti mo sa picture, nagbibigay ng lakas at inspirasyon kay Clint araw-araw. 💖",
+  ],
+  'general-world': [
+    "Ang ganda ng mundong 'to! Bawat bituin dito patunay ng walang-hanggang pagmamahal ni Clint sa'yo. 💫",
+    "Tignan mo ang mga detalye Lovey, bawat memorya iningatan para sa'yo! 🥰✨",
+    "Kasama mo ako saan ka man pumunta sa uniberso ninyong dalawa! 🌌💖",
+  ],
+};
+
 export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
   currentLine,
   isAche = false,
@@ -180,6 +225,9 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
   const isIdleRef = useRef<boolean>(false);
   const hasSpokenInitialGreetingRef = useRef<boolean>(false);
 
+  const activeWorldRef = useRef<string | null>(null);
+  const worldChatterIndexRef = useRef<number>(0);
+
   // Keep windowSize synchronized
   useEffect(() => {
     const handleResize = () => {
@@ -206,6 +254,25 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
       setActiveSpeech(null);
     }, duration);
   }, []);
+
+  // Periodic Contextual Yapping during World Exploration
+  useEffect(() => {
+    const yappingInterval = setInterval(() => {
+      const currentWorld = activeWorldRef.current;
+      if (!currentWorld || isMenuOpen) return;
+
+      const chatterList = WORLD_CONTINUOUS_CHATTER[currentWorld] || WORLD_CONTINUOUS_CHATTER['general-world'];
+      if (!chatterList || chatterList.length === 0) return;
+
+      worldChatterIndexRef.current = (worldChatterIndexRef.current + 1) % chatterList.length;
+      const nextLine = chatterList[worldChatterIndexRef.current];
+
+      displaySpeech(nextLine, 7500);
+      triggerBounce('heart');
+    }, 16000);
+
+    return () => clearInterval(yappingInterval);
+  }, [isMenuOpen, displaySpeech, triggerBounce]);
 
   // Time-of-day contextual greeting upon initial load
   useEffect(() => {
@@ -279,26 +346,69 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
 
         case 'MODAL_CHANGE':
           if (event.data?.isOpen) {
-            if (event.data.modalName === 'pangilatan') {
+            const rawName = (event.data.modalName || '').toLowerCase();
+            if (rawName.includes('letters') || rawName.includes('liham')) {
+              activeWorldRef.current = 'letters-universe';
+              setGuideMood('inlove');
+              setGuideBehavior('dancing');
+              triggerBounce('heart');
+              displaySpeech("Hala! Andito tayo sa Mundo ng mga Liham! Bawat sobre may dalang yakap at pagmamahal mula kay Clint. 💌✨", 7000);
+            } else if (rawName.includes('pangilatan') || rawName.includes('bundok') || rawName.includes('mountain')) {
+              activeWorldRef.current = 'pangilatan';
               setGuideMood('starry');
               setGuideBehavior('star-watching');
               triggerBounce('wonder');
-              displaySpeech("Tuktok ng Pangilatan! Ang sarap balikan nung magkasama tayo sa ibabaw ng mga ulap... ⛰️✨", 7000);
-            } else if (event.data.modalName === 'wish') {
+              displaySpeech("Tuktok ng Pangilatan! Ang sarap balikan nung magkasama kayo sa ibabaw ng mga ulap... ⛰️✨", 7000);
+            } else if (rawName.includes('sayaw') || rawName.includes('dance')) {
+              activeWorldRef.current = 'first-dance';
+              setGuideMood('inlove');
+              setGuideBehavior('dancing');
+              triggerBounce('heart');
+              displaySpeech("Ating Unang Sayaw! Dahan-dahang sumasayaw sa ilalim ng mga bituin... 💃🕺🎶", 7000);
+            } else if (rawName.includes('tagpuan') || rawName.includes('meeting') || rawName.includes('unang')) {
+              activeWorldRef.current = 'first-meeting';
+              setGuideMood('inlove');
+              setGuideBehavior('cheering');
+              triggerBounce('heart');
+              displaySpeech("Ang Ating Unang Tagpuan! Dito nagsimula ang lahat nung unang magtagpo ang inyong mga mata. 💫🥰", 7000);
+            } else if (rawName.includes('musika') || rawName.includes('music') || rawName.includes('playlist')) {
+              activeWorldRef.current = 'music';
+              setGuideMood('inlove');
+              setGuideBehavior('dancing');
+              triggerBounce('heart');
+              displaySpeech("Mundo ng Musika! Ang ganda ng playlist ng inyong pag-ibig, bawat nota may kwento. 🎵✨", 7000);
+            } else if (rawName.includes('liwanag') || rawName.includes('bukang-liwayway') || rawName.includes('pangarap') || rawName.includes('future')) {
+              activeWorldRef.current = 'future';
+              setGuideMood('starry');
+              setGuideBehavior('cheering');
+              triggerBounce('star');
+              displaySpeech("Liwanag ng Bukang-Liwayway! Dito nakaukit ang magagandang pangarap ninyong dalawa. 🌅💖", 7000);
+            } else if (rawName === 'wish') {
+              activeWorldRef.current = 'wish';
               setGuideMood('excited');
               setGuideBehavior('cheering');
               triggerBounce('star');
               displaySpeech("Hiling ka na ng wish Lovey! Ipagpe-pray ko na matupad lahat ng pangarap natin. ⭐", 7000);
-            } else if (event.data.modalName === 'photos') {
+            } else if (rawName === 'photos') {
+              activeWorldRef.current = 'photos';
               setGuideMood('giggle');
               setGuideBehavior('floating');
               triggerBounce('heart');
               displaySpeech("Ayan ang mga paborito nating memories! Ang ganda-ganda mo palagi sa pictures. 📷💖", 7000);
-            } else if (event.data.modalName === 'chat') {
+            } else if (rawName === 'chat') {
+              activeWorldRef.current = 'chat';
               setGuideMood('inlove');
               setGuideBehavior('following');
               displaySpeech("Kwento ka lang Lovey, nakikinig ako sa'yo buong-puso. 🥰", 6000);
+            } else {
+              activeWorldRef.current = 'general-world';
+              setGuideMood('curious');
+              setGuideBehavior('following');
+              triggerBounce('wonder');
+              displaySpeech(`Pumasok tayo sa ${event.data.modalName}! Kasama mo ako sa bawat sulok ng ating universe Lovey! ✨🌌`, 7000);
             }
+          } else {
+            activeWorldRef.current = null;
           }
           break;
 
@@ -653,7 +763,7 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
       <div
         ref={guideContainerRef}
         id="living-companion-guide-container"
-        className="fixed z-40 select-none pointer-events-none transition-all duration-300"
+        className="fixed z-[70] select-none pointer-events-none transition-all duration-300"
         style={{
           left: `${position.x}vw`,
           top: `${position.y}vh`,
@@ -734,7 +844,7 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
                 ? { top: `${bounds.bubbleTop}px` }
                 : { bottom: `${bounds.bubbleBottom}px` }),
             }}
-            className="z-50 p-4 rounded-2xl bg-slate-950/95 backdrop-blur-xl border border-cyan-400/35 text-cyan-50 shadow-[0_14px_48px_rgba(0,0,0,0.9),0_0_25px_rgba(56,189,248,0.25)] select-none pointer-events-auto"
+            className="z-[75] p-4 rounded-2xl bg-slate-950/95 backdrop-blur-xl border border-cyan-400/35 text-cyan-50 shadow-[0_14px_48px_rgba(0,0,0,0.9),0_0_25px_rgba(56,189,248,0.25)] select-none pointer-events-auto"
           >
             {/* Dynamic Pointer Arrow Tail */}
             <div
@@ -806,7 +916,7 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
       {/* 3. STRICTLY VIEWPORT-CONTAINED EMOTION MENU & ACTIONS */}
       <AnimatePresence>
         {isMenuOpen && (
-          <div className="fixed inset-0 z-50 pointer-events-none">
+          <div className="fixed inset-0 z-[80] pointer-events-none">
             <div
               className="absolute inset-0 pointer-events-auto bg-black/20 backdrop-blur-[2px]"
               onClick={() => setIsMenuOpen(false)}
@@ -827,7 +937,7 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
                 top: `${bounds.chatBtnTop}px`,
                 transform: 'translate(-50%, -50%)',
               }}
-              className="pointer-events-auto px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500 via-rose-500 to-pink-500 text-white font-serif text-xs font-semibold shadow-[0_4px_20px_rgba(244,63,94,0.45)] hover:scale-110 active:scale-95 transition-all flex items-center gap-1.5 border border-white/30 whitespace-nowrap z-50"
+              className="pointer-events-auto px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500 via-rose-500 to-pink-500 text-white font-serif text-xs font-semibold shadow-[0_4px_20px_rgba(244,63,94,0.45)] hover:scale-110 active:scale-95 transition-all flex items-center gap-1.5 border border-white/30 whitespace-nowrap z-[80]"
               title="Mag-usap tayo sa Chat"
             >
               <MessageCircle className="w-3.5 h-3.5" />
@@ -849,7 +959,7 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
                 top: `${bounds.hugBtnTop}px`,
                 transform: 'translate(-50%, -50%)',
               }}
-              className="pointer-events-auto p-2.5 rounded-full bg-rose-500/90 text-white shadow-lg hover:scale-110 active:scale-95 transition-all border border-rose-300/40 z-50"
+              className="pointer-events-auto p-2.5 rounded-full bg-rose-500/90 text-white shadow-lg hover:scale-110 active:scale-95 transition-all border border-rose-300/40 z-[80]"
               title="Magpa-hug kay Clint 🤗"
             >
               <Heart className="w-4 h-4 fill-white" />
@@ -872,7 +982,7 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
                 top: `${bounds.flyBtnTop}px`,
                 transform: 'translate(-50%, -50%)',
               }}
-              className="pointer-events-auto p-2.5 rounded-full bg-indigo-600/90 text-white shadow-lg hover:scale-110 active:scale-95 transition-all border border-indigo-300/40 z-50"
+              className="pointer-events-auto p-2.5 rounded-full bg-indigo-600/90 text-white shadow-lg hover:scale-110 active:scale-95 transition-all border border-indigo-300/40 z-[80]"
               title="Lumipad sa kabilang bituin"
             >
               <Navigation className="w-4 h-4" />
@@ -892,7 +1002,7 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
                   ? { bottom: `${bounds.paletteBottom}px` }
                   : { top: `${bounds.paletteTop}px` }),
               }}
-              className="pointer-events-auto z-50 flex items-center justify-between gap-1 p-1.5 rounded-full bg-slate-950/95 backdrop-blur-xl border border-cyan-400/40 shadow-[0_10px_35px_rgba(0,0,0,0.85),0_0_18px_rgba(56,189,248,0.3)] overflow-x-auto no-scrollbar"
+              className="pointer-events-auto z-[80] flex items-center justify-between gap-1 p-1.5 rounded-full bg-slate-950/95 backdrop-blur-xl border border-cyan-400/40 shadow-[0_10px_35px_rgba(0,0,0,0.85),0_0_18px_rgba(56,189,248,0.3)] overflow-x-auto no-scrollbar"
             >
               {Object.entries(EMOTION_QUICK_RESPONSES).map(([key, item]) => {
                 const isActive = guideMood === item.mood;

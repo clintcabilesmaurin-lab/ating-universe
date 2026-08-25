@@ -31,6 +31,35 @@ export interface Letter {
   signature: string;
   tag: string;
   sealColor: string;
+  audioVoiceSnippet?: string;
+  isSpecialMilestone?: boolean;
+}
+
+export interface OpenWhenLetter {
+  id: string;
+  trigger: string;
+  title: string;
+  tagline: string;
+  emoji: string;
+  accentColor: string;
+  content: string[];
+  encouragement: string;
+  signature: string;
+  virtualGift?: string;
+}
+
+export interface LetterSubworld {
+  id: string;
+  name: string;
+  subtitle: string;
+  description: string;
+  category: 'secret-link' | 'milestone' | 'archive' | 'open-when' | 'whispers';
+  starColor: string;
+  accentGlow: string;
+  iconName: string;
+  badgeText?: string;
+  externalUrl?: string;
+  previewLine: string;
 }
 
 export interface MemoryItem {

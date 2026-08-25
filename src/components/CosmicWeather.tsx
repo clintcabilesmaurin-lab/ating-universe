@@ -103,16 +103,198 @@ interface Particle {
   hueShift?: number;
 }
 
-interface CosmicWeatherProps {
+export interface CosmicWeatherProps {
   activeMoodId?: WeatherMoodId;
   onMoodChange?: (mood: WeatherMoodId) => void;
   onSpeakMood?: (text: string) => void;
+  hideToggle?: boolean;
 }
+
+export interface CosmicWeatherToggleProps {
+  activeMoodId?: WeatherMoodId;
+  onMoodChange?: (mood: WeatherMoodId) => void;
+  onSpeakMood?: (text: string) => void;
+  className?: string;
+}
+
+export const CosmicWeatherToggle: React.FC<CosmicWeatherToggleProps> = memo(({
+  activeMoodId: activeMoodIdProp,
+  onMoodChange,
+  onSpeakMood,
+  className = '',
+}) => {
+  const [internalMoodId, setInternalMoodId] = useState<WeatherMoodId>(() => {
+    try {
+      const saved = localStorage.getItem('cosmic_weather_mood');
+      if (saved && COSMIC_WEATHER_MOODS.some((m) => m.id === saved)) {
+        return saved as WeatherMoodId;
+      }
+    } catch {
+      // fallback
+    }
+    return getDailyMood();
+  });
+
+  const [atmosphere, setAtmosphere] = useState<AtmosphereState>(() => getAtmosphereSnapshot());
+  const [currentTimeFormatted, setCurrentTimeFormatted] = useState<string>('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setAtmosphere(getAtmosphereSnapshot(now));
+      setCurrentTimeFormatted(
+        now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      );
+    };
+    updateTime();
+    const timer = setInterval(updateTime, 10000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const currentMoodId = activeMoodIdProp || internalMoodId;
+  const currentMood = useMemo(
+    () => COSMIC_WEATHER_MOODS.find((m) => m.id === currentMoodId) || COSMIC_WEATHER_MOODS[0],
+    [currentMoodId]
+  );
+
+  const handleSelectMood = (mood: WeatherMood) => {
+    setInternalMoodId(mood.id);
+    if (onMoodChange) {
+      onMoodChange(mood.id);
+    }
+    lumiSync.notifyWeather(mood.id);
+    setIsMenuOpen(false);
+    try {
+      localStorage.setItem('cosmic_weather_mood', mood.id);
+    } catch {
+      // ignore
+    }
+    audioEngine.playStarGazeChime();
+
+    if (onSpeakMood) {
+      onSpeakMood(`Kasalukuyang panahon sa ating uniberso: ${mood.name}. "${mood.tagline}" ✨`);
+    }
+  };
+
+  const IconComp = currentMood.icon;
+
+  return (
+    <div className={`relative pointer-events-auto ${className}`}>
+      <motion.button
+        id="btn-cosmic-weather-toggle"
+        whileHover={{ scale: 1.04 }}
+        whileTap={{ scale: 0.96 }}
+        onClick={() => setIsMenuOpen((prev) => !prev)}
+        className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-full backdrop-blur-md border shadow-lg transition-all duration-300 text-xs font-sans tracking-wide select-none group"
+        style={{
+          backgroundColor: currentMood.badgeBg,
+          borderColor: currentMood.badgeBorder,
+          color: '#ffffff',
+        }}
+        title="Kasalukuyang Panahon & Oras ng Ating Uniberso"
+      >
+        <span
+          className="p-1 rounded-full flex items-center justify-center animate-pulse"
+          style={{ backgroundColor: `${currentMood.accentColor}33` }}
+        >
+          <IconComp className="w-3.5 h-3.5" style={{ color: currentMood.accentColor }} />
+        </span>
+        <span className="font-serif italic font-medium text-slate-100 text-xs hidden xs:inline">
+          {currentMood.name}
+        </span>
+        <span className="text-[10px] text-cyan-300/80 font-mono hidden md:inline pl-1 border-l border-white/15 flex items-center gap-1">
+          <span>{atmosphere.timeEmoji}</span>
+          <span>{atmosphere.seasonEmoji}</span>
+          {currentTimeFormatted && <span>{currentTimeFormatted}</span>}
+        </span>
+        <ChevronRight
+          className={`w-3 h-3 text-slate-400 group-hover:text-white transition-transform duration-200 ${
+            isMenuOpen ? 'rotate-90' : ''
+          }`}
+        />
+      </motion.button>
+
+      {/* Dropdown Menu */}
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -8, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="absolute top-full left-0 mt-2 w-72 p-2.5 rounded-2xl bg-slate-950/95 border border-white/15 backdrop-blur-xl shadow-2xl z-50 space-y-2 pointer-events-auto"
+          >
+            <div className="p-2 rounded-xl bg-gradient-to-r from-cyan-950/40 via-purple-950/40 to-pink-950/40 border border-white/10 text-xs">
+              <div className="flex items-center justify-between text-cyan-200 font-serif font-semibold mb-1">
+                <span className="flex items-center gap-1.5">
+                  <span>{atmosphere.timeEmoji}</span>
+                  <span>{atmosphere.timeLabel}</span>
+                </span>
+                <span className="flex items-center gap-1 text-pink-200">
+                  <span>{atmosphere.seasonEmoji}</span>
+                  <span>{atmosphere.seasonLabel}</span>
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300 font-serif italic leading-relaxed">
+                {atmosphere.tagline}
+              </p>
+            </div>
+
+            <div className="px-2 py-1 border-b border-white/10 flex items-center justify-between">
+              <span className="text-[10px] uppercase font-mono tracking-widest text-slate-400">
+                Cosmic Weather Themes
+              </span>
+              <span className="text-[10px] text-amber-300 font-sans">Araw-araw nagbabago</span>
+            </div>
+
+            {COSMIC_WEATHER_MOODS.map((mood) => {
+              const isSelected = mood.id === currentMood.id;
+              const ItemIcon = mood.icon;
+              return (
+                <button
+                  key={mood.id}
+                  onClick={() => handleSelectMood(mood)}
+                  className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-all flex items-center gap-2.5 group ${
+                    isSelected
+                      ? 'bg-white/15 text-white font-medium border border-white/20'
+                      : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <div
+                    className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: `${mood.accentColor}25` }}
+                  >
+                    <ItemIcon className="w-3.5 h-3.5" style={{ color: mood.accentColor }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className="truncate">{mood.name}</span>
+                      {isSelected && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                      )}
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-serif italic truncate">
+                      {mood.tagline}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+});
+
+CosmicWeatherToggle.displayName = 'CosmicWeatherToggle';
 
 export const CosmicWeather: React.FC<CosmicWeatherProps> = memo(({
   activeMoodId: activeMoodIdProp,
   onMoodChange,
   onSpeakMood,
+  hideToggle = false,
 }) => {
   const [internalMoodId, setInternalMoodId] = useState<WeatherMoodId>(() => {
     try {
@@ -361,115 +543,116 @@ export const CosmicWeather: React.FC<CosmicWeatherProps> = memo(({
         className="fixed inset-0 w-full h-full pointer-events-none z-[4] mix-blend-screen"
       />
 
-      {/* Atmospheric Weather & Real-Time Atmosphere Badge (Top-Left Pill in Sky) */}
-      <div className="fixed top-3 left-3 sm:top-4 sm:left-4 z-40 flex items-center gap-2">
-        <div className="relative">
-          <motion.button
-            id="btn-cosmic-weather-toggle"
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-            onClick={() => setIsMenuOpen((prev) => !prev)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md border shadow-lg transition-all duration-300 text-xs font-sans tracking-wide select-none group"
-            style={{
-              backgroundColor: currentMood.badgeBg,
-              borderColor: currentMood.badgeBorder,
-              color: '#ffffff',
-            }}
-            title="Kasalukuyang Panahon & Oras ng Ating Uniberso"
-          >
-            <span
-              className="p-1 rounded-full flex items-center justify-center animate-pulse"
-              style={{ backgroundColor: `${currentMood.accentColor}33` }}
+      {/* Atmospheric Weather & Real-Time Atmosphere Badge (Optional standalone toggle) */}
+      {!hideToggle && (
+        <div className="fixed top-3 left-3 sm:top-4 sm:left-4 z-40 flex items-center gap-2">
+          <div className="relative">
+            <motion.button
+              id="btn-cosmic-weather-toggle-standalone"
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              onClick={() => setIsMenuOpen((prev) => !prev)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md border shadow-lg transition-all duration-300 text-xs font-sans tracking-wide select-none group"
+              style={{
+                backgroundColor: currentMood.badgeBg,
+                borderColor: currentMood.badgeBorder,
+                color: '#ffffff',
+              }}
+              title="Kasalukuyang Panahon & Oras ng Ating Uniberso"
             >
-              <IconComp className="w-3.5 h-3.5" style={{ color: currentMood.accentColor }} />
-            </span>
-            <span className="font-serif italic font-medium hidden xs:inline text-slate-100">
-              {currentMood.name}
-            </span>
-            <span className="text-[10px] text-cyan-300/80 font-mono hidden sm:inline pl-1 border-l border-white/15 flex items-center gap-1">
-              <span>{atmosphere.timeEmoji}</span>
-              <span>{atmosphere.seasonEmoji}</span>
-              {currentTimeFormatted && <span>{currentTimeFormatted}</span>}
-            </span>
-            <ChevronRight
-              className={`w-3 h-3 text-slate-400 group-hover:text-white transition-transform duration-200 ${
-                isMenuOpen ? 'rotate-90' : ''
-              }`}
-            />
-          </motion.button>
-
-          {/* Dropdown Menu to Choose Cosmic Weather & View Real-Time Status */}
-          <AnimatePresence>
-            {isMenuOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="absolute top-full left-0 mt-2 w-72 p-2.5 rounded-2xl bg-slate-950/95 border border-white/15 backdrop-blur-xl shadow-2xl z-50 space-y-2"
+              <span
+                className="p-1 rounded-full flex items-center justify-center animate-pulse"
+                style={{ backgroundColor: `${currentMood.accentColor}33` }}
               >
-                {/* Real-time Atmosphere Info Panel */}
-                <div className="p-2 rounded-xl bg-gradient-to-r from-cyan-950/40 via-purple-950/40 to-pink-950/40 border border-white/10 text-xs">
-                  <div className="flex items-center justify-between text-cyan-200 font-serif font-semibold mb-1">
-                    <span className="flex items-center gap-1.5">
-                      <span>{atmosphere.timeEmoji}</span>
-                      <span>{atmosphere.timeLabel}</span>
-                    </span>
-                    <span className="flex items-center gap-1 text-pink-200">
-                      <span>{atmosphere.seasonEmoji}</span>
-                      <span>{atmosphere.seasonLabel}</span>
-                    </span>
+                <IconComp className="w-3.5 h-3.5" style={{ color: currentMood.accentColor }} />
+              </span>
+              <span className="font-serif italic font-medium hidden xs:inline text-slate-100">
+                {currentMood.name}
+              </span>
+              <span className="text-[10px] text-cyan-300/80 font-mono hidden sm:inline pl-1 border-l border-white/15 flex items-center gap-1">
+                <span>{atmosphere.timeEmoji}</span>
+                <span>{atmosphere.seasonEmoji}</span>
+                {currentTimeFormatted && <span>{currentTimeFormatted}</span>}
+              </span>
+              <ChevronRight
+                className={`w-3 h-3 text-slate-400 group-hover:text-white transition-transform duration-200 ${
+                  isMenuOpen ? 'rotate-90' : ''
+                }`}
+              />
+            </motion.button>
+
+            {/* Dropdown Menu */}
+            <AnimatePresence>
+              {isMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  className="absolute top-full left-0 mt-2 w-72 p-2.5 rounded-2xl bg-slate-950/95 border border-white/15 backdrop-blur-xl shadow-2xl z-50 space-y-2"
+                >
+                  <div className="p-2 rounded-xl bg-gradient-to-r from-cyan-950/40 via-purple-950/40 to-pink-950/40 border border-white/10 text-xs">
+                    <div className="flex items-center justify-between text-cyan-200 font-serif font-semibold mb-1">
+                      <span className="flex items-center gap-1.5">
+                        <span>{atmosphere.timeEmoji}</span>
+                        <span>{atmosphere.timeLabel}</span>
+                      </span>
+                      <span className="flex items-center gap-1 text-pink-200">
+                        <span>{atmosphere.seasonEmoji}</span>
+                        <span>{atmosphere.seasonLabel}</span>
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 font-serif italic leading-relaxed">
+                      {atmosphere.tagline}
+                    </p>
                   </div>
-                  <p className="text-[11px] text-slate-300 font-serif italic leading-relaxed">
-                    {atmosphere.tagline}
-                  </p>
-                </div>
 
-                <div className="px-2 py-1 border-b border-white/10 flex items-center justify-between">
-                  <span className="text-[10px] uppercase font-mono tracking-widest text-slate-400">
-                    Cosmic Weather Themes
-                  </span>
-                  <span className="text-[10px] text-amber-300 font-sans">Araw-araw nagbabago</span>
-                </div>
+                  <div className="px-2 py-1 border-b border-white/10 flex items-center justify-between">
+                    <span className="text-[10px] uppercase font-mono tracking-widest text-slate-400">
+                      Cosmic Weather Themes
+                    </span>
+                    <span className="text-[10px] text-amber-300 font-sans">Araw-araw nagbabago</span>
+                  </div>
 
-                {COSMIC_WEATHER_MOODS.map((mood) => {
-                  const isSelected = mood.id === currentMood.id;
-                  const ItemIcon = mood.icon;
-                  return (
-                    <button
-                      key={mood.id}
-                      onClick={() => handleSelectMood(mood)}
-                      className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-all flex items-center gap-2.5 group ${
-                        isSelected
-                          ? 'bg-white/15 text-white font-medium border border-white/20'
-                          : 'text-slate-300 hover:bg-white/5 hover:text-white'
-                      }`}
-                    >
-                      <div
-                        className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: `${mood.accentColor}25` }}
+                  {COSMIC_WEATHER_MOODS.map((mood) => {
+                    const isSelected = mood.id === currentMood.id;
+                    const ItemIcon = mood.icon;
+                    return (
+                      <button
+                        key={mood.id}
+                        onClick={() => handleSelectMood(mood)}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-all flex items-center gap-2.5 group ${
+                          isSelected
+                            ? 'bg-white/15 text-white font-medium border border-white/20'
+                            : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                        }`}
                       >
-                        <ItemIcon className="w-3.5 h-3.5" style={{ color: mood.accentColor }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <span className="truncate">{mood.name}</span>
-                          {isSelected && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                          )}
+                        <div
+                          className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
+                          style={{ backgroundColor: `${mood.accentColor}25` }}
+                        >
+                          <ItemIcon className="w-3.5 h-3.5" style={{ color: mood.accentColor }} />
                         </div>
-                        <p className="text-[10px] text-slate-400 font-serif italic truncate">
-                          {mood.tagline}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </motion.div>
-            )}
-          </AnimatePresence>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className="truncate">{mood.name}</span>
+                            {isSelected && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                            )}
+                          </div>
+                          <p className="text-[10px] text-slate-400 font-serif italic truncate">
+                            {mood.tagline}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
-      </div>
+      )}
     </>
   );
 });

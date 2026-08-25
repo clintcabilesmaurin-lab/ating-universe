@@ -141,11 +141,10 @@ export const PangilatanModal: React.FC<PangilatanModalProps> = ({
 
               <a
                 href={PANGILATAN_FOLDER_URL}
-                target="_blank"
-                rel="noreferrer"
+                target="_top"
                 className="text-emerald-300 hover:text-emerald-100 underline flex items-center gap-1 text-[11px] font-sans"
               >
-                <span>Buksan ang Drive Folder</span>
+                <span>Drive Folder</span>
                 <ExternalLink className="w-3 h-3" />
               </a>
             </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, memo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { WORLDS, PANGILATAN_LINES } from '../data/universeData';
+import { WORLDS, PANGILATAN_LINES, OUR_FIRST_YEAR_URL } from '../data/universeData';
 import { WorldStar } from '../types';
 import { Sparkles, Heart, Compass, Image as ImageIcon, Mail, Lock, ExternalLink, Globe } from 'lucide-react';
 import { World3DIcon } from './World3DIcon';
@@ -588,11 +588,38 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
                     <span>Buksan • Pumasok</span>
                   </button>
 
+                  {world.id === 'our-first-year' && (
+                    <a
+                      href={OUR_FIRST_YEAR_URL}
+                      target="_top"
+                      id="card-btn-our-first-year-link"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs px-3 py-1.5 rounded-full font-sans tracking-wider bg-gradient-to-r from-amber-400/25 to-rose-400/25 hover:from-amber-400/45 hover:to-rose-400/45 text-amber-200 border border-amber-300/40 hover:border-amber-200 transition-all flex items-center gap-1 shadow-sm hover:scale-105"
+                    >
+                      <Sparkles className="w-3 h-3 text-amber-300" />
+                      <span>Our First Year</span>
+                      <ExternalLink className="w-3 h-3 text-amber-300 ml-0.5" />
+                    </a>
+                  )}
+
+                  {world.id === 'letters' && (
+                    <a
+                      href="https://secret-letter-daw.vercel.app/"
+                      target="_top"
+                      id="card-btn-secret-letter-link"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs px-3 py-1.5 rounded-full font-sans tracking-wider bg-rose-500/25 hover:bg-rose-500/45 text-rose-200 border border-rose-400/40 hover:border-rose-300 transition-all flex items-center gap-1 shadow-sm hover:scale-105"
+                    >
+                      <Sparkles className="w-3 h-3 text-rose-300" />
+                      <span>Secret Letter</span>
+                      <ExternalLink className="w-3 h-3 text-rose-300 ml-0.5" />
+                    </a>
+                  )}
+
                   {world.id === 'memory-gallery' && (
                     <a
                       href={world.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      target="_top"
                       id="card-btn-gallery-walk"
                       onClick={(e) => e.stopPropagation()}
                       className="text-xs px-3 py-1.5 rounded-full font-sans tracking-wider bg-purple-500/25 hover:bg-purple-500/45 text-purple-200 border border-purple-400/40 hover:border-purple-300 transition-all flex items-center gap-1 shadow-sm hover:scale-105"

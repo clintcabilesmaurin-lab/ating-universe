@@ -561,8 +561,7 @@ export const PhotoManagerModal: React.FC<PhotoManagerModalProps> = ({
             <div className="flex items-center gap-3">
               <a
                 href={PANGILATAN_FOLDER_URL}
-                target="_blank"
-                rel="noreferrer"
+                target="_top"
                 className="hover:text-amber-200 underline flex items-center gap-1"
               >
                 <span>Pangilatan Folder</span>
@@ -571,8 +570,7 @@ export const PhotoManagerModal: React.FC<PhotoManagerModalProps> = ({
               <span>&bull;</span>
               <a
                 href={RANDOM_MEMORIES_FOLDER_URL}
-                target="_blank"
-                rel="noreferrer"
+                target="_top"
                 className="hover:text-purple-200 underline flex items-center gap-1"
               >
                 <span>Random Folder</span>

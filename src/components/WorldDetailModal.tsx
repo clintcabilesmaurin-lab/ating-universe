@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Sparkles, Heart, Mail, Calendar, Compass, ArrowLeft, CheckCircle2, Lock, BookOpen, Camera, ExternalLink, Globe, Mountain } from 'lucide-react';
+import { X, Sparkles, Heart, Mail, Calendar, Compass, ArrowLeft, CheckCircle2, Lock, BookOpen, Camera, ExternalLink, Globe, Mountain, ChevronRight } from 'lucide-react';
 import { WorldStar, Letter } from '../types';
-import { TIMELINE_MILESTONES, MEMORIES, LETTERS, TRAVEL_DREAMS, MEMORY_GALLERY_WALK_URL, WORLDS } from '../data/universeData';
+import { TIMELINE_MILESTONES, MEMORIES, LETTERS, TRAVEL_DREAMS, MEMORY_GALLERY_WALK_URL, SECRET_LETTER_DAW_URL, OUR_FIRST_YEAR_URL, WORLDS } from '../data/universeData';
 import { audioEngine } from '../utils/audioEngine';
 import { CelestialMemoryVisual } from './CelestialMemoryVisual';
 import { loadCustomPhotos, getDriveThumbnailUrl } from '../utils/driveHelper';
@@ -14,6 +14,7 @@ interface WorldDetailModalProps {
   onOpenPhotoManager?: () => void;
   onNavigateWorld?: (world: WorldStar) => void;
   onOpenPangilatan?: (line: string) => void;
+  onOpenLettersSubUniverse?: (subworldId?: string) => void;
 }
 
 export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
@@ -23,6 +24,7 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
   onOpenPhotoManager,
   onNavigateWorld,
   onOpenPangilatan,
+  onOpenLettersSubUniverse,
 }) => {
   const [selectedLetter, setSelectedLetter] = useState<Letter | null>(null);
   const [activeTab, setActiveTab] = useState<'timeline' | 'moments'>('timeline');
@@ -102,18 +104,53 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
+              {world.id === 'our-first-year' && (
+                <a
+                  href={OUR_FIRST_YEAR_URL}
+                  target="_top"
+                  id="header-our-first-year-portal-btn"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-400 via-rose-400 to-pink-500 hover:from-amber-300 hover:to-rose-300 text-slate-950 text-xs font-sans font-bold transition-all shadow-[0_0_20px_rgba(251,191,36,0.5)] hover:scale-105"
+                >
+                  <Sparkles className="w-3.5 h-3.5 fill-slate-950" />
+                  <span>Our First Year Website</span>
+                  <ExternalLink className="w-3 h-3 text-slate-950 ml-0.5" />
+                </a>
+              )}
               {world.id === 'memory-gallery' && (
                 <a
                   href={MEMORY_GALLERY_WALK_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  target="_top"
                   id="header-gallery-walk-btn"
                   className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/25 hover:bg-purple-500/40 border border-purple-300/40 text-purple-100 text-xs font-sans font-medium transition-all shadow-md hover:scale-102"
                 >
                   <Globe className="w-3.5 h-3.5 text-purple-300" />
-                  <span>3D Gallery Walk</span>
+                  <span>3D Walk</span>
                   <ExternalLink className="w-3 h-3 text-purple-300 ml-0.5" />
                 </a>
+              )}
+              {world.id === 'letters' && (
+                <>
+                  <a
+                    href={SECRET_LETTER_DAW_URL}
+                    target="_top"
+                    id="header-secret-letter-link-btn"
+                    className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-500/25 hover:bg-rose-500/40 border border-rose-400/40 text-rose-100 text-xs font-sans font-medium transition-all shadow-md hover:scale-102"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-rose-300" />
+                    <span>Secret Letter</span>
+                    <ExternalLink className="w-3 h-3 text-rose-300 ml-0.5" />
+                  </a>
+                  {onOpenLettersSubUniverse && (
+                    <button
+                      id="header-open-full-letters-universe-btn"
+                      onClick={() => onOpenLettersSubUniverse()}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-400 hover:to-pink-500 text-white text-xs font-sans font-medium transition-all shadow-md hover:scale-102"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>Mundo ng mga Liham</span>
+                    </button>
+                  )}
+                </>
               )}
               <button
                 id="close-world-modal"
@@ -130,14 +167,26 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
             {/* World 1: Our First Year Experience */}
             {world.id === 'our-first-year' && (
               <div className="space-y-6">
-                <div className="p-6 rounded-2xl bg-amber-500/10 border border-amber-400/30 text-center max-w-xl mx-auto">
-                  <Heart className="w-8 h-8 text-amber-300 mx-auto mb-2 fill-amber-300/30" />
+                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-amber-950/70 via-rose-950/60 to-slate-950/90 border border-amber-400/40 p-5 sm:p-6 shadow-[0_0_40px_rgba(251,191,36,0.15)] text-center max-w-xl mx-auto space-y-3">
+                  <Heart className="w-8 h-8 text-rose-400 mx-auto fill-rose-400/30" />
                   <h3 className="text-xl font-serif text-amber-100 font-medium">
                     365+ Araw ng Pagpili sa Isa't Isa
                   </h3>
-                  <p className="text-xs text-amber-200/80 font-sans mt-1">
+                  <p className="text-xs text-amber-200/80 font-sans">
                     Ang patunay na ang tunay na pag-ibig ay lumalalim sa bawat pagsubok at distansya.
                   </p>
+                  
+                  <div className="pt-2">
+                    <a
+                      href={OUR_FIRST_YEAR_URL}
+                      target="_top"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-pink-500 hover:from-amber-300 hover:to-rose-400 text-slate-950 font-bold text-xs shadow-[0_0_25px_rgba(251,191,36,0.5)] transition-all hover:scale-105"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 fill-slate-950" />
+                      <span>Buksan ang Our First Year Experience</span>
+                      <ExternalLink className="w-3.5 h-3.5 text-slate-950" />
+                    </a>
+                  </div>
                 </div>
 
                 {/* Timeline Milestones */}
@@ -203,13 +252,12 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
 
                     <a
                       href={MEMORY_GALLERY_WALK_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      target="_top"
                       id="launch-gallery-walk-btn"
                       className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 text-white font-sans text-xs sm:text-sm font-semibold tracking-wide shadow-lg hover:shadow-purple-500/30 hover:scale-105 transition-all shrink-0 cursor-pointer"
                     >
                       <Globe className="w-4 h-4" />
-                      <span>Pumasok sa 3D Gallery Walk</span>
+                      <span>Pumasok sa 3D Walk</span>
                       <ExternalLink className="w-4 h-4" />
                     </a>
                   </div>
@@ -291,6 +339,44 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                       <p className="text-xs text-slate-300 mt-2 font-serif italic">
                         Pumili ng selyadong sobre para basahin ang mga salitang nakalaan sa'yo.
                       </p>
+                    </div>
+
+                    {/* Subworld Navigation Banner for Letters Universe */}
+                    <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-rose-950/70 via-pink-950/70 to-purple-950/70 border border-rose-400/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-rose-300" />
+                          <h4 className="text-sm font-serif font-medium text-white">
+                            Subworlds sa Loob ng Mundo ng mga Liham
+                          </h4>
+                        </div>
+                        <p className="text-xs text-rose-200/80 font-sans">
+                          Kasama ang 11 Monthsary Milestone, Secret Letter Daw, at Open When Capsules.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <a
+                          href={SECRET_LETTER_DAW_URL}
+                          target="_top"
+                          id="modal-secret-letter-link-btn"
+                          className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-rose-200 text-xs font-sans font-medium flex items-center justify-center gap-1.5 transition-all"
+                        >
+                          <span>Secret Letter</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+
+                        {onOpenLettersSubUniverse && (
+                          <button
+                            id="modal-enter-letters-universe-btn"
+                            onClick={() => onOpenLettersSubUniverse()}
+                            className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-400 hover:to-pink-500 text-white text-xs font-sans font-medium flex items-center justify-center gap-1.5 transition-all shadow-md"
+                          >
+                            <span>Pumasok sa Landing Page</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {/* Sealed Envelopes Grid */}
