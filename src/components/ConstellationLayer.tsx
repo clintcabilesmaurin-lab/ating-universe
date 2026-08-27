@@ -6,6 +6,7 @@ import { Sparkles, Heart, Compass, Image as ImageIcon, Mail, Lock, ExternalLink,
 import { World3DIcon } from './World3DIcon';
 import { audioEngine } from '../utils/audioEngine';
 import { performanceManager } from '../utils/performanceManager';
+import { isFirstYearAnniversaryUnlocked } from '../utils/timeHelper';
 
 interface ConstellationLayerProps {
   onSelectWorld: (world: WorldStar) => void;
@@ -589,17 +590,33 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
                   </button>
 
                   {world.id === 'our-first-year' && (
-                    <a
-                      href={OUR_FIRST_YEAR_URL}
-                      target="_top"
-                      id="card-btn-our-first-year-link"
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-xs px-3 py-1.5 rounded-full font-sans tracking-wider bg-gradient-to-r from-amber-400/25 to-rose-400/25 hover:from-amber-400/45 hover:to-rose-400/45 text-amber-200 border border-amber-300/40 hover:border-amber-200 transition-all flex items-center gap-1 shadow-sm hover:scale-105"
-                    >
-                      <Sparkles className="w-3 h-3 text-amber-300" />
-                      <span>Our First Year</span>
-                      <ExternalLink className="w-3 h-3 text-amber-300 ml-0.5" />
-                    </a>
+                    isFirstYearAnniversaryUnlocked() ? (
+                      <a
+                        href={OUR_FIRST_YEAR_URL}
+                        target="_top"
+                        id="card-btn-our-first-year-link"
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-xs px-3 py-1.5 rounded-full font-sans tracking-wider bg-gradient-to-r from-amber-400/25 to-rose-400/25 hover:from-amber-400/45 hover:to-rose-400/45 text-amber-200 border border-amber-300/40 hover:border-amber-200 transition-all flex items-center gap-1 shadow-sm hover:scale-105"
+                      >
+                        <Sparkles className="w-3 h-3 text-amber-300" />
+                        <span>Our First Year</span>
+                        <ExternalLink className="w-3 h-3 text-amber-300 ml-0.5" />
+                      </a>
+                    ) : (
+                      <button
+                        type="button"
+                        id="card-btn-our-first-year-locked"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          audioEngine.playLockedSound();
+                          onSpeak("Hindi pa ito ang tamang oras hanggang sa Setyembre 22... Sabay nating bubuksan sa ating 1st Anniversary, Lovey! 🔒✨");
+                        }}
+                        className="text-xs px-3 py-1.5 rounded-full font-sans tracking-wider bg-amber-950/60 hover:bg-amber-900/80 text-amber-300 border border-amber-400/30 transition-all flex items-center gap-1.5 shadow-sm"
+                      >
+                        <Lock className="w-3 h-3 text-amber-400" />
+                        <span>Naka-lock (Sept 22)</span>
+                      </button>
+                    )
                   )}
 
                   {world.id === 'letters' && (

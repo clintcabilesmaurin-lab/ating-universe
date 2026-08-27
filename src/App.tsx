@@ -529,35 +529,37 @@ export default function App() {
         </main>
       )}
 
-      {/* 5. Living Companion & Guide System (Lumi ✨) */}
-      <CompanionGuide
-        currentLine={currentLine}
-        isAche={isAcheLine}
-        weatherMood={weatherMood}
-        externalFlareTrigger={companionFlareTrigger}
-        externalFlareType={companionFlareType}
-        personalityContext={personalityContext}
-        onOpenFullChat={() => {
-          triggerCompanionReaction('heart');
-          setIsChatModalOpen(true);
-        }}
-        onOpenPangilatan={() => {
-          triggerCompanionReaction('heart');
-          handleOpenPangilatan("Uyy, ito na siya... Pangilatan. Ang paborito nating tagpuan sa ibabaw ng mga ulap! ⛰️✨");
-        }}
-        onOpenWishModal={() => {
-          triggerCompanionReaction('star');
-          setIsWishModalOpen(true);
-        }}
-        onSpawnPhoto={() => {
-          triggerCompanionReaction('sparkle');
-          setSpawnPhotoTrigger((prev) => prev + 1);
-        }}
-        onTriggerHearts={(count) => {
-          triggerCompanionReaction('heart');
-          triggerFloatingHearts(count || 16);
-        }}
-      />
+      {/* 5. Living Companion & Guide System (Lumi ✨) - Only in Main Universe & Countdown */}
+      {!isLettersUniverseOpen && selectedWorld === null && !isPangilatanOpen && (
+        <CompanionGuide
+          currentLine={currentLine}
+          isAche={isAcheLine}
+          weatherMood={weatherMood}
+          externalFlareTrigger={companionFlareTrigger}
+          externalFlareType={companionFlareType}
+          personalityContext={personalityContext}
+          onOpenFullChat={() => {
+            triggerCompanionReaction('heart');
+            setIsChatModalOpen(true);
+          }}
+          onOpenPangilatan={() => {
+            triggerCompanionReaction('heart');
+            handleOpenPangilatan("Uyy, ito na siya... Pangilatan. Ang paborito nating tagpuan sa ibabaw ng mga ulap! ⛰️✨");
+          }}
+          onOpenWishModal={() => {
+            triggerCompanionReaction('star');
+            setIsWishModalOpen(true);
+          }}
+          onSpawnPhoto={() => {
+            triggerCompanionReaction('sparkle');
+            setSpawnPhotoTrigger((prev) => prev + 1);
+          }}
+          onTriggerHearts={(count) => {
+            triggerCompanionReaction('heart');
+            triggerFloatingHearts(count || 16);
+          }}
+        />
+      )}
 
       {/* 6. Dedicated Interactive AI Copy Chat Box with Clint */}
       <CharacterChatModal

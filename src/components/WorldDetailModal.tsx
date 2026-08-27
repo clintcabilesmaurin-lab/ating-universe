@@ -6,6 +6,7 @@ import { TIMELINE_MILESTONES, MEMORIES, LETTERS, TRAVEL_DREAMS, MEMORY_GALLERY_W
 import { audioEngine } from '../utils/audioEngine';
 import { CelestialMemoryVisual } from './CelestialMemoryVisual';
 import { loadCustomPhotos, getDriveThumbnailUrl } from '../utils/driveHelper';
+import { isFirstYearAnniversaryUnlocked, calculateCountdownToTarget } from '../utils/timeHelper';
 
 interface WorldDetailModalProps {
   world: WorldStar | null;
@@ -105,16 +106,31 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
 
             <div className="flex items-center gap-2">
               {world.id === 'our-first-year' && (
-                <a
-                  href={OUR_FIRST_YEAR_URL}
-                  target="_top"
-                  id="header-our-first-year-portal-btn"
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-400 via-rose-400 to-pink-500 hover:from-amber-300 hover:to-rose-300 text-slate-950 text-xs font-sans font-bold transition-all shadow-[0_0_20px_rgba(251,191,36,0.5)] hover:scale-105"
-                >
-                  <Sparkles className="w-3.5 h-3.5 fill-slate-950" />
-                  <span>Our First Year Website</span>
-                  <ExternalLink className="w-3 h-3 text-slate-950 ml-0.5" />
-                </a>
+                isFirstYearAnniversaryUnlocked() ? (
+                  <a
+                    href={OUR_FIRST_YEAR_URL}
+                    target="_top"
+                    id="header-our-first-year-portal-btn"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-400 via-rose-400 to-pink-500 hover:from-amber-300 hover:to-rose-300 text-slate-950 text-xs font-sans font-bold transition-all shadow-[0_0_20px_rgba(251,191,36,0.5)] hover:scale-105"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 fill-slate-950" />
+                    <span>Our First Year Website</span>
+                    <ExternalLink className="w-3 h-3 text-slate-950 ml-0.5" />
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    id="header-our-first-year-locked-btn"
+                    onClick={() => {
+                      audioEngine.playLockedSound();
+                      onSpeak("Hindi pa ito ang tamang oras hanggang sa Setyembre 22... Sabay nating bubuksan sa ating 1st Anniversary, Lovey! 🔒✨");
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-950/80 hover:bg-amber-900 border border-amber-400/40 text-amber-200 text-xs font-sans font-medium transition-all shadow-md"
+                  >
+                    <Lock className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Naka-lock (Sept 22)</span>
+                  </button>
+                )
               )}
               {world.id === 'memory-gallery' && (
                 <a
@@ -177,15 +193,37 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                   </p>
                   
                   <div className="pt-2">
-                    <a
-                      href={OUR_FIRST_YEAR_URL}
-                      target="_top"
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-pink-500 hover:from-amber-300 hover:to-rose-400 text-slate-950 font-bold text-xs shadow-[0_0_25px_rgba(251,191,36,0.5)] transition-all hover:scale-105"
-                    >
-                      <Sparkles className="w-3.5 h-3.5 fill-slate-950" />
-                      <span>Buksan ang Our First Year Experience</span>
-                      <ExternalLink className="w-3.5 h-3.5 text-slate-950" />
-                    </a>
+                    {isFirstYearAnniversaryUnlocked() ? (
+                      <a
+                        href={OUR_FIRST_YEAR_URL}
+                        target="_top"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-pink-500 hover:from-amber-300 hover:to-rose-400 text-slate-950 font-bold text-xs shadow-[0_0_25px_rgba(251,191,36,0.5)] transition-all hover:scale-105"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 fill-slate-950" />
+                        <span>Buksan ang Our First Year Experience</span>
+                        <ExternalLink className="w-3.5 h-3.5 text-slate-950" />
+                      </a>
+                    ) : (
+                      <div className="p-4 rounded-2xl bg-black/50 border border-amber-400/30 space-y-2">
+                        <div className="flex items-center justify-center gap-2 text-amber-300 font-sans text-xs font-semibold">
+                          <Lock className="w-4 h-4 text-amber-400" />
+                          <span>Naka-lock hanggang Setyembre 22 (9:00 PM)</span>
+                        </div>
+                        <p className="text-xs text-amber-100/70 font-serif italic max-w-sm mx-auto">
+                          Hindi pa ito ang tamang oras hanggang sa Setyembre 22. Sabay nating bubuksan sa ating 1st Anniversary, Lovey!
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            audioEngine.playLockedSound();
+                            onSpeak("Hindi pa ito ang tamang oras hanggang sa Setyembre 22... Sabay nating bubuksan sa ating 1st Anniversary, Lovey! 🔒✨");
+                          }}
+                          className="mt-1 px-4 py-2 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/30 text-xs font-sans font-medium transition-all"
+                        >
+                          I-check ang Status 🔒
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
 

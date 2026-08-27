@@ -3,7 +3,7 @@ import { PANGILATAN_FOLDER_URL, RANDOM_MEMORIES_FOLDER_URL, getDriveThumbnailUrl
 
 export const MEMORY_GALLERY_WALK_URL = 'https://memory-gallary-walk.vercel.app/';
 export const SECRET_LETTER_DAW_URL = 'https://secret-letter-daw.vercel.app/';
-export const OUR_FIRST_YEAR_URL = '';
+export const OUR_FIRST_YEAR_URL = 'https://our-first-yearlovey.vercel.app/';
 
 // Relationship start: September 22, 2025 at 9:00 PM (21:00 Philippine Standard Time / UTC+8)
 export const RELATIONSHIP_START_DATE_ISO = '2025-09-22T21:00:00+08:00';
