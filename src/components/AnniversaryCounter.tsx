@@ -242,7 +242,7 @@ export const AnniversaryCounter: React.FC<AnniversaryCounterProps> = ({ onSpeak 
                       </span>
                     </div>
                     <p className="text-[11px] text-amber-200/70 font-sans leading-tight">
-                      🔒 Naka-lock pa ang website hanggang Setyembre 22 (9:00 PM). Sabay nating bubuksan sa ating 1st Anniversary!
+                      🔒 Naka-lock pa ang website hanggang Setyembre 22, 2026 (9:00 PM). Sabay nating bubuksan sa ating 1st Anniversary!
                     </p>
                   </div>
                 )}

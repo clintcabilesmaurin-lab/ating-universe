@@ -16,14 +16,14 @@ export const WORLDS: WorldStar[] = [
   {
     id: 'our-first-year',
     name: 'Our First Year',
-    url: '#first-year',
+    url: OUR_FIRST_YEAR_URL,
     active: true,
     order: 1,
     previewLine: 'Look, Lovey... our first year, hahahah.',
     starColor: '#f4d58d',
-    unlockedDate: '2025-11-12',
+    unlockedDate: '2026-09-22T21:00:00+08:00',
     tagline: 'Dito Nagsimula ang Lahat',
-    description: 'Bawat late-night call, mga nakakatawang moments, at ang mga simpleng bagay na nagpatibay sa ating tiwala sa isa\'t isa.',
+    description: 'Ang patunay na ang pag-ibig ay lumalalim sa bawat araw — buksan ang Our First Year portal sa our-first-yearlovey.vercel.app kapag sumapit na ang 1st Anniversary sa Setyembre 22, 2026 (9:00 PM).',
     iconName: 'Sparkles',
   },
   {

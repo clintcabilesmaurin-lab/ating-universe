@@ -31,6 +31,14 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
   const [activeTab, setActiveTab] = useState<'timeline' | 'moments'>('timeline');
   const [imgLoadFailed, setImgLoadFailed] = useState<Record<string, boolean>>({});
   const [customPhotos, setCustomPhotos] = useState<Record<string, string>>({});
+  const [currentTime, setCurrentTime] = useState<Date>(() => new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const updatePhotos = () => {
@@ -42,6 +50,10 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
   }, []);
 
   if (!world) return null;
+
+  const isAnniversaryUnlocked = isFirstYearAnniversaryUnlocked(currentTime);
+  const countdown = calculateCountdownToTarget(undefined, currentTime);
+  const pad = (n: number) => String(n).padStart(2, '0');
 
   const handleOpenLetter = (letter: Letter) => {
     audioEngine.playStarGazeChime();
@@ -106,7 +118,7 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
 
             <div className="flex items-center gap-2">
               {world.id === 'our-first-year' && (
-                isFirstYearAnniversaryUnlocked() ? (
+                isAnniversaryUnlocked ? (
                   <a
                     href={OUR_FIRST_YEAR_URL}
                     target="_top"
@@ -123,12 +135,12 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                     id="header-our-first-year-locked-btn"
                     onClick={() => {
                       audioEngine.playLockedSound();
-                      onSpeak("Hindi pa ito ang tamang oras hanggang sa Setyembre 22... Sabay nating bubuksan sa ating 1st Anniversary, Lovey! 🔒✨");
+                      onSpeak("Hindi pa ito ang tamang oras hanggang sa Setyembre 22, 2026 nang 9:00 PM... Sabay nating bubuksan sa ating 1st Anniversary, Lovey! 🔒✨");
                     }}
                     className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-950/80 hover:bg-amber-900 border border-amber-400/40 text-amber-200 text-xs font-sans font-medium transition-all shadow-md"
                   >
                     <Lock className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Naka-lock (Sept 22)</span>
+                    <span>Naka-lock (Sept 22, 9PM)</span>
                   </button>
                 )
               )}
@@ -193,34 +205,80 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                   </p>
                   
                   <div className="pt-2">
-                    {isFirstYearAnniversaryUnlocked() ? (
-                      <a
-                        href={OUR_FIRST_YEAR_URL}
-                        target="_top"
-                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-pink-500 hover:from-amber-300 hover:to-rose-400 text-slate-950 font-bold text-xs shadow-[0_0_25px_rgba(251,191,36,0.5)] transition-all hover:scale-105"
-                      >
-                        <Sparkles className="w-3.5 h-3.5 fill-slate-950" />
-                        <span>Buksan ang Our First Year Experience</span>
-                        <ExternalLink className="w-3.5 h-3.5 text-slate-950" />
-                      </a>
-                    ) : (
-                      <div className="p-4 rounded-2xl bg-black/50 border border-amber-400/30 space-y-2">
-                        <div className="flex items-center justify-center gap-2 text-amber-300 font-sans text-xs font-semibold">
-                          <Lock className="w-4 h-4 text-amber-400" />
-                          <span>Naka-lock hanggang Setyembre 22 (9:00 PM)</span>
+                    {isAnniversaryUnlocked ? (
+                      <div className="space-y-3">
+                        <div className="p-3 rounded-2xl bg-amber-500/20 border border-amber-300/40 text-amber-200 text-xs font-sans">
+                          ✨ <strong>1st Anniversary Reached!</strong> Available na ang buong selebrasyon ng ating unang taon.
                         </div>
-                        <p className="text-xs text-amber-100/70 font-serif italic max-w-sm mx-auto">
-                          Hindi pa ito ang tamang oras hanggang sa Setyembre 22. Sabay nating bubuksan sa ating 1st Anniversary, Lovey!
+                        <a
+                          href={OUR_FIRST_YEAR_URL}
+                          target="_top"
+                          id="btn-unlocked-our-first-year"
+                          className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-pink-500 hover:from-amber-300 hover:to-rose-400 text-slate-950 font-bold text-xs sm:text-sm shadow-[0_0_30px_rgba(251,191,36,0.6)] transition-all hover:scale-105 cursor-pointer"
+                        >
+                          <Sparkles className="w-4 h-4 fill-slate-950 text-slate-950" />
+                          <span>Pumasok sa Our First Year Experience</span>
+                          <ExternalLink className="w-4 h-4 text-slate-950" />
+                        </a>
+                      </div>
+                    ) : (
+                      <div className="p-5 rounded-2xl bg-black/60 border border-amber-400/30 space-y-3">
+                        <div className="flex items-center justify-center gap-2 text-amber-300 font-sans text-xs font-bold uppercase tracking-wider">
+                          <Lock className="w-4 h-4 text-amber-400" />
+                          <span>Magbubukas sa Setyembre 22, 2026 (9:00 PM)</span>
+                        </div>
+
+                        {/* Live Countdown Grid */}
+                        <div className="grid grid-cols-4 gap-2 py-1 max-w-xs mx-auto">
+                          <div className="p-2 rounded-xl bg-amber-950/40 border border-amber-400/20 text-center">
+                            <span className="block font-mono text-lg sm:text-xl font-bold text-amber-200">
+                              {countdown.days}
+                            </span>
+                            <span className="text-[9px] uppercase font-sans tracking-wider text-amber-300/70">
+                              Araw
+                            </span>
+                          </div>
+                          <div className="p-2 rounded-xl bg-amber-950/40 border border-amber-400/20 text-center">
+                            <span className="block font-mono text-lg sm:text-xl font-bold text-amber-200">
+                              {pad(countdown.hours)}
+                            </span>
+                            <span className="text-[9px] uppercase font-sans tracking-wider text-amber-300/70">
+                              Oras
+                            </span>
+                          </div>
+                          <div className="p-2 rounded-xl bg-amber-950/40 border border-amber-400/20 text-center">
+                            <span className="block font-mono text-lg sm:text-xl font-bold text-amber-200">
+                              {pad(countdown.minutes)}
+                            </span>
+                            <span className="text-[9px] uppercase font-sans tracking-wider text-amber-300/70">
+                              Minuto
+                            </span>
+                          </div>
+                          <div className="p-2 rounded-xl bg-amber-950/40 border border-amber-400/20 text-center">
+                            <span className="block font-mono text-lg sm:text-xl font-bold text-rose-300">
+                              {pad(countdown.seconds)}
+                            </span>
+                            <span className="text-[9px] uppercase font-sans tracking-wider text-rose-300/70">
+                              Segundo
+                            </span>
+                          </div>
+                        </div>
+
+                        <p className="text-xs text-amber-100/80 font-serif italic max-w-md mx-auto leading-relaxed">
+                          "Hindi pa ito ang tamang oras hanggang sa Setyembre 22, 2026 nang 9:00 PM. Sabay nating bubuksan sa ating 1st Anniversary, Lovey!"
                         </p>
+
                         <button
                           type="button"
+                          id="btn-check-first-year-status"
                           onClick={() => {
                             audioEngine.playLockedSound();
-                            onSpeak("Hindi pa ito ang tamang oras hanggang sa Setyembre 22... Sabay nating bubuksan sa ating 1st Anniversary, Lovey! 🔒✨");
+                            onSpeak(`Naka-lock pa hanggang Setyembre 22, 2026, 9:00 PM (${countdown.days} araw at ${countdown.hours} oras na lang)... Sabay nating bubuksan sa ating 1st Anniversary, Lovey! 🔒✨`);
                           }}
-                          className="mt-1 px-4 py-2 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/30 text-xs font-sans font-medium transition-all"
+                          className="w-full sm:w-auto px-5 py-2.5 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40 text-xs font-sans font-medium transition-all flex items-center justify-center gap-2 mx-auto cursor-pointer"
                         >
-                          I-check ang Status 🔒
+                          <Lock className="w-3.5 h-3.5 text-amber-400" />
+                          <span>I-check ang Status 🔒</span>
                         </button>
                       </div>
                     )}

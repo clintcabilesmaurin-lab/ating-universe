@@ -136,6 +136,14 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
 
   // Mouse Parallax Offset for foreground 3D depth floating
   const [mouseParallax, setMouseParallax] = useState({ x: 0, y: 0 });
+  const [currentTime, setCurrentTime] = useState<Date>(() => new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const [selectedMountainLine] = useState(() => {
     return PANGILATAN_LINES[Math.floor(Math.random() * PANGILATAN_LINES.length)];
@@ -590,7 +598,7 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
                   </button>
 
                   {world.id === 'our-first-year' && (
-                    isFirstYearAnniversaryUnlocked() ? (
+                    isFirstYearAnniversaryUnlocked(currentTime) ? (
                       <a
                         href={OUR_FIRST_YEAR_URL}
                         target="_top"
@@ -609,12 +617,12 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
                         onClick={(e) => {
                           e.stopPropagation();
                           audioEngine.playLockedSound();
-                          onSpeak("Hindi pa ito ang tamang oras hanggang sa Setyembre 22... Sabay nating bubuksan sa ating 1st Anniversary, Lovey! 🔒✨");
+                          onSpeak("Hindi pa ito ang tamang oras hanggang sa Setyembre 22, 2026 nang 9:00 PM... Sabay nating bubuksan sa ating 1st Anniversary, Lovey! 🔒✨");
                         }}
                         className="text-xs px-3 py-1.5 rounded-full font-sans tracking-wider bg-amber-950/60 hover:bg-amber-900/80 text-amber-300 border border-amber-400/30 transition-all flex items-center gap-1.5 shadow-sm"
                       >
                         <Lock className="w-3 h-3 text-amber-400" />
-                        <span>Naka-lock (Sept 22)</span>
+                        <span>Naka-lock (Sept 22, 9PM)</span>
                       </button>
                     )
                   )}
