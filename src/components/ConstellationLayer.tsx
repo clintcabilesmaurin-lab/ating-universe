@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef, memo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { WORLDS, PANGILATAN_LINES, OUR_FIRST_YEAR_URL } from '../data/universeData';
+import { WORLDS, PANGILATAN_LINES, OUR_FIRST_YEAR_URL, WORLD_OF_LETTERS_URL } from '../data/universeData';
 import { WorldStar } from '../types';
 import { Sparkles, Heart, Compass, Image as ImageIcon, Mail, Lock, ExternalLink, Globe } from 'lucide-react';
 import { World3DIcon } from './World3DIcon';
 import { audioEngine } from '../utils/audioEngine';
 import { performanceManager } from '../utils/performanceManager';
 import { isFirstYearAnniversaryUnlocked } from '../utils/timeHelper';
+import { openInParent } from '../utils/navigationHelper';
 
 interface ConstellationLayerProps {
   onSelectWorld: (world: WorldStar) => void;
@@ -498,26 +499,29 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
                   }}
                 />
 
-                {/* Core Star Body with 3D Three.js Interactive Mesh & Glowing Orbit */}
+                {/* Core Star Body with 3D Three.js Interactive Mesh & Translucent Glass Orbit */}
                 <div
-                  className={`relative w-20 h-20 rounded-full flex items-center justify-center border-2 transition-all duration-500 ease-out backdrop-blur-md ${
+                  className={`relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-500 ease-out backdrop-blur-xl border shadow-[0_8px_32px_rgba(0,0,0,0.45),inset_0_1px_2px_rgba(255,255,255,0.4)] ${
                     isHovered
-                      ? 'scale-115 z-20'
+                      ? 'scale-115 z-20 shadow-[0_0_35px_rgba(251,191,36,0.5),inset_0_1px_3px_rgba(255,255,255,0.6)]'
                       : 'group-hover:scale-110'
                   } ${
                     world.active
-                      ? 'bg-black/75 border-amber-200/70'
-                      : 'bg-slate-900/75 border-slate-600/50 opacity-75'
+                      ? 'bg-gradient-to-b from-white/20 via-slate-950/65 to-slate-950/85 border-white/35'
+                      : 'bg-slate-900/55 border-white/15 opacity-75'
                   }`}
                   style={{
-                    borderColor: world.active ? world.starColor : '#64748b',
+                    borderColor: isHovered ? world.starColor : undefined,
                     boxShadow: isHovered
-                      ? `0 0 30px ${world.active ? world.starColor : '#64748b'}95, 0 0 60px ${world.active ? world.starColor : '#64748b'}45, inset 0 0 15px rgba(255, 255, 255, 0.3)`
+                      ? `0 0 32px ${world.active ? world.starColor : '#64748b'}95, 0 0 60px ${world.active ? world.starColor : '#64748b'}40, inset 0 1px 3px rgba(255, 255, 255, 0.6)`
                       : world.active
-                      ? `0 0 18px ${world.starColor}45`
+                      ? `0 0 20px ${world.starColor}40, inset 0 1px 2px rgba(255, 255, 255, 0.35)`
                       : 'none',
                   }}
                 >
+                  {/* Subtle glass reflection highlight */}
+                  <div className="absolute top-1.5 inset-x-3 h-3 rounded-full bg-gradient-to-b from-white/40 to-transparent pointer-events-none" />
+
                   {/* 3D Three.js Animated Celestial Display */}
                   <World3DIcon
                     worldId={world.id}
@@ -530,7 +534,7 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
                   {/* Pulsing Star Orbit Ring */}
                   {world.active && (
                     <span
-                      className={`absolute -inset-2 rounded-full border border-amber-200/40 animate-ping opacity-30 transition-opacity duration-300 ${
+                      className={`absolute -inset-2 rounded-full border border-white/30 animate-ping opacity-30 transition-opacity duration-300 ${
                         isHovered ? 'opacity-60 border-amber-200/70' : ''
                       }`}
                       style={{ animationDuration: `${3 + index}s` }}
@@ -550,18 +554,21 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
                 </div>
               </div>
 
-              {/* Persistent World Label Card */}
+              {/* Persistent Translucent Glass World Label Card */}
               <div
-                className={`mt-4 max-w-xs text-center md:text-left bg-black/45 backdrop-blur-md p-4 rounded-2xl border transition-all duration-300 ${
+                className={`mt-4 max-w-xs text-center md:text-left glass-card p-5 rounded-3xl relative overflow-hidden transition-all duration-300 ${
                   isEven ? 'md:text-left' : 'md:text-right'
                 } ${
                   isHovered
-                    ? 'border-amber-200/60 shadow-[0_0_25px_rgba(244,213,141,0.25)] bg-black/65 scale-[1.02]'
+                    ? 'border-white/40 shadow-[0_16px_45px_rgba(0,0,0,0.55),0_0_25px_rgba(244,213,141,0.25)] scale-[1.02]'
                     : world.active
-                    ? 'border-white/15 hover:border-amber-200/40'
-                    : 'border-white/5 opacity-60'
+                    ? 'hover:border-white/30'
+                    : 'opacity-60'
                 }`}
               >
+                {/* Specular rim gradient at top of card */}
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent pointer-events-none" />
+
                 <div className="flex items-center gap-2 justify-center md:justify-start mb-1">
                   <h3
                     className="text-xl font-serif tracking-wide font-medium"
@@ -570,41 +577,69 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
                     {world.name}
                   </h3>
                   {!world.active && (
-                    <span className="flex items-center gap-1 text-[10px] bg-slate-800/80 text-slate-300 px-2 py-0.5 rounded-full border border-slate-700">
+                    <span className="flex items-center gap-1 text-[10px] glass-pill text-slate-300 px-2 py-0.5 rounded-full border border-white/10">
                       <Lock className="w-2.5 h-2.5" /> Soon
                     </span>
                   )}
                 </div>
 
-                <p className="text-xs text-amber-100/70 font-sans tracking-wide mb-2">
+                <p className="text-xs text-amber-100/80 font-sans tracking-wide mb-2">
                   {world.tagline}
                 </p>
 
-                <p className="text-xs text-slate-300/80 leading-relaxed font-serif italic line-clamp-2">
+                <p className="text-xs text-slate-300/85 leading-relaxed font-serif italic line-clamp-2">
                   {world.description}
                 </p>
 
                 {/* Action Buttons */}
-                <div className="mt-3 flex flex-wrap items-center gap-2 justify-center md:justify-start">
-                  <button
-                    id={`btn-open-${world.id}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleStarClick(world);
-                    }}
-                    className="text-xs px-3.5 py-1.5 rounded-full font-sans tracking-wider transition-all flex items-center gap-1.5 bg-amber-400/20 hover:bg-amber-400/30 text-amber-200 border border-amber-300/40 hover:border-amber-200 active:scale-95"
-                  >
-                    <span>Buksan • Pumasok</span>
-                  </button>
+                <div className="mt-3.5 flex flex-wrap items-center gap-2 justify-center md:justify-start">
+                  {world.id === 'letters' ? (
+                    <>
+                      <a
+                        href={WORLD_OF_LETTERS_URL}
+                        target="_parent"
+                        id="card-btn-world-of-letters-direct"
+                        onClick={(e) => openInParent(WORLD_OF_LETTERS_URL, e)}
+                        className="glass-pill text-xs px-3.5 py-1.5 rounded-full font-sans tracking-wider transition-all flex items-center gap-1.5 text-rose-100 shadow-sm hover:scale-105 active:scale-95 border border-rose-400/40"
+                      >
+                        <Mail className="w-3.5 h-3.5 text-rose-300 fill-rose-300/30" />
+                        <span>Buksan ang Link</span>
+                        <ExternalLink className="w-3 h-3 text-rose-300" />
+                      </a>
+
+                      <button
+                        id="btn-open-letters"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStarClick(world);
+                        }}
+                        className="glass-pill text-xs px-3 py-1.5 rounded-full font-sans tracking-wider text-slate-300 hover:text-white transition-all flex items-center gap-1"
+                      >
+                        <Globe className="w-3 h-3 text-slate-400" />
+                        <span>Detalye / Preview</span>
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      id={`btn-open-${world.id}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleStarClick(world);
+                      }}
+                      className="glass-pill text-xs px-3.5 py-1.5 rounded-full font-sans tracking-wider transition-all flex items-center gap-1.5 text-amber-100 active:scale-95"
+                    >
+                      <span>Buksan &bull; Pumasok</span>
+                    </button>
+                  )}
 
                   {world.id === 'our-first-year' && (
                     isFirstYearAnniversaryUnlocked(currentTime) ? (
                       <a
                         href={OUR_FIRST_YEAR_URL}
-                        target="_top"
+                        target="_parent"
                         id="card-btn-our-first-year-link"
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-xs px-3 py-1.5 rounded-full font-sans tracking-wider bg-gradient-to-r from-amber-400/25 to-rose-400/25 hover:from-amber-400/45 hover:to-rose-400/45 text-amber-200 border border-amber-300/40 hover:border-amber-200 transition-all flex items-center gap-1 shadow-sm hover:scale-105"
+                        onClick={(e) => openInParent(OUR_FIRST_YEAR_URL, e)}
+                        className="glass-pill text-xs px-3 py-1.5 rounded-full font-sans tracking-wider text-amber-200 transition-all flex items-center gap-1 shadow-sm hover:scale-105"
                       >
                         <Sparkles className="w-3 h-3 text-amber-300" />
                         <span>Our First Year</span>
@@ -619,7 +654,7 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
                           audioEngine.playLockedSound();
                           onSpeak("Hindi pa ito ang tamang oras hanggang sa Setyembre 22, 2026 nang 9:00 PM... Sabay nating bubuksan sa ating 1st Anniversary, Lovey! 🔒✨");
                         }}
-                        className="text-xs px-3 py-1.5 rounded-full font-sans tracking-wider bg-amber-950/60 hover:bg-amber-900/80 text-amber-300 border border-amber-400/30 transition-all flex items-center gap-1.5 shadow-sm"
+                        className="glass-pill text-xs px-3 py-1.5 rounded-full font-sans tracking-wider text-amber-300/90 transition-all flex items-center gap-1.5 shadow-sm"
                       >
                         <Lock className="w-3 h-3 text-amber-400" />
                         <span>Naka-lock (Sept 22, 9PM)</span>
@@ -627,27 +662,13 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
                     )
                   )}
 
-                  {world.id === 'letters' && (
-                    <a
-                      href="https://secret-letter-daw.vercel.app/"
-                      target="_top"
-                      id="card-btn-secret-letter-link"
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-xs px-3 py-1.5 rounded-full font-sans tracking-wider bg-rose-500/25 hover:bg-rose-500/45 text-rose-200 border border-rose-400/40 hover:border-rose-300 transition-all flex items-center gap-1 shadow-sm hover:scale-105"
-                    >
-                      <Sparkles className="w-3 h-3 text-rose-300" />
-                      <span>Secret Letter</span>
-                      <ExternalLink className="w-3 h-3 text-rose-300 ml-0.5" />
-                    </a>
-                  )}
-
                   {world.id === 'memory-gallery' && (
                     <a
                       href={world.url}
-                      target="_top"
+                      target="_parent"
                       id="card-btn-gallery-walk"
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-xs px-3 py-1.5 rounded-full font-sans tracking-wider bg-purple-500/25 hover:bg-purple-500/45 text-purple-200 border border-purple-400/40 hover:border-purple-300 transition-all flex items-center gap-1 shadow-sm hover:scale-105"
+                      onClick={(e) => openInParent(world.url, e)}
+                      className="glass-pill text-xs px-3 py-1.5 rounded-full font-sans tracking-wider text-purple-200 transition-all flex items-center gap-1 shadow-sm hover:scale-105"
                     >
                       <Globe className="w-3 h-3 text-purple-300" />
                       <span>3D Walk</span>

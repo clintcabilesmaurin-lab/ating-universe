@@ -45,6 +45,53 @@
     box-shadow: 0 14px 45px 0 rgba(217, 119, 6, 0.25), inset 0 1px 2px 0 rgba(251, 191, 36, 0.4);
   }
 
+  /* Universal Translucent Glass & Crystal UI Utilities */
+  .glass-panel {
+    background: rgba(10, 15, 30, 0.68);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.25);
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 8px 32px -4px rgba(0, 0, 0, 0.35), inset 0 1px 1px 0 rgba(255, 255, 255, 0.18);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .glass-card:hover {
+    background: rgba(255, 255, 255, 0.11);
+    border-color: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 14px 40px -4px rgba(0, 0, 0, 0.48), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  .glass-pill {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 1px 0 rgba(255, 255, 255, 0.22);
+    transition: all 0.25s ease-out;
+  }
+
+  .glass-pill:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.42);
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.35);
+  }
+
+  .glass-orb {
+    background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.32), rgba(15, 23, 42, 0.6) 60%, rgba(2, 6, 23, 0.75) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.6), inset 0 -2px 6px rgba(0, 0, 0, 0.4);
+  }
+
   /* Airmail Postal Edge Pattern */
   .postal-airmail-pattern {
     background-image: repeating-linear-gradient(

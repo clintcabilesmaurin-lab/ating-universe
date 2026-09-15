@@ -231,18 +231,21 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 20 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full max-w-xl h-[88vh] max-h-[720px] bg-slate-950/95 backdrop-blur-2xl border border-amber-300/35 rounded-3xl shadow-[0_0_60px_rgba(244,213,141,0.25),0_20px_50px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden z-10"
+            className="glass-panel relative w-full max-w-xl h-[88vh] max-h-[720px] rounded-3xl shadow-[0_0_60px_rgba(244,213,141,0.25),0_20px_50px_rgba(0,0,0,0.9)] flex flex-col overflow-hidden z-10 border border-white/20"
           >
+            {/* Top specular highlight rim */}
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none z-10" />
+
             {/* Ambient Background Glows */}
             <div className="absolute top-0 right-1/4 w-72 h-72 rounded-full bg-amber-400/10 blur-3xl pointer-events-none" />
             <div className="absolute bottom-0 left-1/4 w-72 h-72 rounded-full bg-rose-500/10 blur-3xl pointer-events-none" />
 
             {/* Header */}
-            <div className="relative px-5 py-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-white/[0.02]">
+            <div className="relative px-5 py-4 border-b border-white/10 flex items-center justify-between shrink-0 backdrop-blur-md bg-white/[0.03]">
               <div className="flex items-center gap-3">
                 {/* Clint Avatar & Presence */}
                 <div className="relative">
-                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400/30 via-rose-400/20 to-purple-500/30 border border-amber-300/40 flex items-center justify-center text-xl shadow-[0_0_15px_rgba(244,213,141,0.4)]">
+                  <div className="glass-orb w-11 h-11 rounded-2xl flex items-center justify-center text-xl shadow-[0_0_15px_rgba(244,213,141,0.4)]">
                     {currentMood === 'loving' || currentMood === 'inlove'
                       ? '👻💖'
                       : currentMood === 'laugh'
@@ -268,8 +271,8 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
                       Kausapin si Clint
                       <Sparkles className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
                     </h3>
-                    <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-200 text-[10px] font-sans font-medium border border-amber-400/30">
-                      Lumi Ghost • Clint
+                    <span className="glass-pill px-2 py-0.5 rounded-full text-amber-200 text-[10px] font-sans font-medium">
+                      Lumi Ghost &bull; Clint
                     </span>
                   </div>
                   <p className="text-xs text-amber-200/70 font-serif italic mt-0.5">
@@ -280,7 +283,7 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
 
               {/* Header Navigation & Close */}
               <div className="flex items-center gap-1.5">
-                <div className="flex bg-white/5 border border-white/10 rounded-xl p-0.5">
+                <div className="flex glass-pill p-0.5 rounded-xl">
                   <button
                     onClick={() => setActiveTab('chat')}
                     className={`px-3 py-1 rounded-lg text-xs font-sans transition-all flex items-center gap-1 ${
@@ -310,7 +313,7 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
 
                 <button
                   onClick={onClose}
-                  className="w-8 h-8 rounded-xl bg-white/5 hover:bg-white/15 text-slate-300 hover:text-white flex items-center justify-center transition-colors border border-white/10"
+                  className="w-8 h-8 rounded-xl glass-pill text-slate-300 hover:text-white flex items-center justify-center transition-colors"
                   title="Isara"
                 >
                   <X className="w-4 h-4" />
@@ -350,10 +353,10 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
                         )}
 
                         <div
-                          className={`rounded-2xl px-4 py-3 text-xs sm:text-[13.5px] font-serif leading-relaxed shadow-md ${
+                          className={`rounded-2xl px-4 py-3 text-xs sm:text-[13.5px] font-serif leading-relaxed shadow-md backdrop-blur-xl ${
                             msg.sender === 'user'
-                              ? 'bg-gradient-to-r from-amber-500 via-amber-600 to-rose-600 text-white rounded-br-none font-medium'
-                              : 'bg-slate-900/90 border border-amber-300/25 text-amber-50 rounded-bl-none'
+                              ? 'bg-gradient-to-r from-amber-500/85 via-amber-600/85 to-rose-600/85 text-white rounded-br-none font-medium border border-white/20'
+                              : 'glass-card border border-white/20 text-amber-50 rounded-bl-none'
                           }`}
                         >
                           {msg.text}
@@ -363,7 +366,7 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
                       <div className="flex items-center gap-1.5 mt-1 px-1">
                         <span className="text-[10px] text-slate-400 font-sans">{msg.time}</span>
                         {msg.sender === 'clint' && msg.mood && (
-                          <span className="text-[10px] text-amber-300/70 font-sans italic">
+                          <span className="text-[10px] text-amber-300/80 font-sans italic">
                             &bull;{' '}
                             {msg.mood === 'loving' || msg.mood === 'inlove'
                               ? 'malambing 🥰'
@@ -388,7 +391,7 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
                     <motion.div
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="flex items-center gap-2.5 text-xs text-amber-200/90 font-serif italic bg-slate-900/80 border border-amber-300/20 px-4 py-2.5 rounded-2xl w-fit"
+                      className="flex items-center gap-2.5 text-xs text-amber-200 font-serif italic glass-card px-4 py-2.5 rounded-2xl w-fit"
                     >
                       <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
                       <span>Nag-iisip si Clint ng sagot para sa'yo, Lovey... ✨</span>
@@ -399,9 +402,9 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
                 </div>
 
                 {/* Quick Topics Pill Bar */}
-                <div className="px-4 py-2 bg-black/40 border-t border-white/10 shrink-0">
+                <div className="px-4 py-2.5 border-t border-white/10 shrink-0 backdrop-blur-md bg-black/30">
                   <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-                    <span className="text-[10px] uppercase font-sans font-semibold tracking-wider text-amber-300/60 shrink-0 mr-1 flex items-center gap-1">
+                    <span className="text-[10px] uppercase font-sans font-semibold tracking-wider text-amber-300/70 shrink-0 mr-1 flex items-center gap-1">
                       <Sparkles className="w-3 h-3 text-amber-400" />
                       Paboritong Topics:
                     </span>
@@ -410,7 +413,7 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
                         key={i}
                         onClick={() => handleSendMessage(topic.text)}
                         disabled={isAiGenerating}
-                        className="shrink-0 px-3 py-1.5 rounded-full bg-white/5 hover:bg-amber-400/20 border border-white/10 hover:border-amber-300/40 text-xs text-amber-200/90 hover:text-amber-100 transition-all font-serif disabled:opacity-40 flex items-center gap-1"
+                        className="glass-pill shrink-0 px-3 py-1.5 rounded-full text-xs text-amber-200 hover:text-amber-100 transition-all font-serif disabled:opacity-40 flex items-center gap-1"
                       >
                         <span>{topic.label}</span>
                       </button>
@@ -424,7 +427,7 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
                     e.preventDefault();
                     handleSendMessage();
                   }}
-                  className="p-3 sm:p-4 border-t border-white/10 bg-slate-950/80 shrink-0 flex items-center gap-2"
+                  className="p-3 sm:p-4 border-t border-white/10 shrink-0 flex items-center gap-2 backdrop-blur-xl bg-black/40"
                 >
                   <input
                     ref={inputRef}
@@ -433,14 +436,14 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
                     onChange={(e) => setInputMessage(e.target.value)}
                     placeholder="I-type ang mensahe mo kay Clint (e.g. Kumusta ka na diyan?)..."
                     disabled={isAiGenerating}
-                    className="flex-1 bg-white/10 border border-white/20 rounded-2xl px-4 py-3 text-xs sm:text-sm text-amber-100 placeholder-amber-200/40 focus:outline-none focus:border-amber-400 transition-all font-serif"
+                    className="flex-1 bg-white/5 border border-white/15 focus:border-amber-400/80 rounded-2xl px-4 py-3 text-xs sm:text-sm text-amber-100 placeholder-amber-200/40 focus:outline-none transition-all font-serif backdrop-blur-md shadow-inner"
                   />
 
                   <button
                     type="button"
                     onClick={handleResetChat}
                     title="I-reset ang usapan"
-                    className="p-3 rounded-2xl bg-white/5 hover:bg-white/15 text-slate-400 hover:text-slate-200 border border-white/10 transition-colors"
+                    className="p-3 rounded-2xl glass-pill text-slate-400 hover:text-slate-200 transition-colors"
                   >
                     <RotateCcw className="w-4 h-4" />
                   </button>
@@ -448,7 +451,7 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
                   <button
                     type="submit"
                     disabled={!inputMessage.trim() || isAiGenerating}
-                    className="px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-rose-300 to-amber-300 hover:from-amber-300 hover:to-rose-200 disabled:opacity-40 text-slate-950 font-serif font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-[0_0_20px_rgba(244,213,141,0.4)] transition-all cursor-pointer"
+                    className="glass-pill px-5 py-3 rounded-2xl text-amber-100 font-serif font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-[0_0_20px_rgba(244,213,141,0.3)] transition-all cursor-pointer hover:scale-105 active:scale-95 disabled:opacity-40"
                   >
                     <span>Ipadala</span>
                     <Send className="w-3.5 h-3.5" />
@@ -494,7 +497,7 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
                           setActiveTab('chat');
                           handleSendMessage(`Naalala mo ba: "${item.joke}"?`);
                         }}
-                        className="group p-3.5 rounded-2xl bg-white/[0.04] hover:bg-amber-400/10 border border-white/10 hover:border-amber-300/40 transition-all cursor-pointer flex flex-col justify-between"
+                        className="group p-3.5 rounded-2xl glass-card border border-white/10 hover:border-amber-300/40 transition-all cursor-pointer flex flex-col justify-between"
                       >
                         <div>
                           <div className="flex items-start gap-2 mb-1">
@@ -525,15 +528,15 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
                     {personalityContext.specialDates.map((d) => (
                       <div
                         key={d.id}
-                        className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/10 flex items-start gap-3"
+                        className="p-3.5 rounded-2xl glass-card border border-white/10 flex items-start gap-3"
                       >
-                        <div className="w-9 h-9 rounded-xl bg-rose-500/20 border border-rose-400/30 flex items-center justify-center text-base shrink-0">
+                        <div className="w-9 h-9 rounded-xl glass-pill flex items-center justify-center text-base shrink-0 text-rose-300">
                           {d.emoji}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
                             <h6 className="text-xs font-serif font-bold text-amber-100">{d.title}</h6>
-                            <span className="text-[10px] text-rose-300/90 font-sans font-medium px-2 py-0.5 bg-rose-500/10 rounded-full border border-rose-500/20">
+                            <span className="text-[10px] text-rose-300/90 font-sans font-medium px-2 py-0.5 glass-pill rounded-full">
                               {d.date}
                             </span>
                           </div>
@@ -552,7 +555,7 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
                     <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                     Paboritong Linya at Quirks ni Clint
                   </h5>
-                  <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/10 space-y-2 text-xs font-serif">
+                  <div className="p-4 rounded-2xl glass-card border border-white/10 space-y-2 text-xs font-serif">
                     <div className="flex items-center gap-2 text-amber-200">
                       <span className="font-sans font-semibold">Tawag kay Maica:</span>
                       <span className="italic">{personalityContext.userNicknames.join(', ')}</span>

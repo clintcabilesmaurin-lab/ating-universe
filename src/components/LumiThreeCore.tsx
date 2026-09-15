@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { performanceManager } from '../utils/performanceManager';
 
 export type LumiMood =
   | 'happy'
@@ -223,10 +224,22 @@ export const LumiThreeCore: React.FC<LumiThreeCoreProps> = ({
     scene.add(ringPoints);
     ringPointsRef.current = ringPoints;
 
-    // 7. Animation Loop
+    // 7. Animation Loop with 45-60 FPS cap
     let clock = new THREE.Clock();
+    let lastRenderTime = 0;
 
     const animate = () => {
+      animFrameIdRef.current = requestAnimationFrame(animate);
+
+      if (!performanceManager.getIsTabVisible()) return;
+
+      const now = performance.now();
+      const targetInterval = 1000 / performanceManager.getTargetFps();
+      if (now - lastRenderTime < targetInterval - 1.5) {
+        return;
+      }
+      lastRenderTime = now;
+
       const elapsedTime = clock.getElapsedTime();
       const palette = MOOD_COLOR_PALETTES[mood];
       const speedMult = (palette?.speed || 1) * (isHovered ? 1.8 : 1) * (isSpinning ? 3.5 : 1);
@@ -259,7 +272,6 @@ export const LumiThreeCore: React.FC<LumiThreeCoreProps> = ({
       }
 
       renderer.render(scene, camera);
-      animFrameIdRef.current = requestAnimationFrame(animate);
     };
 
     animate();

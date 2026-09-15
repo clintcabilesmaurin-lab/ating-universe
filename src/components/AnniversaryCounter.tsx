@@ -8,6 +8,7 @@ import {
 } from '../data/universeData';
 import { audioEngine } from '../utils/audioEngine';
 import { calculateTimeTogether, calculateCountdownToTarget } from '../utils/timeHelper';
+import { openInParent } from '../utils/navigationHelper';
 
 interface AnniversaryCounterProps {
   onSpeak?: (line: string) => void;
@@ -68,10 +69,13 @@ export const AnniversaryCounter: React.FC<AnniversaryCounterProps> = ({ onSpeak 
           >
             <a
               href={OUR_FIRST_YEAR_URL}
-              target="_top"
+              target="_parent"
               id="header-our-first-year-unlocked-btn"
-              onClick={() => audioEngine.playInLoveSound()}
-              className="group relative flex items-center gap-2 bg-gradient-to-r from-amber-400 via-rose-500 to-pink-500 hover:from-amber-300 hover:to-rose-400 text-slate-950 px-3 sm:px-4 py-1.5 rounded-full font-serif font-bold text-xs shadow-[0_0_25px_rgba(251,191,36,0.6)] hover:shadow-[0_0_35px_rgba(244,63,94,0.8)] transition-all hover:scale-105"
+              onClick={(e) => {
+                audioEngine.playInLoveSound();
+                openInParent(OUR_FIRST_YEAR_URL, e);
+              }}
+              className="group relative flex items-center gap-2 bg-gradient-to-r from-amber-400 via-rose-500 to-pink-500 hover:from-amber-300 hover:to-rose-400 text-slate-950 px-3 sm:px-4 py-1.5 rounded-full font-serif font-bold text-xs shadow-[0_0_25px_rgba(251,191,36,0.6)] hover:shadow-[0_0_35px_rgba(244,63,94,0.8)] transition-all hover:scale-105 cursor-pointer"
             >
               <Crown className="w-3.5 h-3.5 fill-slate-950 text-slate-950 animate-bounce" />
               <span>Our First Year</span>
@@ -97,7 +101,7 @@ export const AnniversaryCounter: React.FC<AnniversaryCounterProps> = ({ onSpeak 
             onClick={handleOpenDetails}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="group flex items-center gap-2 bg-black/45 hover:bg-black/60 backdrop-blur-md border border-amber-300/30 hover:border-amber-300/60 px-3 sm:px-4 py-1.5 rounded-full text-amber-100 shadow-lg transition-all"
+            className="glass-pill group flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-full text-amber-100 shadow-lg transition-all border border-amber-300/35 hover:border-amber-300/70"
           >
             {/* Pulsing indicator */}
             <span className="relative flex h-2 w-2">
@@ -127,7 +131,7 @@ export const AnniversaryCounter: React.FC<AnniversaryCounterProps> = ({ onSpeak 
           <div
             id="anniversary-counter-modal-backdrop"
             onClick={() => setIsDetailsOpen(false)}
-            className="fixed inset-0 z-[65] overflow-y-auto overscroll-contain bg-black/80 backdrop-blur-md flex items-center justify-center p-4 pointer-events-auto cursor-pointer"
+            className="fixed inset-0 z-[65] overflow-y-auto overscroll-contain bg-black/80 backdrop-blur-xl flex items-center justify-center p-4 pointer-events-auto cursor-pointer"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.92, y: 15 }}
@@ -135,8 +139,11 @@ export const AnniversaryCounter: React.FC<AnniversaryCounterProps> = ({ onSpeak 
               exit={{ opacity: 0, scale: 0.92, y: 10 }}
               transition={{ duration: 0.25 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-md bg-gradient-to-b from-slate-900/95 via-stone-900/95 to-slate-950/95 border-2 border-amber-300/40 rounded-3xl p-6 sm:p-7 text-amber-50 shadow-[0_0_50px_rgba(0,0,0,0.9)] space-y-5 cursor-default pointer-events-auto"
+              className="glass-panel relative w-full max-w-md rounded-3xl p-6 sm:p-7 text-amber-50 shadow-[0_0_50px_rgba(0,0,0,0.9)] space-y-5 cursor-default pointer-events-auto border border-amber-300/40 overflow-hidden"
             >
+              {/* Top specular highlight */}
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-200/50 to-transparent pointer-events-none" />
+
               {/* Header */}
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
                 <div className="flex items-center gap-2">
@@ -152,7 +159,7 @@ export const AnniversaryCounter: React.FC<AnniversaryCounterProps> = ({ onSpeak 
                     e.stopPropagation();
                     setIsDetailsOpen(false);
                   }}
-                  className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center text-xs transition-colors cursor-pointer pointer-events-auto"
+                  className="w-7 h-7 rounded-full glass-pill text-slate-300 hover:text-white flex items-center justify-center text-xs transition-colors cursor-pointer pointer-events-auto"
                   title="Isara"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -161,11 +168,11 @@ export const AnniversaryCounter: React.FC<AnniversaryCounterProps> = ({ onSpeak 
 
               {/* Central Time Card */}
               <div className="text-center space-y-2 py-1">
-                <p className="text-xs text-slate-400 font-sans">
+                <p className="text-xs text-slate-300 font-sans">
                   Sama na simula noong <strong className="text-amber-200">Setyembre 22, 2025 (9:00 PM)</strong>
                 </p>
                 <div className="grid grid-cols-4 gap-2 pt-2">
-                  <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="p-3 rounded-2xl glass-card border border-white/10">
                     <span className="block font-mono text-xl sm:text-2xl font-bold text-amber-300">
                       {timeTogether.days}
                     </span>
@@ -173,7 +180,7 @@ export const AnniversaryCounter: React.FC<AnniversaryCounterProps> = ({ onSpeak 
                       Araw
                     </span>
                   </div>
-                  <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="p-3 rounded-2xl glass-card border border-white/10">
                     <span className="block font-mono text-xl sm:text-2xl font-bold text-amber-200">
                       {pad(timeTogether.hours)}
                     </span>
@@ -181,7 +188,7 @@ export const AnniversaryCounter: React.FC<AnniversaryCounterProps> = ({ onSpeak 
                       Oras
                     </span>
                   </div>
-                  <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="p-3 rounded-2xl glass-card border border-white/10">
                     <span className="block font-mono text-xl sm:text-2xl font-bold text-amber-200">
                       {pad(timeTogether.minutes)}
                     </span>
@@ -189,7 +196,7 @@ export const AnniversaryCounter: React.FC<AnniversaryCounterProps> = ({ onSpeak 
                       Minuto
                     </span>
                   </div>
-                  <div className="p-3 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="p-3 rounded-2xl glass-card border border-white/10">
                     <span className="block font-mono text-xl sm:text-2xl font-bold text-rose-300">
                       {pad(timeTogether.seconds)}
                     </span>
@@ -201,7 +208,7 @@ export const AnniversaryCounter: React.FC<AnniversaryCounterProps> = ({ onSpeak 
               </div>
 
               {/* Milestone Box */}
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/15 via-rose-500/15 to-purple-500/15 border border-amber-300/30 space-y-2">
+              <div className="p-4 rounded-2xl glass-card border border-amber-300/30 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-amber-300" />
@@ -209,7 +216,7 @@ export const AnniversaryCounter: React.FC<AnniversaryCounterProps> = ({ onSpeak 
                       1st Year Anniversary Target
                     </span>
                   </div>
-                  <span className="text-[10px] font-sans px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-200 border border-amber-300/30">
+                  <span className="text-[10px] font-sans px-2 py-0.5 rounded-full glass-pill text-amber-200 border border-amber-300/30">
                     Sept 22, 2026 &bull; 9:00 PM
                   </span>
                 </div>
@@ -221,10 +228,11 @@ export const AnniversaryCounter: React.FC<AnniversaryCounterProps> = ({ onSpeak 
                     </p>
                     <a
                       href={OUR_FIRST_YEAR_URL}
-                      target="_top"
-                      className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-rose-500 to-pink-500 hover:from-amber-300 hover:to-rose-400 text-slate-950 font-bold text-xs transition-all shadow-[0_0_20px_rgba(251,191,36,0.6)] flex items-center justify-center gap-2 cursor-pointer"
+                      target="_parent"
+                      onClick={(e) => openInParent(OUR_FIRST_YEAR_URL, e)}
+                      className="w-full py-2.5 px-4 rounded-xl glass-pill text-amber-100 hover:text-white font-bold text-xs transition-all shadow-[0_0_20px_rgba(251,191,36,0.5)] border border-amber-300/50 flex items-center justify-center gap-2 cursor-pointer hover:scale-105"
                     >
-                      <Crown className="w-3.5 h-3.5 fill-slate-950" />
+                      <Crown className="w-3.5 h-3.5 text-amber-300" />
                       <span>Pumasok sa Our First Year Website</span>
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
@@ -234,7 +242,7 @@ export const AnniversaryCounter: React.FC<AnniversaryCounterProps> = ({ onSpeak 
                     <p className="text-xs text-slate-300 font-serif italic">
                       Konti na lang Lovey, mag-iisang taon na tayo!
                     </p>
-                    <div className="text-xs font-mono text-amber-300/90 flex items-center gap-1.5 p-2 rounded-xl bg-black/40 border border-amber-400/20">
+                    <div className="text-xs font-mono text-amber-300/90 flex items-center gap-1.5 p-2 rounded-xl glass-card border border-amber-400/20">
                       <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                       <span>Countdown:</span>
                       <span className="font-bold text-amber-200 ml-auto">

@@ -17,6 +17,17 @@ import { DailyLetter } from './components/DailyLetter';
 import { CharacterChatModal } from './components/CharacterChatModal';
 import { LettersSubUniverseView } from './components/LettersSubUniverseView';
 import { AnniversaryCounter } from './components/AnniversaryCounter';
+import { ThemeEngineWidget } from './components/ThemeEngineWidget';
+import { ThemeShiftToast } from './components/ThemeShiftToast';
+import {
+  SeasonId,
+  AtmosphereMoodId,
+  BlendedThemeState,
+  computeBlendedTheme,
+  getCalendarAutoSeason,
+  pickNextRandomMood,
+} from './utils/themeEngine';
+
 import { LumiFlareType, LumiMood } from './components/LumiCompanion';
 import { WorldStar, PersonalityContext } from './types';
 import { DEFAULT_PERSONALITY_CONTEXT } from './data/personalityData';
@@ -82,10 +93,171 @@ export default function App() {
   const voiceTimeoutRef = useRef<number | null>(null);
   const lenisRef = useRef<Lenis | null>(null);
 
+  // Seasons & Blended Atmosphere Theme Engine State
+  const [blendedTheme, setBlendedTheme] = useState<BlendedThemeState>(() => {
+    const calendarSeason = getCalendarAutoSeason();
+    return computeBlendedTheme(calendarSeason, true, 'golden-hour', true, 0.65);
+  });
+
+  const [themeToast, setThemeToast] = useState<{
+    visible: boolean;
+    moodName: string;
+    moodEmoji: string;
+    seasonName: string;
+    accentColor: string;
+  } | null>(null);
+
+  const themeToastTimerRef = useRef<number | null>(null);
+  const randomShiftTimerRef = useRef<number | null>(null);
+
   // Trigger expressive 3D companion particle flare and reactions
   const triggerCompanionReaction = (type: LumiFlareType = 'star') => {
     setCompanionFlareType(type);
     setCompanionFlareTrigger((prev) => prev + 1);
+  };
+
+  // Show romantic toast notification on atmosphere change
+  const notifyThemeShift = (moodName: string, moodEmoji: string, seasonName: string, accentColor: string) => {
+    if (themeToastTimerRef.current) {
+      window.clearTimeout(themeToastTimerRef.current);
+    }
+    setThemeToast({
+      visible: true,
+      moodName,
+      moodEmoji,
+      seasonName,
+      accentColor,
+    });
+    themeToastTimerRef.current = window.setTimeout(() => {
+      setThemeToast((prev) => (prev ? { ...prev, visible: false } : null));
+    }, 4500);
+  };
+
+  // Random Occurrence Scheduler Effect (shifts atmosphere every 60-90s randomly)
+  useEffect(() => {
+    if (!blendedTheme.isRandomMoodActive) {
+      if (randomShiftTimerRef.current) {
+        window.clearTimeout(randomShiftTimerRef.current);
+      }
+      return;
+    }
+
+    // Schedule next random shift between 60,000ms and 90,000ms
+    const randomInterval = 60000 + Math.random() * 30000;
+    randomShiftTimerRef.current = window.setTimeout(() => {
+      setBlendedTheme((prev) => {
+        // Also re-check calendar season in case midnight/season changed
+        const activeSeason = prev.isSeasonAutoCalendar ? getCalendarAutoSeason() : prev.seasonId;
+        const nextMood = pickNextRandomMood(prev.moodId);
+        const nextState = computeBlendedTheme(
+          activeSeason,
+          prev.isSeasonAutoCalendar,
+          nextMood,
+          true,
+          prev.blendWeight,
+          Date.now()
+        );
+
+        notifyThemeShift(
+          nextState.moodConfig.name,
+          nextState.moodConfig.emoji,
+          nextState.seasonConfig.name,
+          nextState.moodConfig.accentColor
+        );
+        triggerCompanionReaction('wonder');
+        return nextState;
+      });
+    }, randomInterval);
+
+    return () => {
+      if (randomShiftTimerRef.current) {
+        window.clearTimeout(randomShiftTimerRef.current);
+      }
+    };
+  }, [blendedTheme.isRandomMoodActive, blendedTheme.moodId, blendedTheme.seasonId, blendedTheme.blendWeight]);
+
+  const handleSeasonSelect = (seasonId: SeasonId, autoCalendar: boolean) => {
+    setBlendedTheme((prev) => {
+      const next = computeBlendedTheme(
+        seasonId,
+        autoCalendar,
+        prev.moodId,
+        prev.isRandomMoodActive,
+        prev.blendWeight,
+        Date.now()
+      );
+      notifyThemeShift(
+        next.moodConfig.name,
+        next.moodConfig.emoji,
+        next.seasonConfig.name,
+        next.moodConfig.accentColor
+      );
+      triggerCompanionReaction('star');
+      return next;
+    });
+  };
+
+  const handleMoodSelect = (moodId: AtmosphereMoodId) => {
+    setBlendedTheme((prev) => {
+      const next = computeBlendedTheme(
+        prev.seasonId,
+        prev.isSeasonAutoCalendar,
+        moodId,
+        prev.isRandomMoodActive,
+        prev.blendWeight,
+        Date.now()
+      );
+      notifyThemeShift(
+        next.moodConfig.name,
+        next.moodConfig.emoji,
+        next.seasonConfig.name,
+        next.moodConfig.accentColor
+      );
+      triggerCompanionReaction('wonder');
+      return next;
+    });
+  };
+
+  const handleToggleRandomMood = (active: boolean) => {
+    setBlendedTheme((prev) => ({
+      ...prev,
+      isRandomMoodActive: active,
+    }));
+  };
+
+  const handleRandomizeNow = () => {
+    setBlendedTheme((prev) => {
+      const nextMood = pickNextRandomMood(prev.moodId);
+      const next = computeBlendedTheme(
+        prev.seasonId,
+        prev.isSeasonAutoCalendar,
+        nextMood,
+        prev.isRandomMoodActive,
+        prev.blendWeight,
+        Date.now()
+      );
+      notifyThemeShift(
+        next.moodConfig.name,
+        next.moodConfig.emoji,
+        next.seasonConfig.name,
+        next.moodConfig.accentColor
+      );
+      triggerCompanionReaction('wonder');
+      return next;
+    });
+  };
+
+  const handleBlendWeightChange = (weight: number) => {
+    setBlendedTheme((prev) =>
+      computeBlendedTheme(
+        prev.seasonId,
+        prev.isSeasonAutoCalendar,
+        prev.moodId,
+        prev.isRandomMoodActive,
+        weight,
+        Date.now()
+      )
+    );
   };
 
   // Initialize Lenis + GSAP smooth scroll
@@ -303,13 +475,6 @@ export default function App() {
     setSelectedWorld(null);
     triggerCompanionReaction('wonder');
 
-    // If the user selects the Letters world, portal into the Letters Sub-Universe Landing Page
-    if (world.id === 'letters') {
-      handleOpenLettersSubUniverse('constellation');
-      setPreviewedIds((prev) => new Set([...prev, world.id]));
-      return;
-    }
-
     triggerWorldPortal(
       {
         title: world.name,
@@ -437,11 +602,60 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* 2. Interactive Sky Canvas Background */}
+      {/* 1.5 Atmospheric Aurora Borealis Background Layer */}
+      <div
+        id="aurora-background-layer"
+        className="fixed inset-0 pointer-events-none z-0 overflow-hidden select-none"
+      >
+        <img
+          src="/aurora-background.jpg"
+          alt="Aurore Polaire"
+          referrerPolicy="no-referrer"
+          className="w-full h-full object-cover object-center scale-[1.02] transform-gpu"
+        />
+
+        {/* Dynamic Blended Mood Atmosphere Overlay Gradient */}
+        <div
+          className="absolute inset-0 transition-all duration-[2500ms] ease-in-out pointer-events-none mix-blend-color-dodge"
+          style={{
+            background: blendedTheme.moodConfig.overlayGradientInline,
+            opacity: blendedTheme.blendWeight * 0.85,
+          }}
+        />
+
+        {/* Additional mood tint layer */}
+        <div
+          className="absolute inset-0 transition-all duration-[2500ms] ease-in-out pointer-events-none mix-blend-soft-light"
+          style={{
+            backgroundColor: blendedTheme.moodConfig.accentColor,
+            opacity: 0.16 * blendedTheme.blendWeight,
+          }}
+        />
+
+        {/* Carefully tuned atmospheric blends & subtle cosmic vignettes for optimal text legibility */}
+        {/* Top/bottom edge darkening for navigation & constellation content contrast */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/75 via-slate-950/25 to-slate-950/85 pointer-events-none" />
+
+        {/* Soft violet/indigo cosmic atmospheric tone blend */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-purple-950/30 via-transparent to-indigo-950/20 mix-blend-color-dodge pointer-events-none" />
+
+        {/* Subtle radial vignette framing the scene */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_transparent_40%,_rgba(2,6,23,0.7)_100%)] pointer-events-none" />
+      </div>
+
+      {/* 2. Interactive Sky Canvas Background (With Seasons & Blended Atmosphere) */}
       <SkyCanvas
         zoneShift={zoneShift}
         onMeteorClick={() => setIsWishModalOpen(true)}
         isBuiltIn={hasEntered}
+        blendedTheme={blendedTheme}
+        seasonOverride={blendedTheme.seasonId}
+      />
+
+      {/* 2.2 Random Occurrence Theme Shift Toast */}
+      <ThemeShiftToast
+        toast={themeToast}
+        onDismiss={() => setThemeToast((prev) => (prev ? { ...prev, visible: false } : null))}
       />
 
       {/* 2.5 Dynamic Atmospheric Cosmic Weather (Rain of Hearts, Soft Snow, Embers, Petals, Aurora) */}
@@ -463,7 +677,35 @@ export default function App() {
           {/* Left: Subtle, Elegantly Styled Live Anniversary Counter / 1st Year Portal */}
           <AnniversaryCounter onSpeak={(text) => speak(text)} />
 
-          <div className="flex items-center gap-2 pointer-events-auto">
+          {/* Right Action Bar: Kausapin si Clint is prioritized FIRST so it's always accessible and visible on mobile */}
+          <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto max-w-[calc(100vw-130px)] sm:max-w-none overflow-x-auto no-scrollbar py-0.5">
+            {/* Primary Chat Button: Kausapin si Clint (AI Copy) */}
+            <button
+              id="btn-open-clint-chat"
+              onClick={() => {
+                triggerCompanionReaction('heart');
+                setIsChatModalOpen(true);
+                lumiSync.notifyModal('chat', true);
+              }}
+              title="Kausapin si Clint (AI Copy)"
+              className="glass-pill flex items-center gap-1.5 text-xs px-3 sm:px-3.5 py-1.5 rounded-full text-amber-100 font-serif font-semibold transition-all hover:scale-105 shrink-0 border border-amber-300/40 shadow-sm"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <MessageCircle className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
+              <span className="whitespace-nowrap">Kausapin si Clint</span>
+            </button>
+
+            {/* Atmosphere Seasons & Blended Theme Engine Widget */}
+            <ThemeEngineWidget
+              blendedTheme={blendedTheme}
+              onSeasonSelect={handleSeasonSelect}
+              onMoodSelect={handleMoodSelect}
+              onToggleRandomMood={handleToggleRandomMood}
+              onRandomizeNow={handleRandomizeNow}
+              onBlendWeightChange={handleBlendWeightChange}
+              onSpeak={(text) => speak(text)}
+            />
+
             {/* Cosmic Weather Atmosphere Selector Toggle Button */}
             <CosmicWeatherToggle
               activeMoodId={weatherMood}
@@ -474,47 +716,36 @@ export default function App() {
               onSpeakMood={(text) => speak(text)}
             />
 
-            <button
-              id="btn-open-clint-chat"
-              onClick={() => {
-                triggerCompanionReaction('heart');
-                setIsChatModalOpen(true);
-                lumiSync.notifyModal('chat', true);
-              }}
-              title="Kausapin si Clint (AI Copy)"
-              className="flex items-center gap-1.5 text-xs bg-gradient-to-r from-amber-400/25 via-rose-400/25 to-amber-300/25 hover:from-amber-400/35 hover:to-rose-400/35 backdrop-blur-md border border-amber-300/60 px-3.5 py-1.5 rounded-full text-amber-100 font-serif font-semibold transition-all shadow-[0_0_16px_rgba(244,213,141,0.3)] hover:scale-105"
-            >
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <MessageCircle className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
-              <span>Kausapin si Clint</span>
-            </button>
-
+            {/* Photo Manager Modal Toggle */}
             <button
               id="btn-open-photo-manager"
               onClick={() => setIsPhotoManagerOpen(true)}
               title="Ayusin o I-upload ang mga Larawan"
-              className="flex items-center gap-1.5 text-xs bg-black/40 hover:bg-black/60 backdrop-blur-md border border-amber-400/30 px-3.5 py-1.5 rounded-full text-amber-200 hover:text-amber-100 transition-colors shadow-lg"
+              className="glass-pill flex items-center gap-1.5 text-xs px-2.5 sm:px-3.5 py-1.5 rounded-full text-amber-200 hover:text-amber-100 transition-colors shrink-0"
             >
               <ImageIcon className="w-3.5 h-3.5 text-amber-300" />
               <span className="hidden sm:inline">Mga Larawan</span>
             </button>
 
             {isReturnVisit && (
-              <span className="hidden sm:inline-block text-[11px] text-amber-200/80 bg-black/40 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full">
+              <span className="hidden sm:inline-block text-[11px] text-amber-200/80 glass-pill px-3 py-1.5 rounded-full shrink-0">
                 Visit #{visitCount}
               </span>
             )}
+
+            {/* Replay Intro Button */}
             <button
               id="btn-replay-opening"
               onClick={handleReplayEntrance}
               title="Balikan ang panimula"
-              className="flex items-center gap-1.5 text-xs bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/10 px-3.5 py-1.5 rounded-full text-slate-300 hover:text-amber-200 transition-colors shadow-lg"
+              className="glass-pill flex items-center gap-1.5 text-xs px-2.5 sm:px-3.5 py-1.5 rounded-full text-slate-300 hover:text-amber-200 transition-colors shrink-0"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Panimula</span>
             </button>
           </div>
         </header>
+
       )}
 
       {/* 4. Main Constellation Scroll Content */}

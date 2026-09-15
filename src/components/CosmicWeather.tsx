@@ -186,9 +186,8 @@ export const CosmicWeatherToggle: React.FC<CosmicWeatherToggleProps> = memo(({
         whileHover={{ scale: 1.04 }}
         whileTap={{ scale: 0.96 }}
         onClick={() => setIsMenuOpen((prev) => !prev)}
-        className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-full backdrop-blur-md border shadow-lg transition-all duration-300 text-xs font-sans tracking-wide select-none group"
+        className="glass-pill flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-full border shadow-lg transition-all duration-300 text-xs font-sans tracking-wide select-none group"
         style={{
-          backgroundColor: currentMood.badgeBg,
           borderColor: currentMood.badgeBorder,
           color: '#ffffff',
         }}
@@ -223,9 +222,12 @@ export const CosmicWeatherToggle: React.FC<CosmicWeatherToggleProps> = memo(({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.95 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="absolute top-full left-0 mt-2 w-72 p-2.5 rounded-2xl bg-slate-950/95 border border-white/15 backdrop-blur-xl shadow-2xl z-50 space-y-2 pointer-events-auto"
+            className="glass-panel absolute top-full left-0 mt-2 w-72 p-2.5 rounded-2xl border border-white/20 shadow-2xl z-50 space-y-2 pointer-events-auto"
           >
-            <div className="p-2 rounded-xl bg-gradient-to-r from-cyan-950/40 via-purple-950/40 to-pink-950/40 border border-white/10 text-xs">
+            {/* Top specular highlight rim */}
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-200/40 to-transparent pointer-events-none" />
+
+            <div className="p-2 rounded-xl glass-card border border-white/10 text-xs">
               <div className="flex items-center justify-between text-cyan-200 font-serif font-semibold mb-1">
                 <span className="flex items-center gap-1.5">
                   <span>{atmosphere.timeEmoji}</span>
@@ -257,8 +259,8 @@ export const CosmicWeatherToggle: React.FC<CosmicWeatherToggleProps> = memo(({
                   onClick={() => handleSelectMood(mood)}
                   className={`w-full text-left px-3 py-2 rounded-xl text-xs transition-all flex items-center gap-2.5 group ${
                     isSelected
-                      ? 'bg-white/15 text-white font-medium border border-white/20'
-                      : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                      ? 'glass-card text-white font-medium border border-cyan-400/40'
+                      : 'text-slate-300 hover:bg-white/10 hover:text-white'
                   }`}
                 >
                   <div
@@ -428,9 +430,10 @@ export const CosmicWeather: React.FC<CosmicWeatherProps> = memo(({
 
     window.addEventListener('resize', handleResize);
 
-    const render = () => {
-      if (!performanceManager.getIsTabVisible()) {
-        animFrameRef.current = requestAnimationFrame(render);
+    const render = (timestamp: number = performance.now()) => {
+      animFrameRef.current = requestAnimationFrame(render);
+
+      if (!performanceManager.shouldRender(timestamp)) {
         return;
       }
 
@@ -500,8 +503,6 @@ export const CosmicWeather: React.FC<CosmicWeatherProps> = memo(({
 
         ctx.restore();
       }
-
-      animFrameRef.current = requestAnimationFrame(render);
     };
 
     animFrameRef.current = requestAnimationFrame(render);

@@ -57,8 +57,11 @@ export const AudioPlayerWidget: React.FC = () => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 15 }}
             transition={{ duration: 0.3 }}
-            className="w-72 sm:w-80 bg-slate-950/90 backdrop-blur-xl border border-amber-300/30 rounded-3xl p-5 shadow-2xl text-amber-50"
+            className="glass-panel relative w-72 sm:w-80 rounded-3xl p-5 shadow-2xl text-amber-50 border border-amber-300/35 overflow-hidden"
           >
+            {/* Top specular highlight rim */}
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-200/40 to-transparent pointer-events-none" />
+
             {/* Top Bar */}
             <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
               <div className="flex items-center gap-2">
@@ -69,7 +72,7 @@ export const AudioPlayerWidget: React.FC = () => {
               </div>
               <button
                 onClick={() => setIsExpanded(false)}
-                className="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-300 transition-colors"
+                className="w-6 h-6 rounded-full glass-pill flex items-center justify-center text-slate-300 hover:text-white transition-colors"
               >
                 <ChevronDown className="w-4 h-4" />
               </button>
@@ -112,7 +115,7 @@ export const AudioPlayerWidget: React.FC = () => {
                   onClick={() => audioEngine.selectTrack(idx)}
                   className={`w-full text-left px-2.5 py-1.5 rounded-xl text-xs transition-colors flex items-center justify-between ${
                     track.title === t.title
-                      ? 'bg-amber-400/20 text-amber-200 border border-amber-300/40 font-medium'
+                      ? 'glass-card text-amber-200 border-amber-300/40 font-medium'
                       : 'hover:bg-white/5 text-slate-300'
                   }`}
                 >
@@ -129,7 +132,7 @@ export const AudioPlayerWidget: React.FC = () => {
               <button
                 id="btn-prev-track"
                 onClick={prevTrack}
-                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 flex items-center justify-center text-amber-200 transition-colors"
+                className="w-8 h-8 rounded-full glass-pill flex items-center justify-center text-amber-200 hover:text-white transition-colors"
               >
                 <SkipBack className="w-4 h-4" />
               </button>
@@ -137,15 +140,15 @@ export const AudioPlayerWidget: React.FC = () => {
               <button
                 id="btn-toggle-play"
                 onClick={togglePlay}
-                className="w-12 h-12 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-950 flex items-center justify-center shadow-lg transition-transform hover:scale-105"
+                className="w-12 h-12 rounded-full glass-pill text-amber-200 hover:text-amber-100 flex items-center justify-center shadow-[0_0_20px_rgba(244,213,141,0.3)] border border-amber-300/50 transition-transform hover:scale-108 active:scale-95"
               >
-                {isPlaying ? <Pause className="w-5 h-5 fill-slate-950" /> : <Play className="w-5 h-5 fill-slate-950 ml-0.5" />}
+                {isPlaying ? <Pause className="w-5 h-5 fill-amber-300" /> : <Play className="w-5 h-5 fill-amber-300 ml-0.5" />}
               </button>
 
               <button
                 id="btn-next-track"
                 onClick={nextTrack}
-                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 flex items-center justify-center text-amber-200 transition-colors"
+                className="w-8 h-8 rounded-full glass-pill flex items-center justify-center text-amber-200 hover:text-white transition-colors"
               >
                 <SkipForward className="w-4 h-4" />
               </button>
@@ -168,7 +171,7 @@ export const AudioPlayerWidget: React.FC = () => {
                   setIsMuted(val === 0);
                   audioEngine.setVolume(val);
                 }}
-                className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-400"
+                className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-amber-400"
               />
             </div>
           </motion.div>
@@ -178,7 +181,7 @@ export const AudioPlayerWidget: React.FC = () => {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.8 }}
-            className="flex items-center gap-3 bg-slate-950/80 backdrop-blur-md border border-amber-300/30 rounded-full pl-3 pr-4 py-2 shadow-2xl cursor-pointer hover:border-amber-300/60 transition-all group"
+            className="glass-pill flex items-center gap-3 rounded-full pl-3 pr-4 py-2 shadow-2xl cursor-pointer border border-amber-300/35 hover:border-amber-300/70 hover:scale-105 transition-all group"
             onClick={() => setIsExpanded(true)}
           >
             <div className="relative">
@@ -205,7 +208,7 @@ export const AudioPlayerWidget: React.FC = () => {
                 e.stopPropagation();
                 togglePlay();
               }}
-              className="w-7 h-7 rounded-full bg-amber-400/20 hover:bg-amber-400/40 text-amber-200 border border-amber-300/40 flex items-center justify-center ml-1 transition-colors"
+              className="w-7 h-7 rounded-full glass-orb text-amber-200 flex items-center justify-center ml-1 transition-colors hover:scale-110"
             >
               {isPlaying ? <Pause className="w-3.5 h-3.5 fill-amber-200" /> : <Play className="w-3.5 h-3.5 fill-amber-200 ml-0.5" />}
             </button>

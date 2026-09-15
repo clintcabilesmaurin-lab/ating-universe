@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Sparkles, Heart, Mail, Calendar, Compass, ArrowLeft, CheckCircle2, Lock, BookOpen, Camera, ExternalLink, Globe, Mountain, ChevronRight } from 'lucide-react';
 import { WorldStar, Letter } from '../types';
-import { TIMELINE_MILESTONES, MEMORIES, LETTERS, TRAVEL_DREAMS, MEMORY_GALLERY_WALK_URL, SECRET_LETTER_DAW_URL, OUR_FIRST_YEAR_URL, WORLDS } from '../data/universeData';
+import { TIMELINE_MILESTONES, MEMORIES, LETTERS, TRAVEL_DREAMS, MEMORY_GALLERY_WALK_URL, SECRET_LETTER_DAW_URL, OUR_FIRST_YEAR_URL, WORLD_OF_LETTERS_URL, WORLDS } from '../data/universeData';
 import { audioEngine } from '../utils/audioEngine';
 import { CelestialMemoryVisual } from './CelestialMemoryVisual';
 import { loadCustomPhotos, getDriveThumbnailUrl } from '../utils/driveHelper';
 import { isFirstYearAnniversaryUnlocked, calculateCountdownToTarget } from '../utils/timeHelper';
+import { openInParent } from '../utils/navigationHelper';
 
 interface WorldDetailModalProps {
   world: WorldStar | null;
@@ -32,6 +33,7 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
   const [imgLoadFailed, setImgLoadFailed] = useState<Record<string, boolean>>({});
   const [customPhotos, setCustomPhotos] = useState<Record<string, string>>({});
   const [currentTime, setCurrentTime] = useState<Date>(() => new Date());
+  const [isLettersPreviewOpen, setIsLettersPreviewOpen] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -65,7 +67,7 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
     <AnimatePresence>
       <div
         data-lenis-prevent
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/85 backdrop-blur-2xl"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-black/65 backdrop-blur-xl"
       >
         <motion.div
           data-lenis-prevent
@@ -73,20 +75,21 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 25 }}
           transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-          className="relative w-full max-w-4xl bg-gradient-to-b from-slate-900/95 via-slate-950/95 to-black rounded-3xl border shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col"
-          style={{ borderColor: `${world.starColor}55` }}
+          className="glass-panel relative w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col border border-white/20"
         >
+          {/* Top specular highlight rim */}
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent pointer-events-none z-10" />
+
           {/* Header Bar */}
           <div
-            className="flex items-center justify-between px-6 py-5 border-b shrink-0"
+            className="flex items-center justify-between px-6 py-5 border-b border-white/10 shrink-0 backdrop-blur-md"
             style={{
-              borderColor: `${world.starColor}30`,
               backgroundColor: `${world.starColor}15`,
             }}
           >
             <div className="flex items-center gap-3">
               <div
-                className="w-10 h-10 rounded-2xl flex items-center justify-center border shadow-inner"
+                className="w-10 h-10 rounded-2xl flex items-center justify-center border shadow-inner backdrop-blur-md"
                 style={{
                   backgroundColor: `${world.starColor}25`,
                   borderColor: world.starColor,
@@ -101,9 +104,8 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                     {world.name}
                   </h2>
                   <span
-                    className="text-[11px] px-2.5 py-0.5 rounded-full font-sans font-medium"
+                    className="text-[11px] px-2.5 py-0.5 rounded-full font-sans font-medium glass-pill"
                     style={{
-                      backgroundColor: `${world.starColor}30`,
                       color: world.starColor,
                     }}
                   >
@@ -121,13 +123,14 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                 isAnniversaryUnlocked ? (
                   <a
                     href={OUR_FIRST_YEAR_URL}
-                    target="_top"
+                    target="_parent"
                     id="header-our-first-year-portal-btn"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-400 via-rose-400 to-pink-500 hover:from-amber-300 hover:to-rose-300 text-slate-950 text-xs font-sans font-bold transition-all shadow-[0_0_20px_rgba(251,191,36,0.5)] hover:scale-105"
+                    onClick={(e) => openInParent(OUR_FIRST_YEAR_URL, e)}
+                    className="glass-pill inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-amber-100 text-xs font-sans font-bold transition-all shadow-[0_0_20px_rgba(251,191,36,0.5)] hover:scale-105"
                   >
-                    <Sparkles className="w-3.5 h-3.5 fill-slate-950" />
+                    <Sparkles className="w-3.5 h-3.5 fill-amber-300" />
                     <span>Our First Year Website</span>
-                    <ExternalLink className="w-3 h-3 text-slate-950 ml-0.5" />
+                    <ExternalLink className="w-3 h-3 text-amber-300 ml-0.5" />
                   </a>
                 ) : (
                   <button
@@ -137,7 +140,7 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                       audioEngine.playLockedSound();
                       onSpeak("Hindi pa ito ang tamang oras hanggang sa Setyembre 22, 2026 nang 9:00 PM... Sabay nating bubuksan sa ating 1st Anniversary, Lovey! 🔒✨");
                     }}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-950/80 hover:bg-amber-900 border border-amber-400/40 text-amber-200 text-xs font-sans font-medium transition-all shadow-md"
+                    className="glass-pill inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-amber-200 text-xs font-sans font-medium transition-all shadow-md"
                   >
                     <Lock className="w-3.5 h-3.5 text-amber-400" />
                     <span>Naka-lock (Sept 22, 9PM)</span>
@@ -147,9 +150,10 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
               {world.id === 'memory-gallery' && (
                 <a
                   href={MEMORY_GALLERY_WALK_URL}
-                  target="_top"
+                  target="_parent"
                   id="header-gallery-walk-btn"
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/25 hover:bg-purple-500/40 border border-purple-300/40 text-purple-100 text-xs font-sans font-medium transition-all shadow-md hover:scale-102"
+                  onClick={(e) => openInParent(MEMORY_GALLERY_WALK_URL, e)}
+                  className="glass-pill hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-purple-100 text-xs font-sans font-medium transition-all shadow-md hover:scale-102"
                 >
                   <Globe className="w-3.5 h-3.5 text-purple-300" />
                   <span>3D Walk</span>
@@ -157,33 +161,23 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                 </a>
               )}
               {world.id === 'letters' && (
-                <>
-                  <a
-                    href={SECRET_LETTER_DAW_URL}
-                    target="_top"
-                    id="header-secret-letter-link-btn"
-                    className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-500/25 hover:bg-rose-500/40 border border-rose-400/40 text-rose-100 text-xs font-sans font-medium transition-all shadow-md hover:scale-102"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-rose-300" />
-                    <span>Secret Letter</span>
-                    <ExternalLink className="w-3 h-3 text-rose-300 ml-0.5" />
-                  </a>
-                  {onOpenLettersSubUniverse && (
-                    <button
-                      id="header-open-full-letters-universe-btn"
-                      onClick={() => onOpenLettersSubUniverse()}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-400 hover:to-pink-500 text-white text-xs font-sans font-medium transition-all shadow-md hover:scale-102"
-                    >
-                      <Mail className="w-3.5 h-3.5" />
-                      <span>Mundo ng mga Liham</span>
-                    </button>
-                  )}
-                </>
+                <a
+                  href={WORLD_OF_LETTERS_URL}
+                  target="_parent"
+                  id="header-world-of-letters-btn"
+                  onClick={(e) => openInParent(WORLD_OF_LETTERS_URL, e)}
+                  className="glass-pill hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-rose-100 text-xs font-sans font-medium transition-all shadow-md hover:scale-102 border border-rose-400/30"
+                >
+                  <Mail className="w-3.5 h-3.5 text-rose-300" />
+                  <span>World of Letters</span>
+                  <ExternalLink className="w-3 h-3 text-rose-300 ml-0.5" />
+                </a>
               )}
+
               <button
                 id="close-world-modal"
                 onClick={onClose}
-                className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+                className="w-9 h-9 rounded-full glass-pill text-white flex items-center justify-center transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -212,8 +206,9 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                         </div>
                         <a
                           href={OUR_FIRST_YEAR_URL}
-                          target="_top"
+                          target="_parent"
                           id="btn-unlocked-our-first-year"
+                          onClick={(e) => openInParent(OUR_FIRST_YEAR_URL, e)}
                           className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-amber-400 via-rose-500 to-pink-500 hover:from-amber-300 hover:to-rose-400 text-slate-950 font-bold text-xs sm:text-sm shadow-[0_0_30px_rgba(251,191,36,0.6)] transition-all hover:scale-105 cursor-pointer"
                         >
                           <Sparkles className="w-4 h-4 fill-slate-950 text-slate-950" />
@@ -222,7 +217,7 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                         </a>
                       </div>
                     ) : (
-                      <div className="p-5 rounded-2xl bg-black/60 border border-amber-400/30 space-y-3">
+                      <div className="p-5 rounded-3xl glass-card space-y-3">
                         <div className="flex items-center justify-center gap-2 text-amber-300 font-sans text-xs font-bold uppercase tracking-wider">
                           <Lock className="w-4 h-4 text-amber-400" />
                           <span>Magbubukas sa Setyembre 22, 2026 (9:00 PM)</span>
@@ -230,7 +225,7 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
 
                         {/* Live Countdown Grid */}
                         <div className="grid grid-cols-4 gap-2 py-1 max-w-xs mx-auto">
-                          <div className="p-2 rounded-xl bg-amber-950/40 border border-amber-400/20 text-center">
+                          <div className="p-2 rounded-xl glass-card text-center">
                             <span className="block font-mono text-lg sm:text-xl font-bold text-amber-200">
                               {countdown.days}
                             </span>
@@ -238,7 +233,7 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                               Araw
                             </span>
                           </div>
-                          <div className="p-2 rounded-xl bg-amber-950/40 border border-amber-400/20 text-center">
+                          <div className="p-2 rounded-xl glass-card text-center">
                             <span className="block font-mono text-lg sm:text-xl font-bold text-amber-200">
                               {pad(countdown.hours)}
                             </span>
@@ -246,7 +241,7 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                               Oras
                             </span>
                           </div>
-                          <div className="p-2 rounded-xl bg-amber-950/40 border border-amber-400/20 text-center">
+                          <div className="p-2 rounded-xl glass-card text-center">
                             <span className="block font-mono text-lg sm:text-xl font-bold text-amber-200">
                               {pad(countdown.minutes)}
                             </span>
@@ -254,7 +249,7 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                               Minuto
                             </span>
                           </div>
-                          <div className="p-2 rounded-xl bg-amber-950/40 border border-amber-400/20 text-center">
+                          <div className="p-2 rounded-xl glass-card text-center">
                             <span className="block font-mono text-lg sm:text-xl font-bold text-rose-300">
                               {pad(countdown.seconds)}
                             </span>
@@ -275,7 +270,7 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                             audioEngine.playLockedSound();
                             onSpeak(`Naka-lock pa hanggang Setyembre 22, 2026, 9:00 PM (${countdown.days} araw at ${countdown.hours} oras na lang)... Sabay nating bubuksan sa ating 1st Anniversary, Lovey! 🔒✨`);
                           }}
-                          className="w-full sm:w-auto px-5 py-2.5 rounded-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/40 text-xs font-sans font-medium transition-all flex items-center justify-center gap-2 mx-auto cursor-pointer"
+                          className="glass-pill w-full sm:w-auto px-5 py-2.5 rounded-full text-amber-200 text-xs font-sans font-medium transition-all flex items-center justify-center gap-2 mx-auto cursor-pointer active:scale-95"
                         >
                           <Lock className="w-3.5 h-3.5 text-amber-400" />
                           <span>I-check ang Status 🔒</span>
@@ -297,7 +292,7 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                         {/* Dot indicator */}
                         <div className="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-amber-400 border-4 border-slate-950 group-hover:scale-125 transition-transform" />
 
-                        <div className="p-4 rounded-2xl bg-slate-900/60 border border-white/10 hover:border-amber-300/40 transition-colors">
+                        <div className="p-4 rounded-2xl glass-card transition-all hover:border-amber-300/40">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-base">{item.emoji}</span>
                             <span className="text-xs text-amber-300 font-sans tracking-wider uppercase font-semibold">
@@ -310,7 +305,7 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                           <p className="text-sm text-slate-300/90 font-serif leading-relaxed mt-1">
                             {item.story}
                           </p>
-                          <div className="mt-3 inline-block px-3 py-1 rounded-full bg-amber-400/10 border border-amber-400/20 text-xs text-amber-200 font-sans">
+                          <div className="mt-3 inline-block px-3 py-1 rounded-full glass-pill text-xs text-amber-200 font-sans">
                             ✨ {item.highlight}
                           </div>
                         </div>
@@ -324,17 +319,17 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
             {/* World 2: Memory Gallery Experience */}
             {world.id === 'memory-gallery' && (
               <div className="space-y-6">
-                <div className="p-5 rounded-2xl bg-purple-950/40 border border-purple-400/30 text-center">
+                <div className="p-5 rounded-2xl glass-card text-center">
                   <p className="text-sm sm:text-base font-serif italic text-purple-100 max-w-lg mx-auto leading-relaxed">
                     "{world.acheLine}"
                   </p>
                 </div>
 
                 {/* Featured 3D Memory Gallery Walk Portal */}
-                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-950/80 via-indigo-950/70 to-slate-950/90 border border-purple-400/40 p-5 sm:p-6 shadow-[0_0_40px_rgba(192,132,252,0.2)]">
+                <div className="relative overflow-hidden rounded-3xl glass-card p-5 sm:p-6 shadow-[0_0_40px_rgba(192,132,252,0.15)]">
                   <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="space-y-1.5 max-w-lg">
-                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/20 border border-purple-300/30 text-purple-200 text-xs font-sans font-medium">
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-pill text-purple-200 text-xs font-sans font-medium">
                         <Sparkles className="w-3.5 h-3.5 text-purple-300 animate-pulse" />
                         <span>Interactive 3D Walkthrough Portal</span>
                       </div>
@@ -348,11 +343,12 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
 
                     <a
                       href={MEMORY_GALLERY_WALK_URL}
-                      target="_top"
+                      target="_parent"
                       id="launch-gallery-walk-btn"
-                      className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-400 hover:to-indigo-400 text-white font-sans text-xs sm:text-sm font-semibold tracking-wide shadow-lg hover:shadow-purple-500/30 hover:scale-105 transition-all shrink-0 cursor-pointer"
+                      onClick={(e) => openInParent(MEMORY_GALLERY_WALK_URL, e)}
+                      className="glass-pill inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full text-white font-sans text-xs sm:text-sm font-semibold tracking-wide shadow-lg hover:scale-105 transition-all shrink-0 cursor-pointer"
                     >
-                      <Globe className="w-4 h-4" />
+                      <Globe className="w-4 h-4 text-purple-300" />
                       <span>Pumasok sa 3D Walk</span>
                       <ExternalLink className="w-4 h-4" />
                     </a>
@@ -368,7 +364,7 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                     return (
                       <div
                         key={mem.id}
-                        className="rounded-2xl bg-slate-900/70 border border-purple-400/20 hover:border-purple-400/50 transition-all flex flex-col justify-between group shadow-lg overflow-hidden"
+                        className="rounded-3xl glass-card transition-all flex flex-col justify-between group shadow-lg overflow-hidden border border-white/10 hover:border-purple-300/40"
                       >
                         {resolved && !isFailed ? (
                           <div className="h-44 w-full overflow-hidden bg-slate-950">
@@ -420,129 +416,75 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
               </div>
             )}
 
-            {/* World 3: Letters Experience */}
+            {/* World 3: Letters Experience - World of Letters */}
             {world.id === 'letters' && (
               <div className="space-y-6">
-                {!selectedLetter ? (
-                  <>
-                    <div className="text-center max-w-lg mx-auto">
-                      <p className="text-xs uppercase tracking-widest text-rose-300/70 font-sans mb-1">
-                        Sulat-Kamay Mula sa Puso
-                      </p>
-                      <h3 className="text-2xl font-serif text-rose-100">
-                        Mga Liham para kay Lovey
-                      </h3>
-                      <p className="text-xs text-slate-300 mt-2 font-serif italic">
-                        Pumili ng selyadong sobre para basahin ang mga salitang nakalaan sa'yo.
-                      </p>
-                    </div>
+                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-rose-950/70 via-pink-950/60 to-slate-950/90 border border-rose-400/40 p-6 sm:p-8 shadow-[0_0_40px_rgba(244,63,94,0.15)] text-center max-w-xl mx-auto space-y-4">
+                  <div className="w-16 h-16 rounded-full glass-card mx-auto flex items-center justify-center border border-rose-400/40 text-rose-300 shadow-[0_0_35px_rgba(244,63,94,0.3)]">
+                    <Mail className="w-8 h-8 text-rose-300 fill-rose-300/20" />
+                  </div>
 
-                    {/* Subworld Navigation Banner for Letters Universe */}
-                    <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-rose-950/70 via-pink-950/70 to-purple-950/70 border border-rose-400/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Sparkles className="w-4 h-4 text-rose-300" />
-                          <h4 className="text-sm font-serif font-medium text-white">
-                            Subworlds sa Loob ng Mundo ng mga Liham
-                          </h4>
-                        </div>
-                        <p className="text-xs text-rose-200/80 font-sans">
-                          Kasama ang 11 Monthsary Milestone, Secret Letter Daw, at Open When Capsules.
-                        </p>
-                      </div>
+                  <div className="space-y-2">
+                    <span className="text-[10px] uppercase tracking-widest font-sans text-rose-300/90 glass-pill px-3.5 py-1 rounded-full border border-rose-400/30">
+                      Bukas Na &bull; World of Letters
+                    </span>
+                    <h3 className="text-2xl sm:text-3xl font-serif text-rose-100 font-medium">
+                      Mundo ng mga Liham 💌
+                    </h3>
+                    <p className="text-sm text-rose-200/90 font-serif italic leading-relaxed pt-1">
+                      Dito nakatago ang bawat salita, pangako, at damdaming isinulat ni Clint mula sa kabilang ibayo para sa kanyang pinakamamahal na si Maica.
+                    </p>
+                  </div>
 
-                      <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <a
-                          href={SECRET_LETTER_DAW_URL}
-                          target="_top"
-                          id="modal-secret-letter-link-btn"
-                          className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-rose-200 text-xs font-sans font-medium flex items-center justify-center gap-1.5 transition-all"
-                        >
-                          <span>Secret Letter</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-
-                        {onOpenLettersSubUniverse && (
-                          <button
-                            id="modal-enter-letters-universe-btn"
-                            onClick={() => onOpenLettersSubUniverse()}
-                            className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-400 hover:to-pink-500 text-white text-xs font-sans font-medium flex items-center justify-center gap-1.5 transition-all shadow-md"
-                          >
-                            <span>Pumasok sa Landing Page</span>
-                            <ChevronRight className="w-3.5 h-3.5" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Sealed Envelopes Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                      {LETTERS.map((letter) => (
-                        <div
-                          key={letter.id}
-                          id={`letter-card-${letter.id}`}
-                          onClick={() => handleOpenLetter(letter)}
-                          className="relative p-6 rounded-3xl bg-gradient-to-b from-rose-950/40 to-slate-950/80 border border-rose-400/30 hover:border-rose-400 cursor-pointer transition-all hover:scale-[1.03] group shadow-xl flex flex-col justify-between min-h-[220px]"
-                        >
-                          {/* Wax Seal Icon */}
-                          <div className="flex justify-between items-start">
-                            <div className="w-10 h-10 rounded-full bg-rose-600/30 border border-rose-400/50 flex items-center justify-center text-rose-300 shadow-md">
-                              <Mail className="w-5 h-5" />
-                            </div>
-                            <span className="text-[10px] uppercase font-sans tracking-widest text-rose-300/60 bg-rose-950/80 px-2 py-0.5 rounded-full border border-rose-500/20">
-                              {letter.tag}
-                            </span>
-                          </div>
-
-                          <div className="my-3">
-                            <h4 className="text-base font-serif font-medium text-white group-hover:text-rose-200 transition-colors">
-                              {letter.title}
-                            </h4>
-                            <p className="text-xs text-slate-400 font-serif italic mt-1 line-clamp-2">
-                              "{letter.excerpt}"
-                            </p>
-                          </div>
-
-                          <div className="text-xs font-sans text-rose-300/80 flex items-center gap-1">
-                            <BookOpen className="w-3.5 h-3.5" /> Buksan ang Liham
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  /* Expanded Letter Reading View */
-                  <div className="p-6 sm:p-8 rounded-3xl bg-stone-900/90 border border-amber-300/30 text-amber-50 shadow-2xl space-y-6">
-                    <button
-                      id="back-to-letters"
-                      onClick={() => setSelectedLetter(null)}
-                      className="flex items-center gap-2 text-xs text-amber-300 hover:text-amber-200 font-sans tracking-wide transition-colors"
+                  <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+                    <a
+                      href={WORLD_OF_LETTERS_URL}
+                      target="_parent"
+                      id="btn-open-world-of-letters-main"
+                      onClick={(e) => openInParent(WORLD_OF_LETTERS_URL, e)}
+                      className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-rose-400 via-pink-500 to-amber-300 hover:from-rose-300 hover:to-amber-200 text-slate-950 font-bold text-xs sm:text-sm shadow-[0_0_30px_rgba(244,63,94,0.5)] transition-all hover:scale-105 cursor-pointer"
                     >
-                      <ArrowLeft className="w-4 h-4" /> Bumalik sa listahan ng mga liham
+                      <Mail className="w-4 h-4 fill-slate-950 text-slate-950" />
+                      <span>Pumasok sa World of Letters</span>
+                      <ExternalLink className="w-4 h-4 text-slate-950" />
+                    </a>
+
+                    <button
+                      type="button"
+                      onClick={() => setIsLettersPreviewOpen(!isLettersPreviewOpen)}
+                      className="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-rose-200 border border-rose-400/40 text-xs transition-colors flex items-center gap-1.5 backdrop-blur-md cursor-pointer"
+                    >
+                      <Globe className="w-3.5 h-3.5 text-rose-300" />
+                      <span>{isLettersPreviewOpen ? 'Itago ang Live Preview' : 'Silipin Dito (Live Preview)'}</span>
                     </button>
+                  </div>
+                </div>
 
-                    <div className="border-b border-amber-200/20 pb-4">
-                      <span className="text-xs text-amber-300/70 uppercase tracking-widest font-sans">
-                        {selectedLetter.tag} &bull; {selectedLetter.date}
-                      </span>
-                      <h3 className="text-2xl sm:text-3xl font-serif text-amber-100 font-medium mt-1">
-                        {selectedLetter.title}
-                      </h3>
+                {/* Embedded Live Preview of World of Letters */}
+                {isLettersPreviewOpen && (
+                  <div className="w-full max-w-3xl mx-auto rounded-3xl overflow-hidden border-2 border-rose-400/50 shadow-[0_20px_60px_rgba(0,0,0,0.8)] bg-slate-950">
+                    <div className="p-3 bg-slate-900/90 border-b border-white/10 flex items-center justify-between text-xs text-rose-200/90 font-mono">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="font-semibold text-rose-100">world-of-letters.vercel.app</span>
+                      </div>
+                      <a
+                        href={WORLD_OF_LETTERS_URL}
+                        target="_parent"
+                        onClick={(e) => openInParent(WORLD_OF_LETTERS_URL, e)}
+                        className="text-amber-300 hover:text-amber-200 flex items-center gap-1 transition-colors cursor-pointer"
+                      >
+                        <span>Pumasok sa Site</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
                     </div>
-
-                    <div className="space-y-4 font-serif text-base sm:text-lg leading-relaxed text-amber-50/90 italic">
-                      {selectedLetter.content.map((paragraph, pIdx) => (
-                        <p key={pIdx}>{paragraph}</p>
-                      ))}
-                    </div>
-
-                    <div className="pt-6 border-t border-amber-200/20 text-right">
-                      <p className="font-serif text-amber-200 italic font-medium">
-                        {selectedLetter.signature}
-                      </p>
-                      <p className="text-xs text-amber-300/50 font-sans mt-1">
-                        Ating Universe &bull; Forever Lovey
-                      </p>
+                    <div className="relative w-full h-[520px]">
+                      <iframe
+                        src={WORLD_OF_LETTERS_URL}
+                        title="World of Letters Live Portal"
+                        className="w-full h-full border-0"
+                        allow="autoplay; encrypted-media; fullscreen"
+                      />
                     </div>
                   </div>
                 )}
@@ -552,12 +494,12 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
             {/* World 4: Travel World Experience */}
             {world.id === 'travel-world' && (
               <div className="space-y-6">
-                <div className="p-6 rounded-2xl bg-sky-950/40 border border-sky-400/30 text-center max-w-xl mx-auto">
+                <div className="p-6 rounded-3xl glass-card text-center max-w-xl mx-auto">
                   <Compass className="w-8 h-8 text-sky-300 mx-auto mb-2" />
                   <h3 className="text-xl font-serif text-sky-100 font-medium">
                     Mga Bagong Mundong Sabay Nating Lalakbayin
                   </h3>
-                  <p className="text-xs text-sky-200/70 font-sans mt-1">
+                  <p className="text-xs text-sky-200/80 font-sans mt-1">
                     Hindi dito nagtatapos ang ating uniberso — simula pa lang ito ng ating mga paglalakbay.
                   </p>
                 </div>
@@ -566,12 +508,12 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                   {TRAVEL_DREAMS.map((dest, idx) => (
                     <div
                       key={idx}
-                      className="p-5 rounded-2xl bg-slate-900/60 border border-sky-400/20 flex flex-col justify-between"
+                      className="p-5 rounded-2xl glass-card flex flex-col justify-between hover:border-sky-300/40 transition-colors"
                     >
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-2xl">✈️</span>
-                          <span className="text-[10px] bg-sky-500/20 text-sky-300 border border-sky-400/30 px-2 py-0.5 rounded-full font-sans uppercase">
+                          <span className="text-[10px] glass-pill text-sky-300 px-2 py-0.5 rounded-full font-sans uppercase">
                             {dest.status}
                           </span>
                         </div>
@@ -603,7 +545,7 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
           </div>
 
           {/* Footer Bar with Portal World Jumpers */}
-          <div className="px-5 sm:px-6 py-4 border-t border-white/10 bg-slate-950/95 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+          <div className="px-5 sm:px-6 py-4 border-t border-white/10 backdrop-blur-xl bg-black/40 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
             {/* Quick Portal Switcher Pills */}
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 w-full sm:w-auto">
               <span className="text-[11px] font-sans text-slate-400 mr-1 flex items-center gap-1">
@@ -625,8 +567,8 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                     }}
                     className={`px-2.5 py-1 rounded-full text-[11px] font-sans font-medium transition-all flex items-center gap-1 ${
                       isCurrent
-                        ? 'bg-white/15 text-white ring-1 ring-white/30 cursor-default opacity-90'
-                        : 'bg-black/40 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 hover:border-white/25 active:scale-95'
+                        ? 'glass-pill text-white ring-1 ring-white/30 cursor-default opacity-90'
+                        : 'glass-pill text-slate-300 hover:text-white active:scale-95'
                     }`}
                     style={
                       !isCurrent
@@ -645,7 +587,7 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                   onClick={() =>
                     onOpenPangilatan('Papasok sa Tuktok ng Pangilatan... Ang ating paboritong tagpuan sa ulap! ⛰️')
                   }
-                  className="px-2.5 py-1 rounded-full text-[11px] font-sans font-medium bg-emerald-950/50 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-500/40 hover:border-emerald-400 transition-all flex items-center gap-1 active:scale-95"
+                  className="glass-pill px-2.5 py-1 rounded-full text-[11px] font-sans font-medium text-emerald-300 transition-all flex items-center gap-1 active:scale-95"
                 >
                   <Mountain className="w-3 h-3 text-emerald-400" />
                   <span>Pangilatan</span>
@@ -656,9 +598,8 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
             <button
               id="btn-return-constellation"
               onClick={onClose}
-              className="px-5 py-2 rounded-full text-xs font-sans tracking-wider border transition-all hover:scale-105 shrink-0"
+              className="glass-pill px-5 py-2 rounded-full text-xs font-sans tracking-wider border transition-all hover:scale-105 shrink-0"
               style={{
-                backgroundColor: `${world.starColor}20`,
                 borderColor: `${world.starColor}50`,
                 color: world.starColor,
               }}

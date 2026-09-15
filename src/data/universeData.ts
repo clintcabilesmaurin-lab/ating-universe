@@ -4,8 +4,8 @@ import { PANGILATAN_FOLDER_URL, RANDOM_MEMORIES_FOLDER_URL, getDriveThumbnailUrl
 export const MEMORY_GALLERY_WALK_URL = 'https://memory-gallary-walk.vercel.app/';
 export const SECRET_LETTER_DAW_URL = 'https://secret-letter-daw.vercel.app/';
 export const OUR_FIRST_YEAR_URL = 'https://our-first-yearlovey.vercel.app/';
+export const WORLD_OF_LETTERS_URL = 'https://world-of-letters.vercel.app/';
 
-// Relationship start: September 22, 2025 at 9:00 PM (21:00 Philippine Standard Time / UTC+8)
 export const RELATIONSHIP_START_DATE_ISO = '2025-09-22T21:00:00+08:00';
 // 1st Year Anniversary milestone: September 22, 2026 at 9:00 PM (21:00 Philippine Standard Time / UTC+8)
 export const FIRST_YEAR_ANNIVERSARY_DATE_ISO = '2026-09-22T21:00:00+08:00';
@@ -43,15 +43,15 @@ export const WORLDS: WorldStar[] = [
   {
     id: 'letters',
     name: 'Letters',
-    url: '#letters',
+    url: WORLD_OF_LETTERS_URL,
     active: true,
     order: 3,
-    previewLine: 'May mga isinulat ako rito para sa\'yo... basahin mo lang, hehe.',
-    acheLine: 'Actually, dito ko inilagay ang mga bagay na mahirap minsan sabihin nang diretso... basahin mo lang, Lovey. Naa-appreciate ko talaga lahat ng ginagawa mo.',
+    previewLine: 'Liham mula sa kabilang ibayo... dito nakasulat ang bawat tibok ng puso ko para sa\'yo, Lovey.',
+    acheLine: 'Kahit ilang kilometro man ang pagitan natin, ang bawat liham dito ay laging yayakap sa\'yo.',
     starColor: '#f7b2ad',
-    unlockedDate: '2026-03-01',
-    tagline: 'Liham Mula sa Kabilang Ibayo',
-    description: 'Mga taos-pusong liham para sa mga gabing nangungulila at sa mga araw na ikaw ang aking lakas.',
+    unlockedDate: '2026-02-14',
+    tagline: 'Liham Mula sa Kabilang Ibayo • World of Letters',
+    description: 'Ang bukas at opisyal na Mundo ng mga Liham — tuklasin ang mga liham ng pagmamahal sa world-of-letters.vercel.app.',
     iconName: 'Mail',
   },
   {
@@ -207,175 +207,11 @@ export const ELEVEN_MONTHSARY_LETTER: Letter = {
   audioVoiceSnippet: 'Happy 11th monthsary Lovey ko... mahal na mahal kita.',
 };
 
-export const LETTERS: Letter[] = [
-  ELEVEN_MONTHSARY_LETTER,
-  {
-    id: 'letter-1',
-    title: 'Para sa Aking Lovey, Gaano Man Kalayo',
-    date: 'Mahalagang Araw',
-    excerpt: 'Hindi madali ang LDR, pero whenever I think of you, nawawala lahat ng pagod...',
-    content: [
-      'Dearest Maica, aking Lovey,',
-      'Alam mo bang sa bawat gabing tahimik ang paligid at nakahiga ako, ikaw agad ang naaalala ko? Mahirap minsan ang magkalayo — \'yung mga araw na gusto kitang yakapin kapag pagod ka, o mag-motor tayo kahit walang tiyak na pupuntahan.',
-      'Pero alam mo ba kung ano ang mas matatag kaysa sa distansya? The certainty na ikaw ang taong gusto kong makasama sa lahat ng yugto ng aking buhay.',
-      'Maraming salamat sa iyong pasensya, sa pagpapadama sa akin na ligtas ako kahit sa screen lang tayo nag-uusap, at sa puso mong laging tapat.',
-      'Hinding-hindi ako mapapagod maghintay at magsumikap para sa araw na wala nang airport goodbyes o pagbibilang ng mga buwan bago magkita.',
-    ],
-    signature: 'Naa-appreciate ko talaga ang lahat, Clint',
-    tag: 'Taos-pusong Liham',
-    sealColor: '#e07a5f',
-  },
-  {
-    id: 'letter-2',
-    title: 'Noong Halos Hindi Tayo Magkausap ("Sooner")',
-    date: 'Panahon ng Pagtibay',
-    excerpt: 'Remember noong mga panahong mabigat ang lahat? Pero look at us now...',
-    content: [
-      'Lovey... totoo nga.',
-      'Hindi perpekto ang ating pinagdaanan. May mga panahon noon na parang nakakapagod, na mahirap abutin ang isa\'t isa dahil sa layo at sa dami ng iniisip.',
-      'Pero may isang salita kang laging sinasabi sa akin: "Sooner."',
-      'Napakasimple lang noon, pero I swear, \'yun ang hinawakan ko. Sabi mo, darating din ang panahon na magiging magaan ang lahat. At totoo nga — bawat unos na dumaan, imbes na magpalayo sa atin, mas lalo tayong pinatatag.',
-      'Salamat dahil hindi ka bumitaw. Salamat sa pagpili sa akin araw-araw.',
-    ],
-    signature: 'Palaging nakaalalay sa\'yo, Clint',
-    tag: 'Alaala at Pagtibay',
-    sealColor: '#81b29a',
-  },
-  {
-    id: 'letter-3',
-    title: 'Ating Pangako sa Hinaharap',
-    date: 'Pangarap Nating Dalawa',
-    excerpt: 'Hindi lang ito alaala ng nakaraan — pundasyon ito ng ating bukas...',
-    content: [
-      'Maica ko,',
-      'Ginawa ko ang ating Universe hindi lang para balikan ang nakaraang taon, kundi para ipaalala sa\'yo na buong kalawakan pa ang ating bubuuin nang magkasama.',
-      'Darating din ang araw na gigising tayo sa umaga na walang timer ang tawag, walang flight na kailangang habulin — kape lang at ikaw sa aking tabi.',
-      'Marami pa tayong lalakbaying landas, Lovey. At sa bawat daan, ikaw at ikaw pa rin ang aking pipiliin.',
-      'Mahal na mahal kita, more than all the stars in the night sky.',
-    ],
-    signature: 'Iyong katuwang magpakailanman, Clint',
-    tag: 'Pangako sa Hinaharap',
-    sealColor: '#3d405b',
-  },
-  {
-    id: 'letter-4',
-    title: 'Mga Lihim na Bulong sa Dilim (Sa Bawat Gabi ng LDR)',
-    date: 'Gabi ng Pangungulila',
-    excerpt: 'Kapag patay na ang mga ilaw at tumitig ako sa kisame, ikaw ang tanging liwanag...',
-    content: [
-      'Lovey,',
-      'May mga gabi talaga na napakatahimik ng kwarto, at sa bawat katahimikan, ang lakas ng tibok ng puso ko para sa\'yo.',
-      'Iniisip ko kung kumusta ka, kung nakapagpahinga ka na ba nang maayos, at kung gaano kasarap sa pakiramdam kapag dumating na ang panahon na hindi na screen ang hawak ko kundi ang kamay mo.',
-      'Bawat sakripisyo ngayon, bawat puyat at pagod — may patutunguhan ang lahat ng ito. Ikaw ang aking pahinga.',
-    ],
-    signature: 'Yayakapin ka nang mahigpit sa isip, Clint',
-    tag: 'Lihim na Bulong',
-    sealColor: '#9333ea',
-  },
-  {
-    id: 'letter-5',
-    title: 'Pasasalamat sa Araw-Araw na Pagpili',
-    date: 'Puso at Pasasalamat',
-    excerpt: 'Hindi biro ang magmahal sa malayo, pero sa\'yo lang naging ganito kadali at kagaan...',
-    content: [
-      'Aking Maica,',
-      'Gusto ko lang ipaalala sa\'yo kung gaano ako nagpapasalamat sa pagkakaroon mo sa buhay ko.',
-      'Hindi mo kailangang maging perpekto para mahalin; sa bawat flaw mo, sa bawat kwela at kulit, lalo lang kitang minamahal.',
-      'Salamat dahil ikaw ang aking sandalan, ang aking inspirasyon sa trabaho, at ang dahilan kung bakit may ngiti ako bago matulog.',
-      'I will always choose you, in this universe and every timeline.',
-    ],
-    signature: 'Ang iyong Clint magpakailanman',
-    tag: 'Tapat na Pag-ibig',
-    sealColor: '#e11d48',
-  },
-];
+export const LETTERS: Letter[] = [];
 
-export const OPEN_WHEN_LETTERS: OpenWhenLetter[] = [
-  {
-    id: 'open-when-miss-me',
-    trigger: 'Kapag Miss na Miss Mo Ako',
-    title: 'Buksan Kapag Nangungulila Ka sa Akin',
-    tagline: 'Hawakan mo ang dibdib mo... andiyan lang ako sa bawat tibok.',
-    emoji: '🥺',
-    accentColor: '#f43f5e',
-    content: [
-      'Lovey ko, alam kong mahirap kapag miss na miss natin ang isa\'t isa.',
-      'Kapag pakiramdam mo ay sobrang layo ko, ipikit mo ang mga mata mo. Isipin mo \'yung yakap ko, \'yung mga tawanan natin sa Pangilatan, at \'yung boses kong laging nagsasabing "Andito lang ako para sa\'yo."',
-      'Hindi habangbuhay ang distansyang ito. Temporary lang ang layo, pero permanente ang pagmamahal ko sa\'yo.',
-      'Tawagan mo ako agad kapag nabasa mo \'to ha? Sabihin mo "Lovey, miss kita" at papakinggan kita nang buong gabi.',
-    ],
-    encouragement: 'I-text o tawagan mo ako agad, Lovey. Sasagutin ko palagi para sa\'yo.',
-    signature: 'Nangungulila rin sa\'yo, Clint',
-    virtualGift: 'Virtual Mahigpit na Yakap at Halik sa Noo 🫂💖',
-  },
-  {
-    id: 'open-when-tired',
-    trigger: 'Kapag Pagod Ka sa Buong Araw',
-    title: 'Buksan Kapag Mabigat ang Araw at Kailangan Mo ng Pahinga',
-    tagline: 'Proud na proud ako sa lahat ng pinaghirapan mo ngayon.',
-    emoji: '☕',
-    accentColor: '#f59e0b',
-    content: [
-      'Pahinga ka muna, aking Lovey.',
-      'I-baba mo muna lahat ng iniisip mo. You did so well today. Kahit gaano kabigat o nakakapagod ang mga nangyari, tapos na ang araw at ligtas ka na ngayon.',
-      'Proud na proud ako sa\'yo palagi sa bawat effort at sipag mo. Huwag mong kakalimutang alagaan ang sarili mo.',
-      'Kung andiyan lang ako, ipagluluto kita ng paborito mo at hihilutin ko ang mga balikat mo habang nagkukuwento ka.',
-    ],
-    encouragement: 'Uminom ka ng mainit na tubig o gatas, humiga nang maayos, at huminga nang malalim.',
-    signature: 'Ang iyong taga-suporta at pahinga, Clint',
-    virtualGift: 'Mainit na Kape at Lambing Delivery ☕✨',
-  },
-  {
-    id: 'open-when-cant-sleep',
-    trigger: 'Kapag Hindi Ka Makatulog sa Gabi',
-    title: 'Buksan Kapag Gising Pa ang Isip sa Hatinggabi',
-    tagline: 'Hayaan mong bantayan ka ng mga bituin sa ating uniberso.',
-    emoji: '🌙',
-    accentColor: '#6366f1',
-    content: [
-      'Gabi na Lovey... bakit gising ka pa? Heheh.',
-      'Alam kong minsan ang daming tumatakbo sa isip kapag patay na ang ilaw. Pero tandaan mo, anuman ang bumabagabag sa\'yo, bukas na natin harapin \'yun nang magkasama.',
-      'I-play mo ang paborito nating kanta dito sa music player, pakinggan mo ang mahinahon nitong tunog, at isipin mo na magkatabi tayong nakahiga sa ilalim ng kalawakan.',
-      'Sweet dreams aking magandang prinsesa. Gigising ka bukas na panibagong araw ng pag-asa.',
-    ],
-    encouragement: 'Hayaan mong ang musika at pagmamahal ko ang magpatulog sa\'yo ngayong gabi.',
-    signature: 'Bumabantay sa iyong panaginip, Clint',
-    virtualGift: 'Kumot ng Pagmamahal at Malambot na Unan 🛏️⭐',
-  },
-  {
-    id: 'open-when-need-laugh',
-    trigger: 'Kapag Kailangan Mo ng Lambing o Tawanan',
-    title: 'Buksan Kapag Gusto Mong Ngumiti at Tumawa',
-    tagline: 'Pampatawa at pampakilig mula sa iyong paboritong makulit na boyfriend.',
-    emoji: '😆',
-    accentColor: '#ec4899',
-    content: [
-      'Uyy Lovey! Hahahah! Alam mo bang ikaw ang pinakamagandang bagay na nangyari sa buong uniberso ko?',
-      'Remember noong kumanta ako sa Pangilatan kahit sintunado pero tawa ka pa rin nang tawa? O \'yung mga goofy faces natin sa videocall tuwing madaling araw?',
-      'Ang ganda-ganda mo kapag nakangiti ka. Ngumiti ka nga ngayon habang binabasa mo \'to... ayan! Kitang-kita ko kahit malayo, ang cute cute mo talaga! 🥰',
-      'Mahal na mahal kita, aking paboritong kalaro at tahanan.',
-    ],
-    encouragement: 'Magpadala ka ng selfie na nakangiti ngayon sa akin!',
-    signature: 'Ang iyong makulit na Lovey, Clint',
-    virtualGift: 'Isang Milyong Yakap at Kakulitan 😂💖',
-  },
-];
+export const OPEN_WHEN_LETTERS: OpenWhenLetter[] = [];
 
-export const LETTER_SUBWORLDS: LetterSubworld[] = [
-  {
-    id: 'secret-letter-daw',
-    name: 'Secret Letter Daw (11 Monthsary Special)',
-    subtitle: 'Lihim na Liham para sa Ika-11 Buwan • Clint & Maica',
-    description: 'Ang ating espesyal na 11th monthsary secret web experience sa secret-letter-daw.vercel.app — may misteryosong liham, mga tagong mensahe, at pagdiriwang ng ika-11 buwan nating dalawa.',
-    category: 'secret-link',
-    starColor: '#f43f5e',
-    accentGlow: 'rgba(244, 63, 94, 0.45)',
-    iconName: 'Sparkles',
-    badgeText: '11 Months Special',
-    externalUrl: SECRET_LETTER_DAW_URL,
-    previewLine: 'Uyy Lovey... ito ang ating 11 monthsary secret letter sa kabilang ibayo! Buksan mo, hehe.',
-  },
-];
+export const LETTER_SUBWORLDS: LetterSubworld[] = [];
 
 export const TIMELINE_MILESTONES: TimelineMilestone[] = [
   {

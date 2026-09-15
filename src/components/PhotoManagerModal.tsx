@@ -33,6 +33,7 @@ import {
   getCachedFolderFiles,
   setCachedFolderFiles,
 } from '../utils/driveHelper';
+import { openInParent } from '../utils/navigationHelper';
 
 interface PhotoManagerModalProps {
   isOpen: boolean;
@@ -198,8 +199,11 @@ export const PhotoManagerModal: React.FC<PhotoManagerModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.3 }}
-          className="relative w-full max-w-4xl rounded-3xl bg-slate-950/95 border border-amber-400/25 p-6 sm:p-8 shadow-2xl text-slate-100 overflow-hidden my-auto max-h-[92vh] flex flex-col"
+          className="glass-panel relative w-full max-w-4xl rounded-3xl border border-white/20 p-6 sm:p-8 shadow-2xl text-slate-100 overflow-hidden my-auto max-h-[92vh] flex flex-col"
         >
+          {/* Top specular highlight rim */}
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-200/40 to-transparent pointer-events-none z-10" />
+
           {/* Subtle cosmic background glow */}
           <div className="absolute top-0 right-0 w-80 h-80 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -207,7 +211,7 @@ export const PhotoManagerModal: React.FC<PhotoManagerModalProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between pb-4 border-b border-white/10 relative z-10 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center text-amber-300">
+              <div className="glass-orb w-10 h-10 rounded-2xl flex items-center justify-center text-amber-300">
                 <ImageIcon className="w-5 h-5" />
               </div>
               <div>
@@ -223,7 +227,7 @@ export const PhotoManagerModal: React.FC<PhotoManagerModalProps> = ({
 
             <button
               onClick={onClose}
-              className="p-2 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 text-slate-300 hover:text-white transition-colors"
+              className="p-2 rounded-full glass-pill text-slate-300 hover:text-white transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -235,8 +239,8 @@ export const PhotoManagerModal: React.FC<PhotoManagerModalProps> = ({
               onClick={() => setActiveTab('foldersync')}
               className={`px-4 py-2 rounded-xl text-xs font-serif tracking-wider transition-all flex items-center gap-2 ${
                 activeTab === 'foldersync'
-                  ? 'bg-amber-500/25 text-amber-100 border border-amber-400/50 shadow-md'
-                  : 'bg-white/5 text-slate-400 hover:text-slate-200 border border-transparent'
+                  ? 'glass-card border-amber-400/50 text-amber-100 shadow-md font-semibold'
+                  : 'glass-pill text-slate-300 hover:text-white'
               }`}
             >
               <FolderOpen className="w-3.5 h-3.5 text-amber-300" />
@@ -247,11 +251,11 @@ export const PhotoManagerModal: React.FC<PhotoManagerModalProps> = ({
               onClick={() => setActiveTab('pangilatan')}
               className={`px-4 py-2 rounded-xl text-xs font-serif tracking-wider transition-all flex items-center gap-2 ${
                 activeTab === 'pangilatan'
-                  ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-400/40 shadow-md'
-                  : 'bg-white/5 text-slate-400 hover:text-slate-200 border border-transparent'
+                  ? 'glass-card border-emerald-400/40 text-emerald-200 shadow-md font-semibold'
+                  : 'glass-pill text-slate-300 hover:text-white'
               }`}
             >
-              <Mountain className="w-3.5 h-3.5" />
+              <Mountain className="w-3.5 h-3.5 text-emerald-400" />
               <span>Pangilatan Memories ({MEMORIES.length})</span>
             </button>
 
@@ -259,11 +263,11 @@ export const PhotoManagerModal: React.FC<PhotoManagerModalProps> = ({
               onClick={() => setActiveTab('random')}
               className={`px-4 py-2 rounded-xl text-xs font-serif tracking-wider transition-all flex items-center gap-2 ${
                 activeTab === 'random'
-                  ? 'bg-purple-500/20 text-purple-200 border border-purple-400/40 shadow-md'
-                  : 'bg-white/5 text-slate-400 hover:text-slate-200 border border-transparent'
+                  ? 'glass-card border-purple-400/40 text-purple-200 shadow-md font-semibold'
+                  : 'glass-pill text-slate-300 hover:text-white'
               }`}
             >
-              <Sparkles className="w-3.5 h-3.5" />
+              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
               <span>Floating Memories ({RANDOM_MEMORY_PHOTOS.length})</span>
             </button>
 
@@ -271,11 +275,11 @@ export const PhotoManagerModal: React.FC<PhotoManagerModalProps> = ({
               onClick={() => setActiveTab('guide')}
               className={`px-4 py-2 rounded-xl text-xs font-serif tracking-wider transition-all flex items-center gap-2 ${
                 activeTab === 'guide'
-                  ? 'bg-blue-500/20 text-blue-200 border border-blue-400/40 shadow-md'
-                  : 'bg-white/5 text-slate-400 hover:text-slate-200 border border-transparent'
+                  ? 'glass-card border-blue-400/40 text-blue-200 shadow-md font-semibold'
+                  : 'glass-pill text-slate-300 hover:text-white'
               }`}
             >
-              <Info className="w-3.5 h-3.5" />
+              <Info className="w-3.5 h-3.5 text-blue-300" />
               <span>Gabay sa Drive</span>
             </button>
           </div>
@@ -286,7 +290,7 @@ export const PhotoManagerModal: React.FC<PhotoManagerModalProps> = ({
             {activeTab === 'foldersync' && (
               <div className="space-y-4">
                 {/* Sync Action Card */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-slate-900/80 border border-amber-400/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="p-4 sm:p-5 rounded-2xl glass-card border border-amber-400/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <h4 className="text-sm font-semibold text-amber-200 flex items-center gap-2">
                       <Sparkles className="w-4 h-4 text-amber-300" />
@@ -422,11 +426,11 @@ export const PhotoManagerModal: React.FC<PhotoManagerModalProps> = ({
                   return (
                     <div
                       key={mem.id}
-                      className="p-4 rounded-2xl bg-slate-900/80 border border-white/10 hover:border-amber-400/30 transition-all flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between"
+                      className="p-4 rounded-2xl glass-card border border-white/10 hover:border-amber-400/30 transition-all flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between"
                     >
                       {/* Photo Thumbnail Preview */}
                       <div className="flex items-center gap-3.5 w-full sm:w-auto">
-                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-black/60 border border-white/15 shrink-0 flex items-center justify-center relative">
+                        <div className="w-16 h-16 rounded-xl overflow-hidden bg-black/60 border border-white/15 shrink-0 flex items-center justify-center relative shadow-inner">
                           {currentSrc ? (
                             <img
                               src={getDriveThumbnailUrl(currentSrc, 300)}
@@ -450,7 +454,7 @@ export const PhotoManagerModal: React.FC<PhotoManagerModalProps> = ({
                             {mem.location} &bull; {mem.date}
                           </p>
                           {customPhotos[mem.id] && (
-                            <span className="inline-block text-[10px] text-emerald-300 font-sans mt-0.5">
+                            <span className="inline-block text-[10px] text-emerald-300 font-sans mt-0.5 px-2 py-0.5 rounded-full glass-pill border border-emerald-400/30">
                               ✓ Naka-link / Na-customize
                             </span>
                           )}
@@ -471,14 +475,14 @@ export const PhotoManagerModal: React.FC<PhotoManagerModalProps> = ({
                                 [mem.id]: e.target.value,
                               }))
                             }
-                            className="w-full text-xs bg-black/60 border border-white/15 rounded-xl px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-400"
+                            className="w-full text-xs bg-white/5 border border-white/15 rounded-xl px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-400 backdrop-blur-md"
                           />
                         </div>
 
                         <button
                           onClick={() => handleSaveDriveLink(mem.id)}
                           title="I-save ang Drive Link"
-                          className="px-3 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/40 border border-amber-400/40 text-amber-200 text-xs font-sans transition-colors flex items-center gap-1 shrink-0"
+                          className="px-3 py-2 rounded-xl glass-pill text-amber-200 hover:text-white text-xs font-sans transition-colors flex items-center gap-1 shrink-0 border border-amber-400/40"
                         >
                           {isSaved ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Link className="w-3.5 h-3.5" />}
                           <span>{isSaved ? 'Na-save!' : 'I-apply'}</span>
@@ -487,7 +491,7 @@ export const PhotoManagerModal: React.FC<PhotoManagerModalProps> = ({
                         {/* Direct File Upload */}
                         <label
                           title="Mag-upload ng File"
-                          className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-slate-200 text-xs font-sans transition-colors flex items-center gap-1 cursor-pointer shrink-0"
+                          className="px-3 py-2 rounded-xl glass-pill text-slate-200 hover:text-white text-xs font-sans transition-colors flex items-center gap-1 cursor-pointer shrink-0 border border-white/20"
                         >
                           <Upload className="w-3.5 h-3.5" />
                           <span className="hidden sm:inline">Upload</span>
@@ -507,7 +511,7 @@ export const PhotoManagerModal: React.FC<PhotoManagerModalProps> = ({
                           <button
                             onClick={() => handleRemovePhoto(mem.id)}
                             title="Ibalik sa default"
-                            className="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs transition-colors shrink-0"
+                            className="p-2 rounded-xl glass-pill text-rose-300 hover:text-rose-100 text-xs transition-colors shrink-0 border border-rose-500/30"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -561,8 +565,9 @@ export const PhotoManagerModal: React.FC<PhotoManagerModalProps> = ({
             <div className="flex items-center gap-3">
               <a
                 href={PANGILATAN_FOLDER_URL}
-                target="_top"
-                className="hover:text-amber-200 underline flex items-center gap-1"
+                target="_parent"
+                onClick={(e) => openInParent(PANGILATAN_FOLDER_URL, e)}
+                className="hover:text-amber-200 underline flex items-center gap-1 cursor-pointer"
               >
                 <span>Pangilatan Folder</span>
                 <ExternalLink className="w-3 h-3" />
@@ -570,8 +575,9 @@ export const PhotoManagerModal: React.FC<PhotoManagerModalProps> = ({
               <span>&bull;</span>
               <a
                 href={RANDOM_MEMORIES_FOLDER_URL}
-                target="_top"
-                className="hover:text-purple-200 underline flex items-center gap-1"
+                target="_parent"
+                onClick={(e) => openInParent(RANDOM_MEMORIES_FOLDER_URL, e)}
+                className="hover:text-purple-200 underline flex items-center gap-1 cursor-pointer"
               >
                 <span>Random Folder</span>
                 <ExternalLink className="w-3 h-3" />
@@ -582,7 +588,7 @@ export const PhotoManagerModal: React.FC<PhotoManagerModalProps> = ({
               {Object.keys(customPhotos).length > 0 && (
                 <button
                   onClick={handleResetAll}
-                  className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition-colors flex items-center gap-1"
+                  className="px-3 py-1.5 rounded-lg glass-pill text-rose-300 hover:text-rose-100 border border-rose-500/30 transition-colors flex items-center gap-1"
                 >
                   <RotateCcw className="w-3 h-3" />
                   <span>I-reset Lahat</span>
@@ -591,7 +597,7 @@ export const PhotoManagerModal: React.FC<PhotoManagerModalProps> = ({
 
               <button
                 onClick={onClose}
-                className="px-5 py-1.5 rounded-xl bg-amber-300 hover:bg-amber-200 text-slate-950 font-medium transition-colors shadow-lg"
+                className="px-5 py-1.5 rounded-xl glass-pill text-amber-200 hover:text-white font-medium transition-colors shadow-lg border border-amber-300/50 hover:scale-105"
               >
                 Tapos Na
               </button>

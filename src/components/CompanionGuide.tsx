@@ -794,14 +794,14 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
           </div>
 
           {/* Name Tag & Status indicator with Real-Time Season badge */}
-          <div className="mt-1 flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/85 backdrop-blur-md border border-cyan-400/35 shadow-md">
+          <div className="mt-1 flex items-center gap-1.5 px-3 py-1 rounded-full glass-pill border border-cyan-400/35 shadow-md">
             <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${
               guideBehavior === 'dancing' ? 'bg-rose-400' : guideBehavior === 'sleeping' ? 'bg-indigo-400' : 'bg-pink-400'
             }`} />
             <span className="text-[11px] font-serif text-cyan-200 tracking-wider font-semibold flex items-center gap-1">
               <span>✦ Lumi</span>
             </span>
-            <span className="text-[10px] text-cyan-400/70 font-sans">
+            <span className="text-[10px] text-cyan-300/80 font-sans">
               &bull; {atmosphere.seasonEmoji} {atmosphere.seasonLabel}
             </span>
           </div>
@@ -825,8 +825,11 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
                 ? { top: `${bounds.bubbleTop}px` }
                 : { bottom: `${bounds.bubbleBottom}px` }),
             }}
-            className="z-[75] p-4 rounded-2xl bg-slate-950/95 backdrop-blur-xl border border-cyan-400/35 text-cyan-50 shadow-[0_14px_48px_rgba(0,0,0,0.9),0_0_25px_rgba(56,189,248,0.25)] select-none pointer-events-auto"
+            className="glass-panel z-[75] p-4 rounded-2xl border border-cyan-400/35 text-cyan-50 shadow-[0_14px_48px_rgba(0,0,0,0.9),0_0_25px_rgba(56,189,248,0.25)] select-none pointer-events-auto overflow-hidden"
           >
+            {/* Top specular highlight rim */}
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-200/40 to-transparent pointer-events-none" />
+
             {/* Dynamic Pointer Arrow Tail */}
             <div
               className="absolute pointer-events-none"
@@ -837,7 +840,7 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
               }}
             >
               <div
-                className={`w-3.5 h-3.5 bg-slate-950/95 border-cyan-400/35 transform rotate-45 ${
+                className={`w-3.5 h-3.5 backdrop-blur-xl bg-slate-950/90 border-cyan-400/35 transform rotate-45 ${
                   bounds.isBubbleBelow
                     ? 'border-t border-l shadow-[-2px_-2px_4px_rgba(56,189,248,0.2)]'
                     : 'border-b border-r shadow-[2px_2px_4px_rgba(0,0,0,0.7)]'
@@ -899,7 +902,7 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
         {isMenuOpen && (
           <div className="fixed inset-0 z-[80] pointer-events-none">
             <div
-              className="absolute inset-0 pointer-events-auto bg-black/20 backdrop-blur-[2px]"
+              className="absolute inset-0 pointer-events-auto bg-black/30 backdrop-blur-[4px]"
               onClick={() => setIsMenuOpen(false)}
             />
 
@@ -918,10 +921,10 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
                 top: `${bounds.chatBtnTop}px`,
                 transform: 'translate(-50%, -50%)',
               }}
-              className="pointer-events-auto px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-500 via-rose-500 to-pink-500 text-white font-serif text-xs font-semibold shadow-[0_4px_20px_rgba(244,63,94,0.45)] hover:scale-110 active:scale-95 transition-all flex items-center gap-1.5 border border-white/30 whitespace-nowrap z-[80]"
+              className="glass-pill pointer-events-auto px-3.5 py-1.5 rounded-full text-white font-serif text-xs font-semibold shadow-[0_4px_20px_rgba(244,63,94,0.45)] hover:scale-110 active:scale-95 transition-all flex items-center gap-1.5 border border-pink-300/50 whitespace-nowrap z-[80]"
               title="Mag-usap tayo sa Chat"
             >
-              <MessageCircle className="w-3.5 h-3.5" />
+              <MessageCircle className="w-3.5 h-3.5 text-pink-300" />
               <span>Kausapin si Clint</span>
             </motion.button>
 
@@ -940,10 +943,10 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
                 top: `${bounds.hugBtnTop}px`,
                 transform: 'translate(-50%, -50%)',
               }}
-              className="pointer-events-auto p-2.5 rounded-full bg-rose-500/90 text-white shadow-lg hover:scale-110 active:scale-95 transition-all border border-rose-300/40 z-[80]"
+              className="glass-orb pointer-events-auto p-2.5 rounded-full text-rose-300 shadow-lg hover:scale-110 active:scale-95 transition-all border border-rose-300/50 z-[80]"
               title="Magpa-hug kay Clint 🤗"
             >
-              <Heart className="w-4 h-4 fill-white" />
+              <Heart className="w-4 h-4 fill-rose-400" />
             </motion.button>
 
             {/* 3. Lumipad sa Bituin (Side Button) */}
@@ -963,10 +966,10 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
                 top: `${bounds.flyBtnTop}px`,
                 transform: 'translate(-50%, -50%)',
               }}
-              className="pointer-events-auto p-2.5 rounded-full bg-indigo-600/90 text-white shadow-lg hover:scale-110 active:scale-95 transition-all border border-indigo-300/40 z-[80]"
+              className="glass-orb pointer-events-auto p-2.5 rounded-full text-cyan-200 shadow-lg hover:scale-110 active:scale-95 transition-all border border-cyan-300/50 z-[80]"
               title="Lumipad sa kabilang bituin"
             >
-              <Navigation className="w-4 h-4" />
+              <Navigation className="w-4 h-4 text-cyan-300" />
             </motion.button>
 
             {/* 4. Clamped Interactive Emotion Palette Bar */}
@@ -983,7 +986,7 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
                   ? { bottom: `${bounds.paletteBottom}px` }
                   : { top: `${bounds.paletteTop}px` }),
               }}
-              className="pointer-events-auto z-[80] flex items-center justify-between gap-1 p-1.5 rounded-full bg-slate-950/95 backdrop-blur-xl border border-cyan-400/40 shadow-[0_10px_35px_rgba(0,0,0,0.85),0_0_18px_rgba(56,189,248,0.3)] overflow-x-auto no-scrollbar"
+              className="glass-panel pointer-events-auto z-[80] flex items-center justify-between gap-1 p-1.5 rounded-full border border-cyan-400/40 shadow-[0_10px_35px_rgba(0,0,0,0.85),0_0_18px_rgba(56,189,248,0.3)] overflow-x-auto no-scrollbar"
             >
               {Object.entries(EMOTION_QUICK_RESPONSES).map(([key, item]) => {
                 const isActive = guideMood === item.mood;
@@ -993,8 +996,8 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
                     onClick={() => triggerEmotionState(key)}
                     className={`px-2 py-1 rounded-full text-xs font-serif transition-all flex items-center gap-1 shrink-0 ${
                       isActive
-                        ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-sm scale-105'
-                        : 'bg-white/5 hover:bg-white/15 text-slate-200 hover:scale-105'
+                        ? 'glass-card border-pink-400 text-pink-200 shadow-sm scale-105 font-medium'
+                        : 'glass-pill text-slate-200 hover:text-white hover:scale-105 border-white/10'
                     }`}
                     title={`Lumi Emotion: ${item.label}`}
                   >

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { performanceManager } from '../utils/performanceManager';
 
 interface World3DIconProps {
   worldId: string;
@@ -219,12 +220,22 @@ export const World3DIcon: React.FC<World3DIconProps> = ({
     innerParticleGroup.add(particles);
     group.add(innerParticleGroup);
 
-    // 6. Animation Loop with standard timestamp delta
+    // 6. Animation Loop with standard timestamp delta and 45-60 FPS cap
     let animId: number;
     let lastTime = performance.now();
+    let lastRenderTime = 0;
 
     const animate = (currentTime: number) => {
       animId = requestAnimationFrame(animate);
+
+      if (!performanceManager.getIsTabVisible()) return;
+
+      const targetInterval = 1000 / performanceManager.getTargetFps();
+      if (currentTime - lastRenderTime < targetInterval - 1.5) {
+        return;
+      }
+      lastRenderTime = currentTime;
+
       const delta = Math.min((currentTime - lastTime) / 1000, 0.1);
       lastTime = currentTime;
       const speedMultiplier = isHoveredRef.current ? 2.5 : 1.0;

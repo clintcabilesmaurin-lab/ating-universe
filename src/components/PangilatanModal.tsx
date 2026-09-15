@@ -22,6 +22,7 @@ import {
   getDriveFallbackUrl,
   loadCustomPhotos,
 } from '../utils/driveHelper';
+import { openInParent } from '../utils/navigationHelper';
 
 interface PangilatanModalProps {
   isOpen: boolean;
@@ -70,15 +71,18 @@ export const PangilatanModal: React.FC<PangilatanModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 20 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className={`relative w-full ${
+          className={`glass-panel relative w-full ${
             isFullscreen ? 'max-w-6xl max-h-[96vh]' : 'max-w-4xl max-h-[92vh]'
-          } flex flex-col bg-gradient-to-b from-emerald-950/95 via-slate-900/95 to-black rounded-3xl border border-emerald-500/30 shadow-[0_0_50px_rgba(157,191,154,0.25)] overflow-hidden my-auto transition-all duration-300`}
+          } flex flex-col rounded-3xl border border-emerald-400/30 shadow-[0_0_50px_rgba(157,191,154,0.25)] overflow-hidden my-auto transition-all duration-300`}
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Top specular highlight rim */}
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-emerald-200/40 to-transparent pointer-events-none z-10" />
+
           {/* Header Bar */}
-          <div className="flex items-center justify-between px-6 py-4 sm:py-5 border-b border-emerald-500/20 bg-emerald-950/70 shrink-0">
+          <div className="flex items-center justify-between px-6 py-4 sm:py-5 border-b border-white/10 backdrop-blur-md bg-emerald-950/40 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shadow-inner">
+              <div className="glass-orb w-10 h-10 rounded-2xl flex items-center justify-center text-emerald-300 shadow-inner">
                 <Mountain className="w-5 h-5" />
               </div>
               <div>
@@ -98,14 +102,14 @@ export const PangilatanModal: React.FC<PangilatanModalProps> = ({
                 id="fullscreen-pangilatan"
                 onClick={() => setIsFullscreen(!isFullscreen)}
                 title={isFullscreen ? 'Ibalik sa karaniwang laki' : 'Palakihin ang view'}
-                className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-emerald-200 hover:text-white flex items-center justify-center transition-colors"
+                className="w-9 h-9 rounded-full glass-pill text-emerald-200 hover:text-white flex items-center justify-center transition-colors"
               >
                 <Maximize2 className="w-4 h-4" />
               </button>
               <button
                 id="close-pangilatan"
                 onClick={onClose}
-                className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+                className="w-9 h-9 rounded-full glass-pill text-white flex items-center justify-center transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -118,7 +122,7 @@ export const PangilatanModal: React.FC<PangilatanModalProps> = ({
             className="p-5 sm:p-7 space-y-5 overflow-y-auto flex-1 overscroll-contain"
           >
             {/* Spoken Quote Card */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-emerald-900/30 border border-emerald-400/30 shadow-inner">
+            <div className="p-4 sm:p-5 rounded-2xl glass-card border border-emerald-400/25 shadow-inner">
               <div className="flex items-start gap-3">
                 <Sparkles className="w-5 h-5 text-emerald-300 shrink-0 mt-0.5" />
                 <div>
@@ -133,7 +137,7 @@ export const PangilatanModal: React.FC<PangilatanModalProps> = ({
             </div>
 
             {/* Direct Link Banner */}
-            <div className="px-4 py-2.5 rounded-xl bg-emerald-950/50 border border-emerald-500/20 flex flex-wrap items-center justify-between gap-2 text-xs text-emerald-200">
+            <div className="px-4 py-2.5 rounded-xl glass-pill flex flex-wrap items-center justify-between gap-2 text-xs text-emerald-200 border border-emerald-400/20">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                 <span className="font-sans">Naka-konekta sa 4 na opisyal na Google Drive image links</span>
@@ -141,8 +145,9 @@ export const PangilatanModal: React.FC<PangilatanModalProps> = ({
 
               <a
                 href={PANGILATAN_FOLDER_URL}
-                target="_top"
-                className="text-emerald-300 hover:text-emerald-100 underline flex items-center gap-1 text-[11px] font-sans"
+                target="_parent"
+                onClick={(e) => openInParent(PANGILATAN_FOLDER_URL, e)}
+                className="text-emerald-300 hover:text-emerald-100 underline flex items-center gap-1 text-[11px] font-sans cursor-pointer"
               >
                 <span>Drive Folder</span>
                 <ExternalLink className="w-3 h-3" />
@@ -294,7 +299,7 @@ export const PangilatanModal: React.FC<PangilatanModalProps> = ({
 
             {/* Jamming Memory Details */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              <div className="p-4 rounded-2xl bg-black/40 border border-white/10 flex items-start gap-3">
+              <div className="p-4 rounded-2xl glass-card border border-white/10 flex items-start gap-3">
                 <Music className="w-5 h-5 text-amber-300 shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-xs font-sans uppercase tracking-wider text-amber-200">
@@ -306,7 +311,7 @@ export const PangilatanModal: React.FC<PangilatanModalProps> = ({
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-black/40 border border-white/10 flex items-start gap-3">
+              <div className="p-4 rounded-2xl glass-card border border-white/10 flex items-start gap-3">
                 <CloudRain className="w-5 h-5 text-sky-300 shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-xs font-sans uppercase tracking-wider text-sky-200">
@@ -336,7 +341,7 @@ export const PangilatanModal: React.FC<PangilatanModalProps> = ({
                         onNavigateWorld(w);
                       }
                     }}
-                    className="px-2.5 py-1 rounded-full text-[11px] font-sans font-medium bg-black/40 hover:bg-white/10 text-slate-300 hover:text-white border border-white/10 hover:border-white/25 active:scale-95 transition-all flex items-center gap-1"
+                    className="glass-pill px-2.5 py-1 rounded-full text-[11px] font-sans font-medium text-slate-300 hover:text-white active:scale-95 transition-all flex items-center gap-1"
                     style={{ borderColor: `${w.starColor}40`, color: `${w.starColor}dd` }}
                   >
                     <span>{w.name}</span>
@@ -347,7 +352,7 @@ export const PangilatanModal: React.FC<PangilatanModalProps> = ({
               <button
                 id="btn-return-sky"
                 onClick={onClose}
-                className="px-6 py-2 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-400/40 text-xs tracking-wider font-sans transition-all shadow-md hover:scale-102 shrink-0"
+                className="glass-pill px-6 py-2 rounded-full text-emerald-200 border border-emerald-400/40 text-xs tracking-wider font-sans transition-all shadow-md hover:scale-102 shrink-0"
               >
                 Bumalik sa Kalawakan
               </button>

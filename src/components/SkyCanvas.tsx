@@ -6,6 +6,7 @@ import {
   TimeOfDayId,
   SeasonId,
 } from '../utils/atmosphereEngine';
+import { BlendedThemeState } from '../utils/themeEngine';
 import { performanceManager } from '../utils/performanceManager';
 
 type RgbTuple = [number, number, number];
@@ -66,114 +67,12 @@ interface SkyCanvasProps {
   isBuiltIn?: boolean;
   timeOfDayOverride?: TimeOfDayId;
   seasonOverride?: SeasonId;
-}
-
-interface MountainPoint {
-  x: number;
-  y: number;
-}
-
-interface MountainTierNatural {
-  depth: number;
-  parallax: number;
-  heightFrac: number;
-  points: MountainPoint[];
-  litCool: RgbTuple;
-  shadedCool: RgbTuple;
-  litWarm: RgbTuple;
-  shadedWarm: RgbTuple;
-  rimCool: RgbTuple;
-  rimWarm: RgbTuple;
-  mistCool: RgbTuple;
-  mistWarm: RgbTuple;
+  blendedTheme?: BlendedThemeState;
 }
 
 const BASE_STAR_COUNT = 145;
 const BASE_SEASONAL_PARTICLE_COUNT = 32;
 const MAX_RIPPLES = 16;
-
-// Smooth Mountain Range Tiers
-const NATURAL_MOUNTAIN_TIERS: MountainTierNatural[] = [
-  {
-    depth: 0.85,
-    parallax: 0.05,
-    heightFrac: 0.28,
-    litCool: [46, 58, 92],
-    shadedCool: [20, 26, 44],
-    litWarm: [82, 42, 80],
-    shadedWarm: [36, 16, 40],
-    rimCool: [190, 220, 255],
-    rimWarm: [255, 190, 150],
-    mistCool: [28, 38, 64],
-    mistWarm: [52, 22, 58],
-    points: [
-      { x: -0.10, y: 0.35 },
-      { x: 0.05, y: 0.68 },
-      { x: 0.16, y: 0.48 },
-      { x: 0.26, y: 0.88 },
-      { x: 0.38, y: 0.58 },
-      { x: 0.50, y: 0.76 },
-      { x: 0.62, y: 0.95 },
-      { x: 0.74, y: 0.62 },
-      { x: 0.85, y: 0.82 },
-      { x: 0.96, y: 0.55 },
-      { x: 1.12, y: 0.40 },
-    ],
-  },
-  {
-    depth: 0.50,
-    parallax: 0.14,
-    heightFrac: 0.23,
-    litCool: [30, 40, 68],
-    shadedCool: [14, 18, 32],
-    litWarm: [58, 26, 56],
-    shadedWarm: [24, 10, 26],
-    rimCool: [150, 195, 250],
-    rimWarm: [250, 160, 120],
-    mistCool: [18, 26, 46],
-    mistWarm: [38, 14, 42],
-    points: [
-      { x: -0.12, y: 0.28 },
-      { x: 0.02, y: 0.55 },
-      { x: 0.14, y: 0.42 },
-      { x: 0.24, y: 0.75 },
-      { x: 0.34, y: 0.98 }, // Mount Pangilatan Summit
-      { x: 0.44, y: 0.68 },
-      { x: 0.56, y: 0.84 },
-      { x: 0.68, y: 0.52 },
-      { x: 0.78, y: 0.78 },
-      { x: 0.90, y: 0.60 },
-      { x: 1.02, y: 0.72 },
-      { x: 1.14, y: 0.32 },
-    ],
-  },
-  {
-    depth: 0.18,
-    parallax: 0.26,
-    heightFrac: 0.15,
-    litCool: [18, 24, 40],
-    shadedCool: [8, 10, 18],
-    litWarm: [38, 16, 34],
-    shadedWarm: [14, 6, 14],
-    rimCool: [110, 160, 220],
-    rimWarm: [220, 120, 90],
-    mistCool: [12, 16, 28],
-    mistWarm: [22, 8, 24],
-    points: [
-      { x: -0.15, y: 0.20 },
-      { x: -0.02, y: 0.48 },
-      { x: 0.10, y: 0.62 },
-      { x: 0.22, y: 0.38 },
-      { x: 0.35, y: 0.65 },
-      { x: 0.48, y: 0.45 },
-      { x: 0.60, y: 0.72 },
-      { x: 0.72, y: 0.50 },
-      { x: 0.84, y: 0.68 },
-      { x: 0.98, y: 0.42 },
-      { x: 1.15, y: 0.25 },
-    ],
-  },
-];
 
 // Color interpolation helpers
 const interpolateRgb = (c1: RgbTuple, c2: RgbTuple, t: number): string => {
@@ -206,6 +105,7 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = memo(({
   isBuiltIn = true,
   timeOfDayOverride,
   seasonOverride,
+  blendedTheme,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const starsRef = useRef<Star[]>([]);
@@ -236,6 +136,9 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = memo(({
   const atmosphere = useMemo(() => {
     return getAtmosphereSnapshot(undefined, timeOfDayOverride, seasonOverride);
   }, [timeOfDayOverride, seasonOverride]);
+
+  const activeParticleType = blendedTheme ? blendedTheme.seasonalParticleType : atmosphere.seasonalParticleType;
+  const activeParticleColor = blendedTheme ? blendedTheme.seasonalParticleColor : atmosphere.seasonalParticleColor;
 
   // Initialize stars with performance multiplier
   const initStars = useCallback(() => {
@@ -335,17 +238,17 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = memo(({
 
   useEffect(() => {
     initStars();
-    initSeasonalParticles(atmosphere.seasonalParticleType, atmosphere.seasonalParticleColor);
+    initSeasonalParticles(activeParticleType, activeParticleColor);
     meteorLingerStartRef.current = Date.now();
 
     // Re-tune particles if device tier changes
     const unsub = performanceManager.subscribe(() => {
       initStars();
-      initSeasonalParticles(atmosphere.seasonalParticleType, atmosphere.seasonalParticleColor);
+      initSeasonalParticles(activeParticleType, activeParticleColor);
     });
 
     return () => unsub();
-  }, [initStars, initSeasonalParticles, atmosphere.seasonalParticleType, atmosphere.seasonalParticleColor]);
+  }, [initStars, initSeasonalParticles, activeParticleType, activeParticleColor]);
 
   // Global mousemove parallax listener (passive)
   useEffect(() => {
@@ -363,7 +266,7 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = memo(({
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d', { alpha: false });
+    const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
     let animId: number;
@@ -378,13 +281,11 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = memo(({
 
     window.addEventListener('resize', handleResize, { passive: true });
 
-    const render = () => {
-      // Record FPS for adaptive quality adjustment
-      performanceManager.recordFrame();
+    const render = (timestamp: number = performance.now()) => {
+      animId = requestAnimationFrame(render);
 
-      // Pause/skip rendering if browser tab is backgrounded
-      if (!performanceManager.getIsTabVisible()) {
-        animId = requestAnimationFrame(render);
+      // Enforce 45-60 FPS frame pacing cap and tab visibility check
+      if (!performanceManager.shouldRender(timestamp)) {
         return;
       }
 
@@ -395,20 +296,29 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = memo(({
       currentMouseRef.current.y += (targetMouseRef.current.y - currentMouseRef.current.y) * 0.05;
       const mouseOffset = currentMouseRef.current;
 
+      // Clear canvas so the underlying aurora image is visible
+      ctx.clearRect(0, 0, width, height);
+
       // =====================================================================
-      // 1. DYNAMIC ATMOSPHERE SKY GRADIENT (Day/Night + ZoneShift)
+      // 1. DYNAMIC ATMOSPHERE SKY GRADIENT (Day/Night + ZoneShift + Blended Theme)
       // =====================================================================
       const grad = ctx.createLinearGradient(0, 0, 0, height);
 
-      const zenithRgb = interpolateRgbTuple(atmosphere.skyZenithRgb, [12, 6, 30], clampedShift * 0.4);
-      const upperRgb = interpolateRgbTuple(atmosphere.skyUpperRgb, [42, 18, 74], clampedShift * 0.4);
-      const midRgb = interpolateRgbTuple(atmosphere.skyMidRgb, [116, 42, 92], clampedShift * 0.5);
-      const horizonRgb = interpolateRgbTuple(atmosphere.skyHorizonRgb, [222, 108, 72], clampedShift * 0.6);
+      const baseZenith = blendedTheme ? blendedTheme.blendedZenithRgb : atmosphere.skyZenithRgb;
+      const baseUpper = blendedTheme ? blendedTheme.blendedUpperRgb : atmosphere.skyUpperRgb;
+      const baseMid = blendedTheme ? blendedTheme.blendedMidRgb : atmosphere.skyMidRgb;
+      const baseHorizon = blendedTheme ? blendedTheme.blendedHorizonRgb : atmosphere.skyHorizonRgb;
 
-      grad.addColorStop(0, `rgb(${zenithRgb[0]}, ${zenithRgb[1]}, ${zenithRgb[2]})`);
-      grad.addColorStop(0.35, `rgb(${upperRgb[0]}, ${upperRgb[1]}, ${upperRgb[2]})`);
-      grad.addColorStop(0.68, `rgb(${midRgb[0]}, ${midRgb[1]}, ${midRgb[2]})`);
-      grad.addColorStop(1, `rgb(${horizonRgb[0]}, ${horizonRgb[1]}, ${horizonRgb[2]})`);
+      const zenithRgb = interpolateRgbTuple(baseZenith, [12, 6, 30], clampedShift * 0.4);
+      const upperRgb = interpolateRgbTuple(baseUpper, [42, 18, 74], clampedShift * 0.4);
+      const midRgb = interpolateRgbTuple(baseMid, [116, 42, 92], clampedShift * 0.5);
+      const horizonRgb = interpolateRgbTuple(baseHorizon, [222, 108, 72], clampedShift * 0.6);
+
+      // Tuned semi-transparent atmospheric tint that gently harmonizes with the aurora background
+      grad.addColorStop(0, `rgba(${zenithRgb[0]}, ${zenithRgb[1]}, ${zenithRgb[2]}, 0.30)`);
+      grad.addColorStop(0.35, `rgba(${upperRgb[0]}, ${upperRgb[1]}, ${upperRgb[2]}, 0.18)`);
+      grad.addColorStop(0.68, `rgba(${midRgb[0]}, ${midRgb[1]}, ${midRgb[2]}, 0.22)`);
+      grad.addColorStop(1, `rgba(${horizonRgb[0]}, ${horizonRgb[1]}, ${horizonRgb[2]}, 0.32)`);
 
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, width, height);
@@ -726,79 +636,7 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = memo(({
       }
 
       // =====================================================================
-      // 7. SMOOTH MOUNTAIN RANGES
-      // =====================================================================
-      NATURAL_MOUNTAIN_TIERS.forEach((tier) => {
-        const horizonParallaxX = mouseOffset.x * tier.parallax * 45;
-        const horizonParallaxY = mouseOffset.y * tier.parallax * 20;
-        const maxPeakHeight = height * tier.heightFrac;
-        const baseY = height;
-
-        // Atmospheric Valley Mist
-        const mistAlpha = 0.20 + (1 - tier.depth) * 0.18 + clampedShift * 0.12;
-        const mistGrad = ctx.createLinearGradient(0, baseY - maxPeakHeight * 0.85, 0, baseY);
-        mistGrad.addColorStop(0, interpolateRgba(tier.mistCool, tier.mistWarm, clampedShift, 0));
-        mistGrad.addColorStop(0.5, interpolateRgba(tier.mistCool, tier.mistWarm, clampedShift, mistAlpha * 0.6));
-        mistGrad.addColorStop(1, interpolateRgba(tier.mistCool, tier.mistWarm, clampedShift, mistAlpha));
-
-        ctx.fillStyle = mistGrad;
-        ctx.fillRect(-30, baseY - maxPeakHeight * 0.95, width + 60, maxPeakHeight * 0.95 + 20);
-
-        const screenPts = tier.points.map((pt) => ({
-          x: pt.x * width + horizonParallaxX,
-          y: baseY - pt.y * maxPeakHeight + horizonParallaxY,
-        }));
-
-        if (screenPts.length < 2) return;
-
-        // Render Smooth Organic Mountain Body
-        const mountainGrad = ctx.createLinearGradient(0, baseY - maxPeakHeight, 0, baseY);
-        mountainGrad.addColorStop(0, interpolateRgb(tier.litCool, tier.litWarm, clampedShift));
-        mountainGrad.addColorStop(0.45, interpolateRgb(tier.shadedCool, tier.shadedWarm, clampedShift));
-        mountainGrad.addColorStop(
-          1,
-          interpolateRgb(
-            [Math.round(tier.shadedCool[0] * 0.4), Math.round(tier.shadedCool[1] * 0.4), Math.round(tier.shadedCool[2] * 0.4)],
-            [Math.round(tier.shadedWarm[0] * 0.4), Math.round(tier.shadedWarm[1] * 0.4), Math.round(tier.shadedWarm[2] * 0.4)],
-            clampedShift
-          )
-        );
-
-        ctx.fillStyle = mountainGrad;
-        ctx.beginPath();
-        ctx.moveTo(screenPts[0].x, screenPts[0].y);
-        for (let i = 0; i < screenPts.length - 1; i++) {
-          const xc = (screenPts[i].x + screenPts[i + 1].x) / 2;
-          const yc = (screenPts[i].y + screenPts[i + 1].y) / 2;
-          ctx.quadraticCurveTo(screenPts[i].x, screenPts[i].y, xc, yc);
-        }
-        const lastPt = screenPts[screenPts.length - 1];
-        ctx.lineTo(lastPt.x, lastPt.y);
-        ctx.lineTo(width + 80, baseY + 30);
-        ctx.lineTo(-80, baseY + 30);
-        ctx.closePath();
-        ctx.fill();
-
-        // Rim Highlight
-        ctx.strokeStyle = interpolateRgba(
-          tier.rimCool,
-          tier.rimWarm,
-          clampedShift,
-          0.38 + (1 - tier.depth) * 0.32 + clampedShift * 0.18
-        );
-        ctx.lineWidth = Math.max(1, 1.8 * (1 - tier.depth * 0.45));
-        ctx.beginPath();
-        ctx.moveTo(screenPts[0].x, screenPts[0].y);
-        for (let i = 0; i < screenPts.length - 1; i++) {
-          const xc = (screenPts[i].x + screenPts[i + 1].x) / 2;
-          const yc = (screenPts[i].y + screenPts[i + 1].y) / 2;
-          ctx.quadraticCurveTo(screenPts[i].x, screenPts[i].y, xc, yc);
-        }
-        ctx.stroke();
-      });
-
-      // =====================================================================
-      // 8. METEOR SYSTEM
+      // 7. METEOR SYSTEM
       // =====================================================================
       if (isBuiltIn) {
         if (!meteorRef.current && now - lastMeteorCheckRef.current > 4500) {
@@ -852,8 +690,6 @@ export const SkyCanvas: React.FC<SkyCanvasProps> = memo(({
           }
         }
       }
-
-      animId = requestAnimationFrame(render);
     };
 
     animId = requestAnimationFrame(render);

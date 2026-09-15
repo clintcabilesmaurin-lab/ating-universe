@@ -50,19 +50,22 @@ export const MeteorWishModal: React.FC<MeteorWishModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ duration: 0.4 }}
-          className="relative w-full max-w-md max-h-[90vh] overflow-y-auto bg-gradient-to-b from-amber-950/70 via-slate-950/90 to-black rounded-3xl border border-amber-300/40 p-6 sm:p-8 shadow-[0_0_50px_rgba(244,213,141,0.25)] text-center my-auto"
+          className="glass-panel relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl border border-amber-300/35 p-6 sm:p-8 shadow-[0_0_50px_rgba(244,213,141,0.25)] text-center my-auto"
         >
+          {/* Top specular highlight rim */}
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-200/40 to-transparent pointer-events-none" />
+
           {/* Close button */}
           <button
             id="close-wish-modal"
             onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+            className="absolute top-4 right-4 w-8 h-8 rounded-full glass-pill text-white flex items-center justify-center transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
 
           {/* Shooting Star Icon */}
-          <div className="w-16 h-16 rounded-full bg-amber-400/20 border border-amber-300/40 flex items-center justify-center mx-auto mb-4 text-amber-200 shadow-[0_0_25px_rgba(244,213,141,0.5)] animate-pulse">
+          <div className="glass-orb w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-200 shadow-[0_0_25px_rgba(244,213,141,0.4)] animate-pulse">
             <Sparkles className="w-8 h-8" />
           </div>
 
@@ -74,11 +77,11 @@ export const MeteorWishModal: React.FC<MeteorWishModalProps> = ({
           </h3>
 
           {/* Clint's Promise Card */}
-          <div className="my-5 p-4 rounded-2xl bg-amber-500/10 border border-amber-400/20">
+          <div className="my-5 p-4 rounded-2xl glass-card border border-amber-400/20">
             <p className="text-sm sm:text-base font-serif italic text-amber-50 leading-relaxed">
               "{randomQuote}"
             </p>
-            <p className="text-[10px] text-amber-300/60 font-sans mt-2 tracking-wider">
+            <p className="text-[10px] text-amber-300/70 font-sans mt-2 tracking-wider">
               — Pangako mula kay Clint
             </p>
           </div>
@@ -94,7 +97,7 @@ export const MeteorWishModal: React.FC<MeteorWishModalProps> = ({
                   value={customWish}
                   onChange={(e) => setCustomWish(e.target.value)}
                   placeholder="Hal: Makita ka na nang walang flight ticket..."
-                  className="w-full px-4 py-3 rounded-2xl bg-black/60 border border-amber-300/30 text-amber-50 placeholder-amber-200/30 text-xs font-serif focus:outline-none focus:border-amber-300 transition-colors"
+                  className="w-full px-4 py-3 rounded-2xl bg-white/5 border border-white/15 focus:border-amber-400/80 text-amber-50 placeholder-amber-200/30 text-xs font-serif focus:outline-none transition-colors backdrop-blur-md"
                   maxLength={100}
                 />
               </div>
@@ -102,9 +105,9 @@ export const MeteorWishModal: React.FC<MeteorWishModalProps> = ({
               <button
                 type="submit"
                 disabled={!customWish.trim()}
-                className="w-full py-3 rounded-full bg-amber-400 hover:bg-amber-300 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-sans text-xs font-semibold tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg"
+                className="w-full py-3 rounded-full glass-pill disabled:opacity-50 disabled:cursor-not-allowed text-amber-100 font-sans text-xs font-semibold tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg border border-amber-300/40 hover:scale-[1.02] active:scale-98"
               >
-                <Star className="w-4 h-4 fill-slate-950" />
+                <Star className="w-4 h-4 fill-amber-300 text-amber-300" />
                 Ipadala ang Hiling sa Kalawakan
               </button>
             </form>

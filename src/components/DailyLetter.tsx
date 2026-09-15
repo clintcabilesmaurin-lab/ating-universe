@@ -256,7 +256,7 @@ export const DailyLetter: React.FC<DailyLetterProps> = ({
 
           {/* Floating Tooltip Label (docked mode) */}
           {!isFlightActive && (
-            <div className="absolute right-full top-1/2 -translate-y-1/2 mr-3 px-3 py-1.5 rounded-full bg-slate-950/85 backdrop-blur-md border border-amber-400/40 text-[11px] text-amber-100 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all pointer-events-none shadow-xl flex items-center gap-1.5">
+            <div className="absolute right-full top-1/2 -translate-y-1/2 mr-3 px-3 py-1.5 rounded-full glass-pill border border-amber-400/40 text-[11px] text-amber-100 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all pointer-events-none shadow-xl flex items-center gap-1.5">
               <Feather className="w-3.5 h-3.5 text-amber-300" />
               <span>Liham ng Pag-ibig • Buksan</span>
             </div>
@@ -267,7 +267,7 @@ export const DailyLetter: React.FC<DailyLetterProps> = ({
       {/* 2. Handwritten Origami Love Letter Modal */}
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-md">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-xl">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -281,26 +281,25 @@ export const DailyLetter: React.FC<DailyLetterProps> = ({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.92, y: 15 }}
               transition={{ type: 'spring', damping: 26, stiffness: 300 }}
-              className="relative w-full max-w-xl max-h-[90vh] flex flex-col bg-[#FDFBF7] text-slate-800 rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.65)] border border-amber-200/80 overflow-hidden"
-              style={{
-                backgroundImage: `radial-gradient(#E8DFD8 1px, transparent 1px), linear-gradient(to bottom, #FAF7F2, #F4EEE5)`,
-                backgroundSize: '20px 20px, 100% 100%',
-              }}
+              className="glass-panel relative w-full max-w-xl max-h-[90vh] flex flex-col text-slate-100 rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] border border-amber-300/30 overflow-hidden"
             >
+              {/* Top specular highlight rim */}
+              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-200/50 to-transparent pointer-events-none z-10" />
+
               {/* Header Navigation Tabs & Close */}
-              <div className="flex items-center justify-between border-b border-amber-900/10 px-6 py-4 bg-amber-50/60">
+              <div className="flex items-center justify-between border-b border-white/10 px-6 py-4 backdrop-blur-md bg-amber-950/30">
                 <div className="flex items-center gap-2">
-                  <span className="p-2 rounded-full bg-amber-100 text-amber-900 border border-amber-300/60 shadow-sm">
+                  <span className="glass-orb p-2 rounded-full text-amber-300 border border-amber-300/40 shadow-sm">
                     <Send className="w-4 h-4" />
                   </span>
                   <div>
-                    <h3 className="font-serif text-base font-semibold tracking-wide text-amber-950 flex items-center gap-1.5">
+                    <h3 className="font-serif text-base font-semibold tracking-wide text-amber-100 flex items-center gap-1.5">
                       <span>Munting Liham mula kay Clint</span>
-                      <span className="text-[11px] font-sans font-medium px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
+                      <span className="text-[11px] font-sans font-medium px-2 py-0.5 rounded-full glass-pill text-rose-300 border border-rose-400/30">
                         Live AI Letter ✨
                       </span>
                     </h3>
-                    <p className="text-[11px] text-amber-800/80 font-sans mt-0.5">
+                    <p className="text-[11px] text-amber-200/70 font-sans mt-0.5">
                       Personal at sariwang liham para kay Maica araw-araw
                     </p>
                   </div>
@@ -311,8 +310,8 @@ export const DailyLetter: React.FC<DailyLetterProps> = ({
                     onClick={() => setActiveTab(activeTab === 'letter' ? 'saved' : 'letter')}
                     className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded-full transition-all border ${
                       activeTab === 'saved'
-                        ? 'bg-amber-800 text-amber-50 border-amber-900 font-semibold'
-                        : 'bg-amber-100/70 hover:bg-amber-200/70 text-amber-900 border-amber-300/60'
+                        ? 'glass-card text-amber-100 border-amber-400/50 font-semibold'
+                        : 'glass-pill text-amber-200 border-amber-300/30 hover:text-white'
                     }`}
                     title="Tingnan ang mga Naka-save na Liham"
                   >
@@ -322,7 +321,7 @@ export const DailyLetter: React.FC<DailyLetterProps> = ({
 
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="p-1.5 rounded-full hover:bg-amber-200/60 text-slate-500 hover:text-slate-800 transition-colors ml-1"
+                    className="p-1.5 rounded-full glass-pill text-slate-300 hover:text-white transition-colors ml-1"
                     title="Isara"
                   >
                     <X className="w-5 h-5" />
@@ -336,12 +335,12 @@ export const DailyLetter: React.FC<DailyLetterProps> = ({
                   <>
                     {/* Theme Topic Selector Bar */}
                     <div className="space-y-2">
-                      <div className="flex items-center justify-between text-xs text-amber-900 font-medium font-sans">
+                      <div className="flex items-center justify-between text-xs text-amber-200 font-medium font-sans">
                         <span className="flex items-center gap-1">
-                          <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                           <span>Pumili ng Paksa ng Liham:</span>
                         </span>
-                        <span className="text-[11px] text-amber-700/80 italic">
+                        <span className="text-[11px] text-amber-300/70 italic">
                           {selectedTheme.description}
                         </span>
                       </div>
@@ -359,8 +358,8 @@ export const DailyLetter: React.FC<DailyLetterProps> = ({
                               disabled={isGenerating}
                               className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-sans transition-all duration-200 ${
                                 isSelected
-                                  ? 'bg-gradient-to-r from-amber-600 to-rose-600 text-white font-medium shadow-sm scale-105'
-                                  : 'bg-white/80 hover:bg-amber-100/80 text-amber-950 border border-amber-200/80'
+                                  ? 'glass-card border-amber-400 text-amber-100 font-semibold shadow-md scale-105'
+                                  : 'glass-pill text-slate-300 hover:text-white border-white/10'
                               }`}
                             >
                               <span>{theme.emoji}</span>
@@ -372,60 +371,60 @@ export const DailyLetter: React.FC<DailyLetterProps> = ({
                     </div>
 
                     {/* Letter Body Card */}
-                    <div className="relative bg-white/60 border border-amber-200/70 rounded-2xl p-5 sm:p-6 shadow-sm">
+                    <div className="relative glass-card border border-amber-200/25 rounded-2xl p-5 sm:p-6 shadow-inner">
                       {isGenerating ? (
                         <div className="py-16 flex flex-col items-center justify-center gap-3 text-center">
                           <motion.div
                             animate={{ rotate: 360 }}
                             transition={{ repeat: Infinity, duration: 1.8, ease: 'linear' }}
-                            className="p-3 rounded-full bg-amber-100 text-amber-700 border border-amber-300/80"
+                            className="glass-orb p-3 rounded-full text-amber-300 border border-amber-300/40"
                           >
                             <Feather className="w-6 h-6 animate-pulse" />
                           </motion.div>
-                          <p className="font-serif text-sm font-semibold text-amber-950">
+                          <p className="font-serif text-sm font-semibold text-amber-100">
                             Sumusulat si Clint ng bagong liham para sa'yo... ✨
                           </p>
-                          <p className="text-xs text-amber-800/70 font-sans max-w-xs">
+                          <p className="text-xs text-amber-200/70 font-sans max-w-xs">
                             Inihahabi ang bawat salita mula sa puso gamit ang inyong mga alaala.
                           </p>
                         </div>
                       ) : (
                         <>
                           {/* Quote Banner */}
-                          <div className="mb-5 bg-amber-100/70 border-l-4 border-amber-600 rounded-r-xl p-4 shadow-sm">
-                            <p className="font-serif italic text-base sm:text-lg text-amber-950 leading-relaxed">
+                          <div className="mb-5 glass-card border-l-4 border-amber-400 rounded-r-xl p-4 shadow-sm border border-white/10">
+                            <p className="font-serif italic text-base sm:text-lg text-amber-100 leading-relaxed">
                               {currentLetter.quote}
                             </p>
-                            <div className="mt-2 flex items-center justify-between text-xs font-sans text-amber-800/80">
+                            <div className="mt-2 flex items-center justify-between text-xs font-sans text-amber-200/80">
                               <span className="font-medium">— {currentLetter.author}</span>
-                              <span className="text-[11px] text-amber-700/70">
+                              <span className="text-[11px] text-amber-300/70">
                                 {currentLetter.generatedAt || 'Ngayong Araw'}
                               </span>
                             </div>
                           </div>
 
                           {/* Letter Paragraphs */}
-                          <div className="space-y-3.5 font-serif text-[14.5px] sm:text-[15.5px] leading-relaxed text-slate-700">
+                          <div className="space-y-3.5 font-serif text-[14.5px] sm:text-[15.5px] leading-relaxed text-amber-50/95">
                             {currentLetter.body.map((paragraph, idx) => (
-                              <p key={idx} className="first-letter:text-lg first-letter:font-semibold">
+                              <p key={idx} className="first-letter:text-lg first-letter:font-semibold first-letter:text-amber-200">
                                 {paragraph}
                               </p>
                             ))}
                           </div>
 
                           {/* Sign-off & Seal */}
-                          <div className="mt-7 pt-4 border-t border-amber-900/10 flex items-end justify-between">
+                          <div className="mt-7 pt-4 border-t border-white/10 flex items-end justify-between">
                             <div>
-                              <p className="text-xs font-serif text-slate-600 italic">
+                              <p className="text-xs font-serif text-slate-300 italic">
                                 {currentLetter.closing}
                               </p>
-                              <p className="font-serif text-base font-bold text-amber-950 tracking-wide mt-0.5">
+                              <p className="font-serif text-base font-bold text-amber-200 tracking-wide mt-0.5">
                                 Clint &hearts;
                               </p>
                             </div>
 
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-100 text-rose-800 border border-rose-300 text-xs font-serif shadow-sm">
-                              <Heart className="w-3.5 h-3.5 fill-rose-600 text-rose-600 animate-pulse" />
+                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-pill text-rose-300 border border-rose-400/30 text-xs font-serif shadow-sm">
+                              <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500 animate-pulse" />
                               <span>First Year • {currentLetter.moodEmoji || '💖'}</span>
                             </div>
                           </div>
@@ -441,18 +440,18 @@ export const DailyLetter: React.FC<DailyLetterProps> = ({
                           disabled={isGenerating}
                           className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-sans font-medium transition-all border ${
                             isSavedCurrent
-                              ? 'bg-rose-100 text-rose-800 border-rose-300 font-semibold'
-                              : 'bg-white/80 hover:bg-amber-100/80 text-amber-900 border-amber-200'
+                              ? 'glass-card text-rose-300 border-rose-400/50 font-semibold'
+                              : 'glass-pill text-amber-200 border-amber-300/30 hover:text-white'
                           }`}
                         >
                           {isSavedCurrent ? (
                             <>
-                              <BookmarkCheck className="w-3.5 h-3.5 text-rose-600" />
+                              <BookmarkCheck className="w-3.5 h-3.5 text-rose-400" />
                               <span>Naka-save sa Memory Box</span>
                             </>
                           ) : (
                             <>
-                              <Bookmark className="w-3.5 h-3.5 text-amber-700" />
+                              <Bookmark className="w-3.5 h-3.5 text-amber-300" />
                               <span>I-save ang Liham</span>
                             </>
                           )}
@@ -461,16 +460,16 @@ export const DailyLetter: React.FC<DailyLetterProps> = ({
                         <button
                           onClick={handleCopy}
                           disabled={isGenerating}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white/80 hover:bg-amber-100/80 text-amber-900 border border-amber-200 text-xs font-sans font-medium transition-all"
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-xl glass-pill text-amber-200 hover:text-white border border-amber-300/30 text-xs font-sans font-medium transition-all"
                         >
                           {isCopied ? (
                             <>
-                              <Check className="w-3.5 h-3.5 text-emerald-600" />
-                              <span className="text-emerald-700 font-medium">Na-kopya na!</span>
+                              <Check className="w-3.5 h-3.5 text-emerald-400" />
+                              <span className="text-emerald-300 font-medium">Na-kopya na!</span>
                             </>
                           ) : (
                             <>
-                              <Copy className="w-3.5 h-3.5 text-amber-700" />
+                              <Copy className="w-3.5 h-3.5 text-amber-300" />
                               <span>Kopyahin</span>
                             </>
                           )}
@@ -481,7 +480,7 @@ export const DailyLetter: React.FC<DailyLetterProps> = ({
                         <button
                           onClick={() => fetchDailyLetter()}
                           disabled={isGenerating}
-                          className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-700 to-rose-700 hover:from-amber-800 hover:to-rose-800 text-white text-xs font-sans font-semibold transition-all shadow-md active:scale-95 disabled:opacity-50"
+                          className="glass-pill flex items-center gap-1.5 px-4 py-1.5 rounded-full text-amber-100 hover:text-white text-xs font-sans font-semibold transition-all shadow-md active:scale-95 disabled:opacity-50 border border-amber-300/40 hover:scale-105"
                         >
                           <RefreshCw className={`w-3.5 h-3.5 ${isGenerating ? 'animate-spin' : ''}`} />
                           <span>Humingi ng Bagong Liham ✨</span>
@@ -489,10 +488,10 @@ export const DailyLetter: React.FC<DailyLetterProps> = ({
 
                         <button
                           onClick={handleRelaunch}
-                          className="flex items-center gap-1 px-3.5 py-1.5 rounded-full bg-amber-200/80 hover:bg-amber-300/80 text-amber-950 text-xs font-sans font-medium transition-all"
+                          className="glass-pill flex items-center gap-1 px-3.5 py-1.5 rounded-full text-amber-200 hover:text-white text-xs font-sans font-medium transition-all border border-white/15 hover:scale-105"
                           title="Paliparin ulit ang paper plane"
                         >
-                          <Sparkles className="w-3.5 h-3.5 text-amber-700" />
+                          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                           <span>Paliparin Ulit</span>
                         </button>
                       </div>
@@ -501,16 +500,16 @@ export const DailyLetter: React.FC<DailyLetterProps> = ({
                 ) : (
                   /* Memory Box Saved Letters Tab */
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between pb-2 border-b border-amber-900/10">
+                    <div className="flex items-center justify-between pb-2 border-b border-white/10">
                       <div>
-                        <h4 className="font-serif text-sm font-bold text-amber-950">
+                        <h4 className="font-serif text-sm font-bold text-amber-100">
                           Aking Memory Box ng mga Liham
                         </h4>
-                        <p className="text-xs text-amber-800/80 font-sans">
+                        <p className="text-xs text-amber-200/70 font-sans">
                           Koleksyon ng mga paborito mong liham mula kay Clint
                         </p>
                       </div>
-                      <span className="text-xs font-sans font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300/60">
+                      <span className="text-xs font-sans font-semibold px-2.5 py-1 rounded-full glass-pill text-amber-200 border border-amber-300/40">
                         {savedLetters.length} Liham
                       </span>
                     </div>
@@ -518,10 +517,10 @@ export const DailyLetter: React.FC<DailyLetterProps> = ({
                     {savedLetters.length === 0 ? (
                       <div className="py-14 text-center space-y-2">
                         <FolderHeart className="w-10 h-10 text-amber-400/80 mx-auto" />
-                        <p className="font-serif text-sm text-amber-950 font-medium">
+                        <p className="font-serif text-sm text-amber-100 font-medium">
                           Wala pang naka-save na liham sa iyong Memory Box.
                         </p>
-                        <p className="text-xs text-amber-800/70 font-sans max-w-xs mx-auto">
+                        <p className="text-xs text-amber-200/70 font-sans max-w-xs mx-auto">
                           Pindutin ang "I-save ang Liham" habang nagbabasa upang maitago rito ang mga paborito mong sulat.
                         </p>
                       </div>
@@ -530,19 +529,19 @@ export const DailyLetter: React.FC<DailyLetterProps> = ({
                         {savedLetters.map((letter) => (
                           <div
                             key={letter.id}
-                            className="bg-white/80 hover:bg-white border border-amber-200/80 rounded-2xl p-4 transition-all shadow-sm group"
+                            className="glass-card border border-white/10 hover:border-amber-300/40 rounded-2xl p-4 transition-all shadow-sm group"
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex-1 space-y-1">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-xs font-bold text-amber-900 font-serif">
+                                  <span className="text-xs font-bold text-amber-200 font-serif">
                                     {letter.theme}
                                   </span>
-                                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-sans">
+                                  <span className="text-[10px] px-2 py-0.5 rounded-full glass-pill text-amber-300 font-sans">
                                     {letter.tag}
                                   </span>
                                 </div>
-                                <p className="font-serif italic text-xs text-amber-950/90 line-clamp-2">
+                                <p className="font-serif italic text-xs text-amber-50/90 line-clamp-2">
                                   {letter.quote}
                                 </p>
                               </div>
@@ -553,7 +552,7 @@ export const DailyLetter: React.FC<DailyLetterProps> = ({
                                     setCurrentLetter(letter);
                                     setActiveTab('letter');
                                   }}
-                                  className="px-3 py-1 rounded-full bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-sans font-medium transition-all"
+                                  className="px-3 py-1 rounded-full glass-pill text-amber-200 hover:text-white text-xs font-sans font-medium transition-all border border-amber-300/30"
                                 >
                                   Basahin
                                 </button>
@@ -562,7 +561,7 @@ export const DailyLetter: React.FC<DailyLetterProps> = ({
                                     removeLetterFromArchive(letter.id);
                                     setSavedLetters(getSavedLetters());
                                   }}
-                                  className="p-1.5 rounded-full hover:bg-rose-100 text-slate-400 hover:text-rose-600 transition-colors"
+                                  className="p-1.5 rounded-full glass-pill text-slate-400 hover:text-rose-400 transition-colors"
                                   title="Tanggalin sa Memory Box"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
