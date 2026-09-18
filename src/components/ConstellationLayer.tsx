@@ -246,6 +246,18 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
   };
 
   const handleStarClick = (world: WorldStar) => {
+    if (!world.active) {
+      audioEngine.playLockedSound();
+      triggerTapGlow(world.id);
+      onSpeak(world.previewLine);
+      if (world.acheLine) {
+        window.setTimeout(() => {
+          onSpeak(world.acheLine!, true);
+        }, 4200);
+      }
+      onSelectWorld(world);
+      return;
+    }
     audioEngine.playStarGazeChime();
     triggerTapGlow(world.id);
     onSpeak(world.previewLine);
@@ -593,7 +605,21 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
 
                 {/* Action Buttons */}
                 <div className="mt-3.5 flex flex-wrap items-center gap-2 justify-center md:justify-start">
-                  {world.id === 'letters' ? (
+                  {!world.active ? (
+                    <button
+                      id={`btn-open-${world.id}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        audioEngine.playLockedSound();
+                        onSpeak(world.previewLine || "Pansamantalang naka-lock pa ang mundong ito, Lovey. 🔒");
+                        handleStarClick(world);
+                      }}
+                      className="glass-pill text-xs px-3.5 py-1.5 rounded-full font-sans tracking-wider text-rose-300/90 hover:text-rose-200 transition-all flex items-center gap-1.5 shadow-sm active:scale-95 border border-rose-400/30 cursor-pointer"
+                    >
+                      <Lock className="w-3 h-3 text-rose-400" />
+                      <span>Naka-lock &bull; Isusulat Pa</span>
+                    </button>
+                  ) : world.id === 'letters' ? (
                     <>
                       <a
                         href={WORLD_OF_LETTERS_URL}
@@ -626,7 +652,7 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
                         e.stopPropagation();
                         handleStarClick(world);
                       }}
-                      className="glass-pill text-xs px-3.5 py-1.5 rounded-full font-sans tracking-wider transition-all flex items-center gap-1.5 text-amber-100 active:scale-95"
+                      className="glass-pill text-xs px-3.5 py-1.5 rounded-full font-sans tracking-wider transition-all flex items-center gap-1.5 text-amber-100 active:scale-95 cursor-pointer"
                     >
                       <span>Buksan &bull; Pumasok</span>
                     </button>

@@ -1,9 +1,7 @@
-import React, { useState, memo } from 'react';
+import React, { memo } from 'react';
 import { motion } from 'motion/react';
-import { Mail, ArrowLeft, Heart, ExternalLink, Globe, Sparkles } from 'lucide-react';
-import { WORLD_OF_LETTERS_URL } from '../data/universeData';
+import { Mail, ArrowLeft, Heart, Lock } from 'lucide-react';
 import { audioEngine } from '../utils/audioEngine';
-import { openInParent } from '../utils/navigationHelper';
 
 interface LettersSubUniverseViewProps {
   onBackToUniverse: () => void;
@@ -13,10 +11,7 @@ interface LettersSubUniverseViewProps {
 
 export const LettersSubUniverseView: React.FC<LettersSubUniverseViewProps> = memo(({
   onBackToUniverse,
-  onSpeak,
 }) => {
-  const [isPreviewOpen, setIsPreviewOpen] = useState(true);
-
   return (
     <div
       id="letters-sub-universe"
@@ -46,108 +41,57 @@ export const LettersSubUniverseView: React.FC<LettersSubUniverseViewProps> = mem
             audioEngine.playStarGazeChime();
             onBackToUniverse();
           }}
-          className="glass-pill flex items-center gap-2 text-xs px-4 py-2 rounded-full text-rose-200 hover:text-white transition-all hover:scale-105 border border-rose-400/30"
+          className="glass-pill flex items-center gap-2 text-xs px-4 py-2 rounded-full text-rose-200 hover:text-white transition-all hover:scale-105 border border-rose-400/30 cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Bumalik sa Kalawakan</span>
         </button>
 
-        <div className="flex items-center gap-3">
-          <a
-            href={WORLD_OF_LETTERS_URL}
-            target="_parent"
-            onClick={(e) => openInParent(WORLD_OF_LETTERS_URL, e)}
-            className="glass-pill flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-full text-amber-200 hover:text-amber-100 transition-all border border-amber-400/40 shadow-sm cursor-pointer"
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Direktang Link:</span>
-            <span>world-of-letters.vercel.app</span>
-          </a>
-
-          <div className="flex items-center gap-1.5 text-rose-300">
-            <Heart className="w-3.5 h-3.5 fill-rose-400 text-rose-400" />
-          </div>
+        <div className="flex items-center gap-2 text-rose-300/80 text-xs glass-pill px-3.5 py-1.5 rounded-full border border-rose-400/20">
+          <Lock className="w-3.5 h-3.5 text-rose-400" />
+          <span>Naka-lock sa Kasalukuyan</span>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="relative flex-1 w-full flex flex-col items-center justify-start p-4 sm:p-8 max-w-5xl mx-auto space-y-6 z-10 pb-20">
+      <main className="relative flex-1 w-full flex flex-col items-center justify-center p-4 sm:p-8 max-w-xl mx-auto space-y-6 z-10 text-center">
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          className="w-full text-center space-y-3 pt-2"
+          className="w-full text-center space-y-5"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-500/15 border border-rose-400/50 text-rose-200 text-xs font-serif shadow-sm backdrop-blur-md">
-            <Mail className="w-3.5 h-3.5 text-rose-300" />
-            <span className="font-sans font-bold tracking-wide uppercase text-[11px]">Bukas Na &bull; World of Letters</span>
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+          <div className="w-20 h-20 rounded-full glass-card mx-auto flex items-center justify-center border border-rose-400/40 text-rose-300 shadow-[0_0_35px_rgba(244,63,94,0.3)]">
+            <Lock className="w-9 h-9 text-rose-300" />
           </div>
 
-          <h1 className="text-2xl sm:text-4xl font-serif text-rose-100 font-medium tracking-wide drop-shadow-md">
-            Mundo ng mga Liham 💌
-          </h1>
+          <div className="space-y-3">
+            <span className="text-[10px] uppercase tracking-widest font-sans text-rose-300/80 glass-pill px-4 py-1.5 rounded-full border border-rose-400/25">
+              Naka-lock sa Kasalukuyan &bull; Isusulat Pa
+            </span>
 
-          <p className="text-sm font-['Caveat'] text-rose-200/90 text-lg sm:text-xl max-w-2xl mx-auto">
-            Bawat liham, bawat damdamin, at bawat panalangin mula sa puso ni Clint para sa kanyang pinakamamahal na si Maica.
-          </p>
+            <h1 className="text-3xl sm:text-4xl font-serif text-rose-100 font-medium tracking-wide drop-shadow-md">
+              Mundo ng mga Liham
+            </h1>
 
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
-            <a
-              href={WORLD_OF_LETTERS_URL}
-              target="_parent"
-              id="btn-open-letters-world-external"
-              onClick={(e) => openInParent(WORLD_OF_LETTERS_URL, e)}
-              className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-rose-400 via-pink-500 to-amber-300 text-slate-950 font-bold text-xs sm:text-sm flex items-center gap-2 shadow-[0_0_25px_rgba(244,63,94,0.4)] hover:scale-105 active:scale-95 transition-all border border-rose-300/60 cursor-pointer"
-            >
-              <Mail className="w-4 h-4 fill-slate-950" />
-              <span>Direktang Pumasok sa Link</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+            <p className="text-base sm:text-lg text-rose-200/80 font-serif italic leading-relaxed max-w-md mx-auto pt-1">
+              Pansamantalang nakasara at walang laman sa ngayon ang mundong ito. Isusulat pa ng ating mga puso ang bawat salita bago natin sabay na buksan sa tamang panahon.
+            </p>
+          </div>
 
+          <div className="pt-4 flex items-center justify-center gap-3">
             <button
-              onClick={() => setIsPreviewOpen(!isPreviewOpen)}
-              className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-slate-200 border border-rose-300/40 text-xs transition-colors flex items-center gap-1.5 backdrop-blur-md"
+              onClick={() => {
+                audioEngine.playStarGazeChime();
+                onBackToUniverse();
+              }}
+              className="px-6 py-3 rounded-full bg-gradient-to-r from-rose-500/20 to-pink-500/20 hover:from-rose-500/30 hover:to-pink-500/30 text-rose-200 border border-rose-400/40 text-xs sm:text-sm font-sans font-medium transition-all hover:scale-105 flex items-center gap-2 cursor-pointer shadow-lg"
             >
-              <Globe className="w-3.5 h-3.5 text-rose-300" />
-              <span>{isPreviewOpen ? 'Itago ang Live Window' : 'Silipin Dito (Live Window)'}</span>
+              <ArrowLeft className="w-4 h-4" />
+              <span>Bumalik sa Kalawakan</span>
             </button>
           </div>
         </motion.div>
-
-        {/* Live Interactive Embed Window */}
-        {isPreviewOpen && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4 }}
-            className="w-full rounded-3xl overflow-hidden border-2 border-rose-400/50 shadow-[0_20px_60px_rgba(0,0,0,0.8)] bg-slate-950"
-          >
-            <div className="p-3 bg-slate-900/95 border-b border-white/10 flex items-center justify-between text-xs text-rose-200/90 font-mono">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="font-semibold text-rose-100">world-of-letters.vercel.app</span>
-              </div>
-              <a
-                href={WORLD_OF_LETTERS_URL}
-                target="_parent"
-                onClick={(e) => openInParent(WORLD_OF_LETTERS_URL, e)}
-                className="text-amber-300 hover:text-amber-200 flex items-center gap-1 transition-colors cursor-pointer"
-              >
-                <span>Pumasok sa Site</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-            <div className="relative w-full h-[620px]">
-              <iframe
-                src={WORLD_OF_LETTERS_URL}
-                title="World of Letters Live Portal"
-                className="w-full h-full border-0"
-                allow="autoplay; encrypted-media; fullscreen"
-              />
-            </div>
-          </motion.div>
-        )}
       </main>
     </div>
   );

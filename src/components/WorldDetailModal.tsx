@@ -161,17 +161,24 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                 </a>
               )}
               {world.id === 'letters' && (
-                <a
-                  href={WORLD_OF_LETTERS_URL}
-                  target="_parent"
-                  id="header-world-of-letters-btn"
-                  onClick={(e) => openInParent(WORLD_OF_LETTERS_URL, e)}
-                  className="glass-pill hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-rose-100 text-xs font-sans font-medium transition-all shadow-md hover:scale-102 border border-rose-400/30"
-                >
-                  <Mail className="w-3.5 h-3.5 text-rose-300" />
-                  <span>World of Letters</span>
-                  <ExternalLink className="w-3 h-3 text-rose-300 ml-0.5" />
-                </a>
+                world.active ? (
+                  <a
+                    href={WORLD_OF_LETTERS_URL}
+                    target="_parent"
+                    id="header-world-of-letters-btn"
+                    onClick={(e) => openInParent(WORLD_OF_LETTERS_URL, e)}
+                    className="glass-pill hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-rose-100 text-xs font-sans font-medium transition-all shadow-md hover:scale-102 border border-rose-400/30"
+                  >
+                    <Mail className="w-3.5 h-3.5 text-rose-300" />
+                    <span>World of Letters</span>
+                    <ExternalLink className="w-3 h-3 text-rose-300 ml-0.5" />
+                  </a>
+                ) : (
+                  <span className="glass-pill hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-rose-300/80 text-xs font-sans border border-rose-400/20">
+                    <Lock className="w-3.5 h-3.5 text-rose-400" />
+                    <span>Naka-lock</span>
+                  </span>
+                )
               )}
 
               <button
@@ -418,77 +425,102 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
 
             {/* World 3: Letters Experience - World of Letters */}
             {world.id === 'letters' && (
-              <div className="space-y-6">
-                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-rose-950/70 via-pink-950/60 to-slate-950/90 border border-rose-400/40 p-6 sm:p-8 shadow-[0_0_40px_rgba(244,63,94,0.15)] text-center max-w-xl mx-auto space-y-4">
+              !world.active ? (
+                <div className="py-12 sm:py-16 px-4 text-center max-w-md mx-auto space-y-5">
                   <div className="w-16 h-16 rounded-full glass-card mx-auto flex items-center justify-center border border-rose-400/40 text-rose-300 shadow-[0_0_35px_rgba(244,63,94,0.3)]">
-                    <Mail className="w-8 h-8 text-rose-300 fill-rose-300/20" />
+                    <Lock className="w-8 h-8 text-rose-300" />
                   </div>
-
                   <div className="space-y-2">
-                    <span className="text-[10px] uppercase tracking-widest font-sans text-rose-300/90 glass-pill px-3.5 py-1 rounded-full border border-rose-400/30">
-                      Bukas Na &bull; World of Letters
+                    <span className="text-[10px] uppercase tracking-widest font-sans text-rose-300/80 glass-pill px-3 py-1 rounded-full border border-rose-400/25">
+                      Naka-lock sa Kasalukuyan
                     </span>
                     <h3 className="text-2xl sm:text-3xl font-serif text-rose-100 font-medium">
-                      Mundo ng mga Liham 💌
+                      Mundo ng mga Liham
                     </h3>
-                    <p className="text-sm text-rose-200/90 font-serif italic leading-relaxed pt-1">
-                      Dito nakatago ang bawat salita, pangako, at damdaming isinulat ni Clint mula sa kabilang ibayo para sa kanyang pinakamamahal na si Maica.
+                    <p className="text-sm text-slate-300 font-serif italic leading-relaxed pt-1">
+                      Pansamantalang nakasara at walang laman sa ngayon ang mundong ito. Isusulat pa ng ating mga puso ang bawat salita bago natin sabay na buksan sa tamang panahon.
                     </p>
                   </div>
-
-                  <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
-                    <a
-                      href={WORLD_OF_LETTERS_URL}
-                      target="_parent"
-                      id="btn-open-world-of-letters-main"
-                      onClick={(e) => openInParent(WORLD_OF_LETTERS_URL, e)}
-                      className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-rose-400 via-pink-500 to-amber-300 hover:from-rose-300 hover:to-amber-200 text-slate-950 font-bold text-xs sm:text-sm shadow-[0_0_30px_rgba(244,63,94,0.5)] transition-all hover:scale-105 cursor-pointer"
-                    >
-                      <Mail className="w-4 h-4 fill-slate-950 text-slate-950" />
-                      <span>Pumasok sa World of Letters</span>
-                      <ExternalLink className="w-4 h-4 text-slate-950" />
-                    </a>
-
-                    <button
-                      type="button"
-                      onClick={() => setIsLettersPreviewOpen(!isLettersPreviewOpen)}
-                      className="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-rose-200 border border-rose-400/40 text-xs transition-colors flex items-center gap-1.5 backdrop-blur-md cursor-pointer"
-                    >
-                      <Globe className="w-3.5 h-3.5 text-rose-300" />
-                      <span>{isLettersPreviewOpen ? 'Itago ang Live Preview' : 'Silipin Dito (Live Preview)'}</span>
-                    </button>
+                  <div className="pt-2">
+                    <span className="inline-flex items-center gap-1.5 text-xs text-rose-200/80 font-mono glass-pill px-4 py-2 rounded-full border border-rose-400/30">
+                      <Lock className="w-3.5 h-3.5 text-rose-400" />
+                      <span>Locked &bull; Isusulat Pa</span>
+                    </span>
                   </div>
                 </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-rose-950/70 via-pink-950/60 to-slate-950/90 border border-rose-400/40 p-6 sm:p-8 shadow-[0_0_40px_rgba(244,63,94,0.15)] text-center max-w-xl mx-auto space-y-4">
+                    <div className="w-16 h-16 rounded-full glass-card mx-auto flex items-center justify-center border border-rose-400/40 text-rose-300 shadow-[0_0_35px_rgba(244,63,94,0.3)]">
+                      <Mail className="w-8 h-8 text-rose-300 fill-rose-300/20" />
+                    </div>
 
-                {/* Embedded Live Preview of World of Letters */}
-                {isLettersPreviewOpen && (
-                  <div className="w-full max-w-3xl mx-auto rounded-3xl overflow-hidden border-2 border-rose-400/50 shadow-[0_20px_60px_rgba(0,0,0,0.8)] bg-slate-950">
-                    <div className="p-3 bg-slate-900/90 border-b border-white/10 flex items-center justify-between text-xs text-rose-200/90 font-mono">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                        <span className="font-semibold text-rose-100">world-of-letters.vercel.app</span>
-                      </div>
+                    <div className="space-y-2">
+                      <span className="text-[10px] uppercase tracking-widest font-sans text-rose-300/90 glass-pill px-3.5 py-1 rounded-full border border-rose-400/30">
+                        Bukas Na &bull; World of Letters
+                      </span>
+                      <h3 className="text-2xl sm:text-3xl font-serif text-rose-100 font-medium">
+                        Mundo ng mga Liham 💌
+                      </h3>
+                      <p className="text-sm text-rose-200/90 font-serif italic leading-relaxed pt-1">
+                        Dito nakatago ang bawat salita, pangako, at damdaming isinulat ni Clint mula sa kabilang ibayo para sa kanyang pinakamamahal na si Maica.
+                      </p>
+                    </div>
+
+                    <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
                       <a
                         href={WORLD_OF_LETTERS_URL}
                         target="_parent"
+                        id="btn-open-world-of-letters-main"
                         onClick={(e) => openInParent(WORLD_OF_LETTERS_URL, e)}
-                        className="text-amber-300 hover:text-amber-200 flex items-center gap-1 transition-colors cursor-pointer"
+                        className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-rose-400 via-pink-500 to-amber-300 hover:from-rose-300 hover:to-amber-200 text-slate-950 font-bold text-xs sm:text-sm shadow-[0_0_30px_rgba(244,63,94,0.5)] transition-all hover:scale-105 cursor-pointer"
                       >
-                        <span>Pumasok sa Site</span>
-                        <ExternalLink className="w-3 h-3" />
+                        <Mail className="w-4 h-4 fill-slate-950 text-slate-950" />
+                        <span>Pumasok sa World of Letters</span>
+                        <ExternalLink className="w-4 h-4 text-slate-950" />
                       </a>
-                    </div>
-                    <div className="relative w-full h-[520px]">
-                      <iframe
-                        src={WORLD_OF_LETTERS_URL}
-                        title="World of Letters Live Portal"
-                        className="w-full h-full border-0"
-                        allow="autoplay; encrypted-media; fullscreen"
-                      />
+
+                      <button
+                        type="button"
+                        onClick={() => setIsLettersPreviewOpen(!isLettersPreviewOpen)}
+                        className="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-rose-200 border border-rose-400/40 text-xs transition-colors flex items-center gap-1.5 backdrop-blur-md cursor-pointer"
+                      >
+                        <Globe className="w-3.5 h-3.5 text-rose-300" />
+                        <span>{isLettersPreviewOpen ? 'Itago ang Live Preview' : 'Silipin Dito (Live Preview)'}</span>
+                      </button>
                     </div>
                   </div>
-                )}
-              </div>
+
+                  {/* Embedded Live Preview of World of Letters */}
+                  {isLettersPreviewOpen && (
+                    <div className="w-full max-w-3xl mx-auto rounded-3xl overflow-hidden border-2 border-rose-400/50 shadow-[0_20px_60px_rgba(0,0,0,0.8)] bg-slate-950">
+                      <div className="p-3 bg-slate-900/90 border-b border-white/10 flex items-center justify-between text-xs text-rose-200/90 font-mono">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span className="font-semibold text-rose-100">world-of-letters.vercel.app</span>
+                        </div>
+                        <a
+                          href={WORLD_OF_LETTERS_URL}
+                          target="_parent"
+                          onClick={(e) => openInParent(WORLD_OF_LETTERS_URL, e)}
+                          className="text-amber-300 hover:text-amber-200 flex items-center gap-1 transition-colors cursor-pointer"
+                        >
+                          <span>Pumasok sa Site</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                      <div className="relative w-full h-[520px]">
+                        <iframe
+                          src={WORLD_OF_LETTERS_URL}
+                          title="World of Letters Live Portal"
+                          className="w-full h-full border-0"
+                          allow="autoplay; encrypted-media; fullscreen"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
             )}
 
             {/* World 4: Travel World Experience */}
