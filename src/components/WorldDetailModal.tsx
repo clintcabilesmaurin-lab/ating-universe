@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Sparkles, Heart, Mail, Calendar, Compass, ArrowLeft, CheckCircle2, Lock, BookOpen, Camera, ExternalLink, Globe, Mountain, ChevronRight } from 'lucide-react';
+import { X, Sparkles, Heart, Mail, Calendar, Compass, ArrowLeft, CheckCircle2, Lock, BookOpen, Camera, ExternalLink, Globe, Mountain, ChevronRight, Music, Headphones, Disc } from 'lucide-react';
 import { WorldStar, Letter } from '../types';
-import { TIMELINE_MILESTONES, MEMORIES, LETTERS, TRAVEL_DREAMS, MEMORY_GALLERY_WALK_URL, SECRET_LETTER_DAW_URL, OUR_FIRST_YEAR_URL, WORLD_OF_LETTERS_URL, WORLDS } from '../data/universeData';
+import { TIMELINE_MILESTONES, MEMORIES, LETTERS, TRAVEL_DREAMS, MEMORY_GALLERY_WALK_URL, SECRET_LETTER_DAW_URL, OUR_FIRST_YEAR_URL, WORLD_OF_LETTERS_URL, MUSIC_WORLD_URL, WORLDS } from '../data/universeData';
 import { audioEngine } from '../utils/audioEngine';
 import { CelestialMemoryVisual } from './CelestialMemoryVisual';
 import { loadCustomPhotos, getDriveThumbnailUrl } from '../utils/driveHelper';
@@ -34,6 +34,7 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
   const [customPhotos, setCustomPhotos] = useState<Record<string, string>>({});
   const [currentTime, setCurrentTime] = useState<Date>(() => new Date());
   const [isLettersPreviewOpen, setIsLettersPreviewOpen] = useState(false);
+  const [isMusicPreviewOpen, setIsMusicPreviewOpen] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -179,6 +180,19 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                     <span>Naka-lock</span>
                   </span>
                 )
+              )}
+              {world.id === 'music-world' && (
+                <a
+                  href={MUSIC_WORLD_URL}
+                  target="_parent"
+                  id="header-music-world-btn"
+                  onClick={(e) => openInParent(MUSIC_WORLD_URL, e)}
+                  className="glass-pill hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-emerald-100 text-xs font-sans font-medium transition-all shadow-md hover:scale-102 border border-emerald-400/30 cursor-pointer"
+                >
+                  <Music className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>Music World</span>
+                  <ExternalLink className="w-3 h-3 text-emerald-300 ml-0.5" />
+                </a>
               )}
 
               <button
@@ -523,7 +537,100 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
               )
             )}
 
-            {/* World 4: Travel World Experience */}
+            {/* World: Music World Experience */}
+            {world.id === 'music-world' && (
+              <div className="space-y-6">
+                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-950/70 via-teal-950/60 to-slate-950/90 border border-emerald-400/40 p-5 sm:p-7 shadow-[0_0_40px_rgba(52,211,153,0.18)] text-center max-w-2xl mx-auto space-y-4">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-mono">
+                    <Headphones className="w-3.5 h-3.5 animate-pulse text-emerald-300" />
+                    <span>Bukas Na • Music World</span>
+                  </div>
+
+                  <h3 className="text-2xl sm:text-3xl font-serif text-emerald-100 font-medium tracking-wide">
+                    Mundo ng Musika 🎵
+                  </h3>
+
+                  <p className="text-xs sm:text-sm text-emerald-200/90 font-sans max-w-lg mx-auto leading-relaxed">
+                    Ang bawat himig at nota dito ay nakalaan para sa ating dalawa. Mula sa mga paborito nating kanta hanggang sa mga awiting nagpapatibay sa atin sa kabila ng distansya.
+                  </p>
+
+                  {/* Curated Song Badges / Sentiments */}
+                  <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-[11px] text-emerald-200/80">
+                    <span className="glass-pill px-3 py-1 rounded-full border border-emerald-400/30 flex items-center gap-1.5 bg-emerald-950/40">
+                      <Music className="w-3 h-3 text-emerald-400" />
+                      <span>Say You Won't Let Go</span>
+                    </span>
+                    <span className="glass-pill px-3 py-1 rounded-full border border-emerald-400/30 flex items-center gap-1.5 bg-emerald-950/40">
+                      <Music className="w-3 h-3 text-emerald-400" />
+                      <span>Supermarket Flowers</span>
+                    </span>
+                    <span className="glass-pill px-3 py-1 rounded-full border border-emerald-400/30 flex items-center gap-1.5 bg-emerald-950/40">
+                      <Music className="w-3 h-3 text-emerald-400" />
+                      <span>Those Eyes</span>
+                    </span>
+                    <span className="glass-pill px-3 py-1 rounded-full border border-emerald-400/30 flex items-center gap-1.5 bg-emerald-950/40">
+                      <Disc className="w-3 h-3 text-emerald-400" />
+                      <span>Love Playlist</span>
+                    </span>
+                  </div>
+
+                  <div className="pt-3 flex flex-wrap items-center justify-center gap-3">
+                    <a
+                      href={MUSIC_WORLD_URL}
+                      target="_parent"
+                      id="btn-open-music-world-main"
+                      onClick={(e) => openInParent(MUSIC_WORLD_URL, e)}
+                      className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-emerald-400 via-teal-400 to-amber-300 hover:from-emerald-300 hover:to-amber-200 text-slate-950 font-bold text-xs sm:text-sm shadow-[0_0_30px_rgba(52,211,153,0.5)] transition-all hover:scale-105 cursor-pointer"
+                    >
+                      <Music className="w-4 h-4 fill-slate-950 text-slate-950" />
+                      <span>Pumasok sa Music World</span>
+                      <ExternalLink className="w-4 h-4 text-slate-950" />
+                    </a>
+
+                    <button
+                      type="button"
+                      id="btn-toggle-music-preview"
+                      onClick={() => setIsMusicPreviewOpen(!isMusicPreviewOpen)}
+                      className="px-4 py-2.5 rounded-full bg-white/10 hover:bg-white/20 text-emerald-200 border border-emerald-400/40 text-xs transition-colors flex items-center gap-1.5 backdrop-blur-md cursor-pointer"
+                    >
+                      <Globe className="w-3.5 h-3.5 text-emerald-300" />
+                      <span>{isMusicPreviewOpen ? 'Itago ang Live Preview' : 'Silipin Dito (Live Preview)'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Embedded Live Preview of Music World */}
+                {isMusicPreviewOpen && (
+                  <div className="w-full max-w-3xl mx-auto rounded-3xl overflow-hidden border-2 border-emerald-400/50 shadow-[0_20px_60px_rgba(0,0,0,0.8)] bg-slate-950">
+                    <div className="p-3 bg-slate-900/90 border-b border-white/10 flex items-center justify-between text-xs text-emerald-200/90 font-mono">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <span className="font-semibold text-emerald-100">music-world-beta.vercel.app</span>
+                      </div>
+                      <a
+                        href={MUSIC_WORLD_URL}
+                        target="_parent"
+                        onClick={(e) => openInParent(MUSIC_WORLD_URL, e)}
+                        className="text-amber-300 hover:text-amber-200 flex items-center gap-1 transition-colors cursor-pointer"
+                      >
+                        <span>Pumasok sa Site</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                    <div className="relative w-full h-[520px]">
+                      <iframe
+                        src={MUSIC_WORLD_URL}
+                        title="Music World Live Portal"
+                        className="w-full h-full border-0"
+                        allow="autoplay; encrypted-media; fullscreen"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* World 5: Travel World Experience */}
             {world.id === 'travel-world' && (
               <div className="space-y-6">
                 <div className="p-6 rounded-3xl glass-card text-center max-w-xl mx-auto">

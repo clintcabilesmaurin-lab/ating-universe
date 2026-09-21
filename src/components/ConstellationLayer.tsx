@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, memo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { WORLDS, PANGILATAN_LINES, OUR_FIRST_YEAR_URL, WORLD_OF_LETTERS_URL } from '../data/universeData';
+import { WORLDS, PANGILATAN_LINES, OUR_FIRST_YEAR_URL, WORLD_OF_LETTERS_URL, MUSIC_WORLD_URL } from '../data/universeData';
 import { WorldStar } from '../types';
-import { Sparkles, Heart, Compass, Image as ImageIcon, Mail, Lock, ExternalLink, Globe } from 'lucide-react';
+import { Sparkles, Heart, Compass, Image as ImageIcon, Mail, Lock, ExternalLink, Globe, Music } from 'lucide-react';
 import { World3DIcon } from './World3DIcon';
 import { audioEngine } from '../utils/audioEngine';
 import { performanceManager } from '../utils/performanceManager';
@@ -116,7 +116,8 @@ const getRandomPangilatanPosition = () => {
 const CONSTELLATION_LINKS = [
   { id: 'link-1-2', from: 'our-first-year', to: 'memory-gallery', label: 'Unang Taon • Galeriya', color1: '#f4d58d', color2: '#c084fc', curve: 0.12 },
   { id: 'link-2-3', from: 'memory-gallery', to: 'letters', label: 'Galeriya • Liham', color1: '#c084fc', color2: '#fb7185', curve: -0.13 },
-  { id: 'link-3-4', from: 'letters', to: 'travel-world', label: 'Liham • Pangarap', color1: '#fb7185', color2: '#38bdf8', curve: 0.1 },
+  { id: 'link-3-4', from: 'letters', to: 'music-world', label: 'Liham • Musika', color1: '#fb7185', color2: '#34d399', curve: 0.11 },
+  { id: 'link-4-5', from: 'music-world', to: 'travel-world', label: 'Musika • Pangarap', color1: '#34d399', color2: '#38bdf8', curve: -0.1 },
   { id: 'link-1-pangilatan', from: 'our-first-year', to: 'pangilatan', label: 'Panimula • Pangilatan', color1: '#f4d58d', color2: '#9dbf9a', curve: -0.09 },
   { id: 'link-2-pangilatan', from: 'memory-gallery', to: 'pangilatan', label: 'Alaala • Pangilatan', color1: '#c084fc', color2: '#9dbf9a', curve: 0.08 },
 ];
@@ -619,6 +620,32 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
                       <Lock className="w-3 h-3 text-rose-400" />
                       <span>Naka-lock &bull; Isusulat Pa</span>
                     </button>
+                  ) : world.id === 'music-world' ? (
+                    <>
+                      <a
+                        href={MUSIC_WORLD_URL}
+                        target="_parent"
+                        id="card-btn-music-world-direct"
+                        onClick={(e) => openInParent(MUSIC_WORLD_URL, e)}
+                        className="glass-pill text-xs px-3.5 py-1.5 rounded-full font-sans tracking-wider transition-all flex items-center gap-1.5 text-emerald-100 shadow-sm hover:scale-105 active:scale-95 border border-emerald-400/40 cursor-pointer"
+                      >
+                        <Music className="w-3.5 h-3.5 text-emerald-300" />
+                        <span>Buksan ang Link</span>
+                        <ExternalLink className="w-3 h-3 text-emerald-300" />
+                      </a>
+
+                      <button
+                        id="btn-open-music-world"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStarClick(world);
+                        }}
+                        className="glass-pill text-xs px-3 py-1.5 rounded-full font-sans tracking-wider text-slate-300 hover:text-white transition-all flex items-center gap-1 cursor-pointer"
+                      >
+                        <Globe className="w-3 h-3 text-slate-400" />
+                        <span>Detalye / Preview</span>
+                      </button>
+                    </>
                   ) : world.id === 'letters' ? (
                     <>
                       <a

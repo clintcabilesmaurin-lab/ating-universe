@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, Mountain, Image as ImageIcon, Mail, Calendar, Compass, Globe, Star, Zap } from 'lucide-react';
+import { Sparkles, Mountain, Image as ImageIcon, Mail, Calendar, Compass, Globe, Star, Zap, Music } from 'lucide-react';
 import { audioEngine } from '../utils/audioEngine';
 
 export interface PortalConfig {
@@ -147,6 +147,8 @@ export const PortalTransition: React.FC<PortalTransitionProps> = ({
         return <Compass {...props} />;
       case 'Globe':
         return <Globe {...props} />;
+      case 'Music':
+        return <Music {...props} />;
       default:
         return <Sparkles {...props} />;
     }

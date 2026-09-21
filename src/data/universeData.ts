@@ -5,6 +5,7 @@ export const MEMORY_GALLERY_WALK_URL = 'https://memory-gallary-walk.vercel.app/'
 export const SECRET_LETTER_DAW_URL = 'https://secret-letter-daw.vercel.app/';
 export const OUR_FIRST_YEAR_URL = 'https://our-first-yearlovey.vercel.app/';
 export const WORLD_OF_LETTERS_URL = 'https://world-of-letters.vercel.app/';
+export const MUSIC_WORLD_URL = 'https://music-world-beta.vercel.app/';
 
 export const RELATIONSHIP_START_DATE_ISO = '2025-09-22T21:00:00+08:00';
 // 1st Year Anniversary milestone: September 22, 2026 at 9:00 PM (21:00 Philippine Standard Time / UTC+8)
@@ -43,23 +44,37 @@ export const WORLDS: WorldStar[] = [
   {
     id: 'letters',
     name: 'Letters',
-    url: '#letters',
-    active: false,
+    url: WORLD_OF_LETTERS_URL,
+    active: true,
     order: 3,
-    previewLine: 'Pansamantalang naka-lock ang Mundo ng mga Liham...',
-    acheLine: 'Isusulat pa ng ating mga puso ang bawat salita bago natin sabay na buksan sa tamang panahon.',
+    previewLine: 'Liham mula sa kabilang ibayo... dito nakasulat ang bawat tibok ng puso ko para sa\'yo, Lovey.',
+    acheLine: 'Kahit ilang kilometro man ang pagitan natin, ang bawat liham dito ay laging yayakap sa\'yo.',
     starColor: '#f7b2ad',
-    unlockedDate: null,
-    tagline: 'Naka-lock • Isusulat Pa',
-    description: 'Pansamantalang nakasara at walang laman sa ngayon ang mundong ito. Isusulat pa ng ating mga puso ang bawat salita bago natin sabay na buksan.',
+    unlockedDate: '2026-09-21',
+    tagline: 'Liham Mula sa Kabilang Ibayo • World of Letters',
+    description: 'Ang bukas at opisyal na Mundo ng mga Liham — tuklasin ang mga liham ng pagmamahal sa world-of-letters.vercel.app.',
     iconName: 'Mail',
+  },
+  {
+    id: 'music-world',
+    name: 'Music World',
+    url: MUSIC_WORLD_URL,
+    active: true,
+    order: 4,
+    previewLine: 'Uyy, pakinggan mo... ang bawat kanta dito, para sa ating dalawa.',
+    acheLine: 'Kahit magkalayo tayo, sa bawat himig at nota, magkasama pa rin ang mga puso natin.',
+    starColor: '#34d399',
+    unlockedDate: '2026-09-21',
+    tagline: 'Himig at Melodiya ng Ating Pag-ibig • Music World',
+    description: 'Ang opisyal na Mundo ng Musika — pakinggan ang mga paborito nating kanta, himig, at melodiya sa music-world-beta.vercel.app.',
+    iconName: 'Music',
   },
   {
     id: 'travel-world',
     name: 'Travel World',
     url: '#travel',
     active: false,
-    order: 4,
+    order: 5,
     previewLine: 'Fast forward tayo nang konti... maglalakbay tayo rito balang araw.',
     starColor: '#9ecae1',
     unlockedDate: null,

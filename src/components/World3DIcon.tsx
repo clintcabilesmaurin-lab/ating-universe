@@ -156,6 +156,43 @@ export const World3DIcon: React.FC<World3DIconProps> = ({
       ringMesh = new THREE.Mesh(ringGeo, ringMat);
       ringMesh.rotation.x = Math.PI / 2.5;
       group.add(ringMesh);
+    } else if (worldId === 'music-world') {
+      // Music World: Melodic Resonant Harmonic Sphere with Soundwave Waves & Dual Celestial Rings
+      const sphereGeo = new THREE.DodecahedronGeometry(0.95, 1);
+      const sphereMat = new THREE.MeshStandardMaterial({
+        color: darkBaseColor,
+        emissive: baseColor,
+        emissiveIntensity: 0.5,
+        roughness: 0.2,
+        metalness: 0.8,
+        wireframe: false,
+      });
+      coreMesh = new THREE.Mesh(sphereGeo, sphereMat);
+      group.add(coreMesh);
+
+      // Outer Vinyl-like Soundwave Torus
+      const waveGeo = new THREE.TorusGeometry(1.4, 0.05, 16, 64);
+      const waveMat = new THREE.MeshStandardMaterial({
+        color: 0xa7f3d0,
+        emissive: baseColor,
+        emissiveIntensity: 0.75,
+      });
+      ringMesh = new THREE.Mesh(waveGeo, waveMat);
+      ringMesh.rotation.x = Math.PI / 3;
+      ringMesh.rotation.y = Math.PI / 8;
+      group.add(ringMesh);
+
+      // Secondary High Harmonic Ring
+      const ring2Geo = new THREE.TorusGeometry(1.65, 0.025, 16, 48);
+      const ring2Mat = new THREE.MeshBasicMaterial({
+        color: 0x6ee7b7,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.6,
+      });
+      const ring2Mesh = new THREE.Mesh(ring2Geo, ring2Mat);
+      ring2Mesh.rotation.x = -Math.PI / 4;
+      group.add(ring2Mesh);
     } else {
       // World 4 & others: Celestial Planet Sphere with Gyroscope Rings
       const sphereGeo = new THREE.SphereGeometry(0.85, 32, 32);
