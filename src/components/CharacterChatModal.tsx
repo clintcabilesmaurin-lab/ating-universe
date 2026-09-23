@@ -5,7 +5,7 @@ import {
   Heart,
   Send,
   X,
-  Bot,
+  MessageCircle,
   Loader2,
   Smile,
   BookOpen,
@@ -247,22 +247,22 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
               <div className="flex items-center gap-3">
                 {/* Clint Avatar & Presence */}
                 <div className="relative">
-                  <div className="glass-orb w-11 h-11 rounded-2xl flex items-center justify-center text-xl shadow-[0_0_15px_rgba(244,213,141,0.4)]">
+                  <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-600/35 via-amber-500/25 to-rose-500/35 border border-amber-300/40 flex items-center justify-center text-xl shadow-[0_0_18px_rgba(244,213,141,0.35)]">
                     {currentMood === 'loving' || currentMood === 'inlove'
-                      ? '👻💖'
+                      ? '👦🏻💖'
                       : currentMood === 'laugh'
-                      ? '👻🤣'
+                      ? '👦🏻🤣'
                       : currentMood === 'giggle'
-                      ? '👻😆'
+                      ? '👦🏻😆'
                       : currentMood === 'cry'
-                      ? '👻💧'
+                      ? '👦🏻🥺'
                       : currentMood === 'sad'
-                      ? '👻🥺'
+                      ? '👦🏻🥺'
                       : currentMood === 'angry'
-                      ? '👻😤'
+                      ? '👦🏻😤'
                       : currentMood === 'playful'
-                      ? '👻😜'
-                      : '👻✨'}
+                      ? '👦🏻😉'
+                      : '👦🏻✨'}
                   </div>
                   <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 ring-2 ring-slate-950 animate-pulse" />
                 </div>
@@ -274,7 +274,7 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
                       <Sparkles className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
                     </h3>
                     <span className="glass-pill px-2 py-0.5 rounded-full text-amber-200 text-[10px] font-sans font-medium">
-                      Lumi Ghost &bull; Clint
+                      Online &bull; Clint
                     </span>
                   </div>
                   <p className="text-xs text-amber-200/70 font-serif italic mt-0.5">
@@ -294,7 +294,7 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
                         : 'text-slate-300 hover:text-white'
                     }`}
                   >
-                    <Bot className="w-3.5 h-3.5" />
+                    <MessageCircle className="w-3.5 h-3.5" />
                     <span className="hidden sm:inline">Usapan</span>
                   </button>
                   <button

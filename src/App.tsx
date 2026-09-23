@@ -774,8 +774,8 @@ export default function App() {
         </main>
       )}
 
-      {/* 5. Living Companion & Guide System (Lumi ✨) - Only in Main Universe & Countdown */}
-      {!isLettersUniverseOpen && selectedWorld === null && !isPangilatanOpen && (
+      {/* 5. Living Companion & Guide System (Lumi ✨) - Only in Main Universe & Countdown, hidden during chat */}
+      {!isLettersUniverseOpen && selectedWorld === null && !isPangilatanOpen && !isChatModalOpen && (
         <CompanionGuide
           currentLine={currentLine}
           isAche={isAcheLine}
@@ -784,7 +784,6 @@ export default function App() {
           externalFlareType={companionFlareType}
           personalityContext={personalityContext}
           onOpenFullChat={() => {
-            triggerCompanionReaction('heart');
             setIsChatModalOpen(true);
           }}
           onOpenPangilatan={() => {
@@ -815,9 +814,6 @@ export default function App() {
         }}
         personalityContext={personalityContext}
         onUpdatePersonalityContext={setPersonalityContext}
-        onTriggerReaction={(mood: LumiMood, flare: LumiFlareType) => {
-          triggerCompanionReaction(flare);
-        }}
       />
 
       {/* 6. Random Appearing Celestial Memory Shards */}

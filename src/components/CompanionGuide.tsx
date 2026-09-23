@@ -377,10 +377,8 @@ export const CompanionGuide: React.FC<CompanionGuideProps> = memo(({
               triggerBounce('heart');
               displaySpeech("Ayan ang mga paborito nating memories! Ang ganda-ganda mo palagi sa pictures. 📷💖", 7000);
             } else if (rawName === 'chat') {
+              // Silence Lumi when chatting with Clint
               activeWorldRef.current = 'chat';
-              setGuideMood('inlove');
-              setGuideBehavior('following');
-              displaySpeech("Kwento ka lang Lovey, nakikinig ako sa'yo buong-puso. 🥰", 6000);
             } else {
               activeWorldRef.current = 'general-world';
               setGuideMood('curious');
