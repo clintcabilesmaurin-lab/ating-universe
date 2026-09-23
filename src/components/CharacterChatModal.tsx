@@ -19,6 +19,8 @@ import {
   Flame,
   Laugh,
   CheckCircle2,
+  Binary,
+  KeyRound,
 } from 'lucide-react';
 import { PersonalityContext, InsideJokeItem, SpecialDateItem } from '../types';
 import { LumiMood, LumiFlareType } from './LumiCompanion';
@@ -42,15 +44,15 @@ export interface ChatMessage {
 }
 
 const QUICK_TOPICS = [
-  { label: 'Miss na kita! 💖', text: 'Clint, miss na miss na kita! Yakap naman diyan mula sa malayo. 🤗' },
-  { label: 'Kumain ka na? 🍲', text: 'Kumain ka na ba diyan, Lovey? Ano ulam mo?' },
+  { label: 'Kumusta ka? ✨', text: 'Kumusta ang araw mo, Lovey? Anong ganap?' },
+  { label: 'Narra ko diri 🌳', text: 'Naalala mo pa ba yung "NARRA ko diri" pun mo sa akin?' },
+  { label: 'T9 Cipher 🔢', text: '222-88-8-33 6-66' },
+  { label: 'Julie\'s Bakery 🍞', text: 'Naalala mo nung nagkita tayo sa Julie\'s Bakery sa Tungkop?' },
+  { label: 'Nag-unongay 🤝', text: 'Nag-unongay ta, diba?' },
+  { label: 'Grade 11 Annex 🏫', text: 'Naalala mo nung tinukso tayo nila Shawn at Nash sa Annex building?' },
   { label: 'Pangilatan hike ⛰️', text: 'Naaalala mo ba nung umakyat tayo sa Mt. Pangilatan habang umuulan?' },
-  { label: 'Sooner 💫', text: 'Sooner, Lovey... kailan tayo magkakasama ulit?' },
-  { label: 'Japan & Siargao ✈️', text: 'Kwentuhan mo naman ako sa mga pangarap nating biyahe sa Japan at Siargao.' },
-  { label: 'Corny joke 😆', text: 'May bago ka bang corny joke para sa akin ngayon? Hahaha!' },
-  { label: 'Kanta tayo 🎶', text: 'Kantahan mo naman ako ng Sun & Moon o Say You Won\'t Let Go!' },
-  { label: 'Late night call 🌙', text: 'Gising ka pa ba, Lovey? Kwentuhan tayo hanggang makatulog.' },
-  { label: 'Mag-tampo ka 😤', text: 'Hindi pa ako kumakain at nagpuyat ako kagabi... mag-tampo ka nga!' },
+  { label: 'Corny joke 😆', text: 'May bago ka bang corny joke para sa akin ngayon? Haha!' },
+  { label: 'Sooner 💫', text: 'Sooner, Lovey... malapit na tayong magkasama ulit.' },
 ];
 
 export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
@@ -72,10 +74,10 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
     {
       id: 'welcome-1',
       sender: 'clint',
-      text: "Lovey! Nandito lang ako palagi para sa'yo. Kahit gaano kalayo ang distansya natin ngayon, iisang kalangitan pa rin ang tinitingnan natin. Kumusta ang mahal ko? 💖✨",
-      mood: 'loving',
+      text: "Narra ko diri mo-listen nimo, Lovey! Kumusta ang araw mo? Relax ka lang, nandito ako nakikinig sa'yo palagi. ✨",
+      mood: 'tender',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      flareType: 'heart',
+      flareType: 'wonder',
     },
   ]);
 
@@ -160,9 +162,9 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
       const fallbackMsg: ChatMessage = {
         id: `clint-${Date.now()}`,
         sender: 'clint',
-        text: "Lovey! Kahit anong mangyari, nandito lang ako palagi sa tabi mo. Gaano man kalayo ang distansya, ikaw at ikaw lang ang pipiliin ko araw-araw. Mahal na mahal kita! 💖✨",
-        mood: 'loving',
-        flareType: 'heart',
+        text: "Narra ko diri mo-listen nimo, Lovey. Nandito lang ako palagi sa likod mo, nakikinig at sumusuporta sa'yo. Steady lang tayo. ✨",
+        mood: 'tender',
+        flareType: 'wonder',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, fallbackMsg]);
@@ -549,7 +551,76 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
                   </div>
                 </div>
 
-                {/* 3. Conversational Style & Catchphrases */}
+                {/* 3. Ciphers & Secret Codes */}
+                {personalityContext.ciphers && personalityContext.ciphers.length > 0 && (
+                  <div>
+                    <h5 className="text-xs uppercase font-sans font-semibold tracking-wider text-cyan-300/80 mb-2.5 flex items-center gap-1.5">
+                      <Binary className="w-3.5 h-3.5 text-cyan-400" />
+                      Mga T9 &amp; Binary Ciphers ({personalityContext.ciphers.length})
+                    </h5>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {personalityContext.ciphers.map((item, idx) => (
+                        <div
+                          key={`cipher-${idx}`}
+                          onClick={() => {
+                            setActiveTab('chat');
+                            handleSendMessage(item.cipher);
+                          }}
+                          className="group p-3 rounded-2xl glass-card border border-cyan-400/20 hover:border-cyan-300/50 transition-all cursor-pointer flex flex-col justify-between"
+                        >
+                          <div>
+                            <div className="flex items-center gap-1.5 text-cyan-200 text-xs font-mono font-bold">
+                              <KeyRound className="w-3 h-3 text-cyan-400" />
+                              <span className="truncate">{item.cipher}</span>
+                            </div>
+                            <p className="text-[11px] text-slate-300 font-serif mt-1">
+                              &rarr; {item.meaning}
+                            </p>
+                          </div>
+                          <span className="mt-2 text-[10px] text-cyan-300/70 font-sans flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            I-send kay Clint &rarr;
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 4. Regional & Bisaya Vocabulary */}
+                {personalityContext.regionalVocabulary && personalityContext.regionalVocabulary.length > 0 && (
+                  <div>
+                    <h5 className="text-xs uppercase font-sans font-semibold tracking-wider text-emerald-300/80 mb-2.5 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                      Wikang Pinagsasaluhan ({personalityContext.regionalVocabulary.length})
+                    </h5>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      {personalityContext.regionalVocabulary.map((v, idx) => (
+                        <div
+                          key={`vocab-${idx}`}
+                          onClick={() => {
+                            setActiveTab('chat');
+                            handleSendMessage(`Ano nga ulit yung "${v.term}" sa atin?`);
+                          }}
+                          className="group p-3 rounded-2xl glass-card border border-emerald-400/20 hover:border-emerald-300/50 transition-all cursor-pointer flex flex-col justify-between"
+                        >
+                          <div>
+                            <span className="text-xs font-serif font-bold text-emerald-100 group-hover:text-emerald-300">
+                              "{v.term}"
+                            </span>
+                            <p className="text-[11px] text-slate-300 font-serif mt-1">
+                              {v.meaning}
+                            </p>
+                          </div>
+                          <span className="mt-2 text-[10px] text-emerald-300/70 font-sans flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            I-click para pag-usapan &rarr;
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 5. Conversational Style & Catchphrases */}
                 <div>
                   <h5 className="text-xs uppercase font-sans font-semibold tracking-wider text-amber-300/80 mb-2.5 flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 text-amber-400" />

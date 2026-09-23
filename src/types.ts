@@ -156,6 +156,19 @@ export interface PersonalityContext {
     place: string;
     plan: string;
   }>;
+  ciphers?: Array<{
+    cipher: string;
+    meaning: string;
+    type: 't9' | 'binary' | 'acronym';
+  }>;
+  linguisticPuns?: Array<{
+    term: string;
+    meaning: string;
+  }>;
+  regionalVocabulary?: Array<{
+    term: string;
+    meaning: string;
+  }>;
 }
 
 export interface VisitState {

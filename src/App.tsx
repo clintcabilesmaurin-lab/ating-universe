@@ -56,11 +56,25 @@ export default function App() {
   const [visitCount, setVisitCount] = useState(1);
   const [spawnPhotoTrigger, setSpawnPhotoTrigger] = useState(0);
 
-  // Personality context state with local persistence
+  // Personality context state with local persistence (v2 with ciphers and grounded non-clingy tone)
   const [personalityContext, setPersonalityContext] = useState<PersonalityContext>(() => {
     try {
-      const saved = localStorage.getItem('universe_personality_context_v1');
-      return saved ? JSON.parse(saved) : DEFAULT_PERSONALITY_CONTEXT;
+      const saved = localStorage.getItem('universe_personality_context_v2');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Ensure new ciphers and tone fields from DEFAULT_PERSONALITY_CONTEXT are merged
+        return {
+          ...DEFAULT_PERSONALITY_CONTEXT,
+          ...parsed,
+          insideJokes: DEFAULT_PERSONALITY_CONTEXT.insideJokes,
+          specialDates: DEFAULT_PERSONALITY_CONTEXT.specialDates,
+          conversationalStyle: DEFAULT_PERSONALITY_CONTEXT.conversationalStyle,
+          ciphers: DEFAULT_PERSONALITY_CONTEXT.ciphers,
+          linguisticPuns: DEFAULT_PERSONALITY_CONTEXT.linguisticPuns,
+          regionalVocabulary: DEFAULT_PERSONALITY_CONTEXT.regionalVocabulary,
+        };
+      }
+      return DEFAULT_PERSONALITY_CONTEXT;
     } catch {
       return DEFAULT_PERSONALITY_CONTEXT;
     }
@@ -69,7 +83,7 @@ export default function App() {
   // Save personalityContext to localStorage on updates
   useEffect(() => {
     try {
-      localStorage.setItem('universe_personality_context_v1', JSON.stringify(personalityContext));
+      localStorage.setItem('universe_personality_context_v2', JSON.stringify(personalityContext));
     } catch (e) {
       console.warn('Failed to persist personality context to localStorage:', e);
     }
