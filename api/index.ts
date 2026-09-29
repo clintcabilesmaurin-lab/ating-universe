@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
+import crypto from 'node:crypto';
 import { GoogleGenAI, Type } from '@google/genai';
 
 dotenv.config();
@@ -500,6 +501,16 @@ function generateDynamicClintFallback(userMessage: string, personalityContext?: 
     };
   }
 
+  // 13.5 Password / Passcode / SHA-256
+  if (lower.includes('password') || lower.includes('passcode') || lower.includes('hash') || lower.includes('encrypt') || lower.includes('sha-256') || lower.includes('sha256')) {
+    return {
+      message: `Hahahah, makakalimutin ka talaga ${nick}! Ang passcode ng ating universe ay ang ating anniversary date: 09/22/2025. Naka-encrypt 'yan gamit ang SHA-256 hashing para exclusive at ligtas ang ating kalawakan! 🔐💖`,
+      mood: 'laugh',
+      flareType: 'sparkle',
+      actionHint: 'SHA-256 Protected Entrance',
+    };
+  }
+
   // 14. Food / Meals / Gutom
   if (lower.includes('kain') || lower.includes('gutom') || lower.includes('ulam') || lower.includes('lunch') || lower.includes('dinner') || lower.includes('breakfast') || lower.includes('food') || lower.includes('eat')) {
     return {
@@ -543,7 +554,7 @@ function generateDynamicClintFallback(userMessage: string, personalityContext?: 
   // 18. Music / Songs
   if (lower.includes('kanta') || lower.includes('song') || lower.includes('music') || lower.includes('gitara') || lower.includes('tugtog')) {
     return {
-      message: `Pakinggan natin ang "Say You Won't Let Go", "Palagi", o "Those Eyes" sa bagong Music World natin ${nick}. Bagay na soundtrack sa gabi natin. 🎸🎶`,
+      message: `Pakinggan natin ang "Say You Won't Let Go", "Love Me Like You Do", o "All of Me" sa Ating Universe Simulation natin ${nick}. Bagay na soundtrack sa 3D cosmos natin. 🌌🎶`,
       mood: 'loving',
       flareType: 'wonder',
       actionHint: 'Soundtrack of us',
@@ -745,6 +756,24 @@ app.get('/api/companion/status', (req: Request, res: Response): void => {
     hasApiKey: !!ai,
     engine: ai ? 'gemini-cloud' : 'clint-neural-personality',
     model: ai ? 'gemini-3.7-flash' : 'local-conversational',
+  });
+});
+
+/**
+ * SHA-256 Encrypted Password Verification Endpoint
+ * Validates against SHA-256 digest of "09/22/2025"
+ */
+app.post('/api/auth/verify-password', (req: Request, res: Response): void => {
+  const { password } = req.body;
+  if (!password || typeof password !== 'string') {
+    res.status(400).json({ error: 'Password string is required' });
+    return;
+  }
+  const computedHash = crypto.createHash('sha256').update(password.trim()).digest('hex');
+  const targetHash = '5f52d64e00375bd167a4bd892793cd97114bd91fde395e26934a1c9aece7d89c';
+  res.json({
+    isValid: computedHash === targetHash,
+    hash: computedHash,
   });
 });
 

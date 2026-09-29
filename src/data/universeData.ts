@@ -5,7 +5,8 @@ export const MEMORY_GALLERY_WALK_URL = 'https://memory-gallary-walk.vercel.app/'
 export const SECRET_LETTER_DAW_URL = 'https://secret-letter-daw.vercel.app/';
 export const OUR_FIRST_YEAR_URL = 'https://our-first-yearlovey.vercel.app/';
 export const WORLD_OF_LETTERS_URL = 'https://world-of-letters.vercel.app/';
-export const MUSIC_WORLD_URL = 'https://music-world-beta.vercel.app/';
+export const ATING_UNIVERSE_SIMULATION_URL = 'https://ating-universe-simulation-five.vercel.app/';
+export const MUSIC_WORLD_URL = ATING_UNIVERSE_SIMULATION_URL;
 
 export const RELATIONSHIP_START_DATE_ISO = '2025-09-22T21:00:00+08:00';
 // 1st Year Anniversary milestone: September 22, 2026 at 9:00 PM (21:00 Philippine Standard Time / UTC+8)
@@ -57,16 +58,16 @@ export const WORLDS: WorldStar[] = [
   },
   {
     id: 'music-world',
-    name: 'Music World',
-    url: MUSIC_WORLD_URL,
+    name: 'Ating Universe Simulation',
+    url: ATING_UNIVERSE_SIMULATION_URL,
     active: true,
     order: 4,
-    previewLine: 'Uyy, pakinggan mo... ang bawat kanta dito, para sa ating dalawa.',
-    acheLine: 'Kahit magkalayo tayo, sa bawat himig at nota, magkasama pa rin ang mga puso natin.',
+    previewLine: 'Uyy, pakinggan mo... ang 3D cosmos at bawat kanta sa ating universe simulation, para sa ating dalawa.',
+    acheLine: 'Kahit magkalayo tayo, sa bawat himig, nota, at simulation ng ating universe, magkasama pa rin ang mga puso natin.',
     starColor: '#34d399',
     unlockedDate: '2026-09-21',
-    tagline: 'Himig at Melodiya ng Ating Pag-ibig • Music World',
-    description: 'Ang opisyal na Mundo ng Musika — pakinggan ang mga paborito nating kanta, himig, at melodiya sa music-world-beta.vercel.app.',
+    tagline: 'Himig, Melodiya at 3D Cosmos • Ating Universe Simulation',
+    description: 'Ang opisyal na Ating Universe Simulation — pakinggan ang mga paborito nating kanta, himig, at melodiya sa 3D interactive cosmos sa ating-universe-simulation-five.vercel.app.',
     iconName: 'Music',
   },
   {

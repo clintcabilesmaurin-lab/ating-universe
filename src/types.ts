@@ -159,7 +159,7 @@ export interface PersonalityContext {
   ciphers?: Array<{
     cipher: string;
     meaning: string;
-    type: 't9' | 'binary' | 'acronym';
+    type: 't9' | 'binary' | 'acronym' | 'sha256' | 'crypto';
   }>;
   linguisticPuns?: Array<{
     term: string;

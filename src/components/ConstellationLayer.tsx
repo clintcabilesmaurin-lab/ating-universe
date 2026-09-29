@@ -630,7 +630,7 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
                         className="glass-pill text-xs px-3.5 py-1.5 rounded-full font-sans tracking-wider transition-all flex items-center gap-1.5 text-emerald-100 shadow-sm hover:scale-105 active:scale-95 border border-emerald-400/40 cursor-pointer"
                       >
                         <Music className="w-3.5 h-3.5 text-emerald-300" />
-                        <span>Buksan ang Link</span>
+                        <span>Buksan ang Simulation</span>
                         <ExternalLink className="w-3 h-3 text-emerald-300" />
                       </a>
 

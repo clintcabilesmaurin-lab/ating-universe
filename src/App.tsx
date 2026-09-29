@@ -34,10 +34,13 @@ import { DEFAULT_PERSONALITY_CONTEXT } from './data/personalityData';
 import { readState, recordVisitStart, resetVisitState } from './utils/storage';
 import { audioEngine } from './utils/audioEngine';
 import { lumiSync } from './utils/lumiSyncBus';
-import { Sparkles, RotateCcw, Heart, Image as ImageIcon, MessageCircle } from 'lucide-react';
+import { Sparkles, RotateCcw, Heart, Image as ImageIcon, MessageCircle, Lock, ShieldCheck } from 'lucide-react';
+import { EncryptedPasswordGate } from './components/EncryptedPasswordGate';
+import { isUniverseUnlocked, lockUniverse } from './utils/security';
 
 export default function App() {
   const [hasEntered, setHasEntered] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState<boolean>(() => isUniverseUnlocked());
   const [isReturnVisit, setIsReturnVisit] = useState(false);
   const [currentLine, setCurrentLine] = useState<string | null>(null);
   const [isAcheLine, setIsAcheLine] = useState(false);
@@ -333,10 +336,12 @@ export default function App() {
   useEffect(() => {
     audioEngine.init();
     const state = readState();
+    const unlocked = isUniverseUnlocked();
 
-    if (state.hasVisitedBefore) {
+    if (state.hasVisitedBefore && unlocked) {
       setIsReturnVisit(true);
       setHasEntered(true);
+      setIsUnlocked(true);
       setVisitCount(state.visitCount + 1);
       recordVisitStart();
 
@@ -347,8 +352,51 @@ export default function App() {
     } else {
       setIsReturnVisit(false);
       setHasEntered(false);
+      setIsUnlocked(unlocked);
     }
   }, []);
+
+  // Handle successful SHA-256 password unlock
+  const handleUnlockSuccess = () => {
+    setIsUnlocked(true);
+    setHasEntered(true);
+    recordVisitStart();
+    setTimeout(() => {
+      speak("Look, Lovey... ating Universe 'to, hahahah.");
+    }, 1400);
+  };
+
+  // Lock universe back down with SHA-256 encryption
+  const handleLockUniverse = () => {
+    lockUniverse();
+    setIsUnlocked(false);
+    setHasEntered(false);
+    try {
+      audioEngine.pause();
+      audioEngine.playLockedSound();
+    } catch (e) {
+      console.warn(e);
+    }
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo(0, { immediate: true });
+    }
+  };
+
+  // Replay entrance from start (resets state & locks)
+  const handleReplayEntrance = () => {
+    resetVisitState();
+    lockUniverse();
+    setIsUnlocked(false);
+    setHasEntered(false);
+    setIsReturnVisit(false);
+    setPreviewedIds(new Set());
+    setCurrentLine(null);
+    if (lenisRef.current) {
+      lenisRef.current.scrollTo(0, { immediate: false, duration: 1 });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   // Voice speech coordinator with queue/auto-clear
   const speak = (line: string, isAche = false, duration = 4800) => {
@@ -504,115 +552,16 @@ export default function App() {
     );
   };
 
-  // Replay entrance from start
-  const handleReplayEntrance = () => {
-    resetVisitState();
-    setHasEntered(false);
-    setIsReturnVisit(false);
-    setPreviewedIds(new Set());
-    setCurrentLine(null);
-    if (lenisRef.current) {
-      lenisRef.current.scrollTo(0, { immediate: false, duration: 1 });
-    } else {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
   return (
     <div className="relative min-h-screen w-full bg-slate-950 text-slate-100 font-sans selection:bg-amber-400 selection:text-slate-950">
-      {/* 1. Pitch Black First-Time Entrance Screen */}
+      {/* 1. SHA-256 Encrypted Entrance Screen */}
       <AnimatePresence>
-        {!hasEntered && (
-          <motion.div
-            id="entrance-stage"
-            initial={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center p-6 text-center select-none"
-          >
-            {/* Luminous Light Form */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.7 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 2, delay: 0.4 }}
-              className="relative flex items-center justify-center mb-8"
-            >
-              <div className="w-16 h-16 rounded-full bg-radial from-amber-200/40 via-purple-400/20 to-transparent blur-lg animate-pulse" />
-              <div className="absolute w-5 h-5 rounded-full bg-white shadow-[0_0_25px_rgba(244,213,141,1)]" />
-            </motion.div>
-
-            {/* Opening Taglish Dialogue */}
-            <motion.p
-              id="entity-line"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.6, delay: 0.8 }}
-              className="text-xl sm:text-2xl font-serif italic text-amber-100 font-light max-w-md tracking-wide leading-relaxed mb-10"
-            >
-              "Uyy, nandito ka na, tara..."
-            </motion.p>
-
-            {/* "Tara" Call to Action Button with Floating Heart Animation */}
-            <div className="relative flex flex-col items-center">
-              {/* Floating Hearts Container */}
-              <div className="absolute -top-6 inset-x-0 flex justify-center pointer-events-none z-10">
-                <AnimatePresence>
-                  {floatingHearts.map((heart) => (
-                    <motion.div
-                      key={heart.id}
-                      initial={{
-                        opacity: heart.opacity,
-                        scale: 0.3,
-                        x: 0,
-                        y: 0,
-                        rotate: 0,
-                      }}
-                      animate={{
-                        opacity: [heart.opacity, heart.opacity * 0.9, 0],
-                        scale: [0.3, heart.scale, heart.scale * 1.25],
-                        x: heart.x,
-                        y: heart.y,
-                        rotate: heart.rotate,
-                      }}
-                      transition={{
-                        duration: heart.duration,
-                        delay: heart.delay,
-                        ease: [0.22, 1, 0.36, 1],
-                      }}
-                      className="absolute"
-                    >
-                      <Heart
-                        className="w-5 h-5 drop-shadow-[0_0_12px_rgba(244,63,94,0.8)] fill-current"
-                        style={{ color: heart.color }}
-                      />
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-
-              {/* Tara Button */}
-              <motion.button
-                id="tara-btn"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1.2, delay: 1.8 }}
-                onClick={handleTaraClick}
-                onMouseEnter={() => {
-                  if (!isTaraPressed && floatingHearts.length < 5) {
-                    triggerFloatingHearts(4);
-                  }
-                }}
-                className="relative group px-10 py-3.5 rounded-full bg-gradient-to-r from-amber-300 via-rose-200 to-amber-300 text-slate-950 font-serif text-sm tracking-[0.25em] uppercase font-semibold shadow-[0_0_35px_rgba(244,213,141,0.55)] hover:shadow-[0_0_45px_rgba(251,113,133,0.7)] hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer flex items-center gap-2 overflow-hidden"
-              >
-                {/* Subtle warm shimmer gradient overlay */}
-                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
-                
-                <Sparkles className="w-4 h-4 fill-slate-950 group-hover:rotate-12 transition-transform duration-300" />
-                <span className="relative z-10">Tara</span>
-                <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500 opacity-80 group-hover:scale-125 group-hover:opacity-100 transition-all duration-300" />
-              </motion.button>
-            </div>
-          </motion.div>
+        {(!hasEntered || !isUnlocked) && (
+          <EncryptedPasswordGate
+            onUnlockSuccess={handleUnlockSuccess}
+            triggerFloatingHearts={triggerFloatingHearts}
+            floatingHearts={floatingHearts}
+          />
         )}
       </AnimatePresence>
 
@@ -756,6 +705,17 @@ export default function App() {
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Panimula</span>
+            </button>
+
+            {/* Lock Universe (SHA-256 Protected) */}
+            <button
+              id="btn-lock-universe"
+              onClick={handleLockUniverse}
+              title="I-lock ang Kalawakan (SHA-256 Encrypted)"
+              className="glass-pill flex items-center gap-1.5 text-xs px-2.5 sm:px-3.5 py-1.5 rounded-full text-rose-300 hover:text-rose-100 hover:border-rose-400/50 transition-all shrink-0 border border-rose-500/30 cursor-pointer"
+            >
+              <Lock className="w-3.5 h-3.5 text-rose-400" />
+              <span className="hidden sm:inline">I-lock</span>
             </button>
           </div>
         </header>

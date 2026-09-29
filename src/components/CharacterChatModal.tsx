@@ -556,7 +556,7 @@ export const CharacterChatModal: React.FC<CharacterChatModalProps> = ({
                   <div>
                     <h5 className="text-xs uppercase font-sans font-semibold tracking-wider text-cyan-300/80 mb-2.5 flex items-center gap-1.5">
                       <Binary className="w-3.5 h-3.5 text-cyan-400" />
-                      Mga T9 &amp; Binary Ciphers ({personalityContext.ciphers.length})
+                      Mga T9, Binary &amp; SHA-256 Ciphers ({personalityContext.ciphers.length})
                     </h5>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       {personalityContext.ciphers.map((item, idx) => (

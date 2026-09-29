@@ -280,6 +280,7 @@ export const DEFAULT_PERSONALITY_CONTEXT: PersonalityContext = {
     },
   ],
   ciphers: [
+    { cipher: '09/22/2025', meaning: 'Official Anniversary & SHA-256 Encrypted Universe Password (5f52d6...d89c)', type: 'sha256' },
     { cipher: '222-88-8-33 6-66', meaning: 'CUTE MO (T9 Keypad)', type: 't9' },
     { cipher: '555-666-888-33-999', meaning: 'I LOVE YOU (T9 Keypad)', type: 't9' },
     { cipher: '444 555 666 888 33 88 555 666 888 33 999', meaning: 'I LOVE YOU (Full Cipher Sequence)', type: 't9' },
