@@ -31,15 +31,80 @@ export const EncryptedPasswordGate: React.FC<EncryptedPasswordGateProps> = ({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
   const [shakeCount, setShakeCount] = useState(0);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
+  const [isMobileView, setIsMobileView] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Focus input on mount
+    const checkMobile = () => {
+      setIsMobileView(window.innerWidth < 768 || 'ontouchstart' in window);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
+    // Focus input on desktop mount (avoid forced keyboard jump on mobile before tap)
     const timer = setTimeout(() => {
-      inputRef.current?.focus();
+      if (window.innerWidth >= 768) {
+        inputRef.current?.focus();
+      }
     }, 600);
-    return () => clearTimeout(timer);
+
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+      clearTimeout(timer);
+    };
   }, []);
+
+  // Calculate smooth upward shift when typing on mobile so password input stays clearly visible above keyboard
+  useEffect(() => {
+    const updateShift = () => {
+      const mobile = window.innerWidth < 768 || 'ontouchstart' in window;
+      setIsMobileView(mobile);
+
+      if (!mobile) {
+        setKeyboardOffset(0);
+        return;
+      }
+
+      const layoutH = window.innerHeight;
+      const vvH = window.visualViewport ? window.visualViewport.height : layoutH;
+      const cardEstimatedH = 290;
+      const naturalTop = Math.max(24, (layoutH - cardEstimatedH) / 2);
+      const maxSafeUpwardShift = Math.max(0, naturalTop - 24);
+
+      const heightDiff = layoutH - vvH;
+      if (heightDiff > 80) {
+        // visualViewport shrunk due to virtual keyboard
+        const desiredShift = Math.min(heightDiff * 0.55, 115);
+        setKeyboardOffset(Math.min(desiredShift, maxSafeUpwardShift));
+      } else if (isInputFocused) {
+        // Input is focused on mobile (including inside iframes where visualViewport may not resize)
+        const desiredShift = Math.min(Math.round(layoutH * 0.14), 95);
+        setKeyboardOffset(Math.min(desiredShift, maxSafeUpwardShift));
+      } else {
+        setKeyboardOffset(0);
+      }
+    };
+
+    updateShift();
+    window.addEventListener('resize', updateShift);
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener('resize', updateShift);
+      vv.addEventListener('scroll', updateShift);
+    }
+    return () => {
+      window.removeEventListener('resize', updateShift);
+      if (vv) {
+        vv.removeEventListener('resize', updateShift);
+        vv.removeEventListener('scroll', updateShift);
+      }
+    };
+  }, [isInputFocused]);
+
+  const isTypingOnMobile = isMobileView && (isInputFocused || keyboardOffset > 0);
 
   const handleVerify = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -136,14 +201,25 @@ export const EncryptedPasswordGate: React.FC<EncryptedPasswordGateProps> = ({
 
       {/* Central Gate Card */}
       <motion.div
+        ref={cardRef}
         key={shakeCount}
         initial={shakeCount > 0 ? { x: [-10, 10, -8, 8, -4, 4, 0] } : { opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0, x: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative z-10 w-full max-w-md p-6 sm:p-8 rounded-3xl bg-slate-950/80 border border-amber-300/30 shadow-[0_0_50px_rgba(244,213,141,0.15)] backdrop-blur-2xl text-slate-100 flex flex-col items-center"
+        animate={{
+          opacity: 1,
+          y: isTypingOnMobile ? -keyboardOffset : 0,
+          x: 0,
+        }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+        className={`relative z-10 w-full max-w-md rounded-3xl bg-slate-950/85 border border-amber-300/30 shadow-[0_0_50px_rgba(244,213,141,0.15)] backdrop-blur-2xl text-slate-100 flex flex-col items-center transition-all duration-300 ${
+          isTypingOnMobile ? 'p-5 sm:p-8' : 'p-6 sm:p-8'
+        }`}
       >
         {/* Luminous Pulsing Orb with Lock Icon */}
-        <div className="relative flex items-center justify-center mb-5">
+        <div
+          className={`relative flex items-center justify-center transition-all duration-300 ${
+            isTypingOnMobile ? 'mb-2.5 scale-90 sm:mb-5 sm:scale-100' : 'mb-5'
+          }`}
+        >
           <div className="w-16 h-16 rounded-full bg-radial from-amber-300/30 via-rose-500/20 to-transparent blur-md animate-pulse" />
           <motion.div
             animate={isSuccess ? { scale: [1, 1.25, 1], rotate: [0, 10, 0] } : {}}
@@ -166,14 +242,18 @@ export const EncryptedPasswordGate: React.FC<EncryptedPasswordGateProps> = ({
         <h1 className="text-xl sm:text-2xl font-serif text-amber-100 font-medium tracking-wide mb-1">
           {isSuccess ? 'Bukas Na ang Kalawakan! ✨' : 'Ano daw password?'}
         </h1>
-        <p className="text-xs sm:text-sm text-slate-300/90 font-light mb-6 max-w-xs leading-relaxed">
+        <p
+          className={`text-xs sm:text-sm text-slate-300/90 font-light max-w-xs leading-relaxed transition-all duration-300 ${
+            isTypingOnMobile ? 'mb-3.5 sm:mb-6' : 'mb-6'
+          }`}
+        >
           {isSuccess
             ? 'Access granted, my Lovey. Maligayang pagdating sa ating kalangitan.'
             : 'Ipasok ang ating lihim na password para mabuksan ang ating Universe 💖'}
         </p>
 
         {/* Password Form */}
-        <form onSubmit={handleVerify} className="w-full space-y-4">
+        <form onSubmit={handleVerify} className="w-full space-y-3.5 sm:space-y-4">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-amber-300/70">
               <KeyRound className="w-4 h-4" />
@@ -183,6 +263,15 @@ export const EncryptedPasswordGate: React.FC<EncryptedPasswordGateProps> = ({
               ref={inputRef}
               type={showPassword ? 'text' : 'password'}
               value={password}
+              onFocus={() => {
+                setIsInputFocused(true);
+                setTimeout(() => {
+                  cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 150);
+              }}
+              onBlur={() => {
+                setIsInputFocused(false);
+              }}
               onChange={(e) => {
                 setPassword(e.target.value);
                 if (errorMsg) setErrorMsg(null);
@@ -190,7 +279,7 @@ export const EncryptedPasswordGate: React.FC<EncryptedPasswordGateProps> = ({
               disabled={isVerifying || isSuccess}
               placeholder="Ano daw password?"
               autoComplete="current-password"
-              className={`w-full pl-10 pr-11 py-3 bg-slate-900/90 border rounded-2xl text-center font-mono text-sm tracking-widest placeholder:text-slate-500 placeholder:font-sans placeholder:tracking-normal focus:outline-none transition-all duration-300 ${
+              className={`w-full pl-10 pr-11 py-3 bg-slate-900/90 border rounded-2xl text-center font-mono text-base sm:text-sm tracking-widest placeholder:text-slate-500 placeholder:font-sans placeholder:tracking-normal focus:outline-none transition-all duration-300 ${
                 errorMsg
                   ? 'border-rose-500/80 text-rose-200 focus:border-rose-400 focus:ring-2 focus:ring-rose-500/30'
                   : isSuccess
@@ -201,6 +290,7 @@ export const EncryptedPasswordGate: React.FC<EncryptedPasswordGateProps> = ({
 
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={() => setShowPassword((prev) => !prev)}
               tabIndex={-1}
               className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-amber-200 transition-colors"
