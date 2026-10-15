@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Lenis from 'lenis';
 import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 import { SkyCanvas } from './components/SkyCanvas';
 import { CompanionGuide } from './components/CompanionGuide';
 import { ConstellationLayer } from './components/ConstellationLayer';
@@ -302,7 +305,10 @@ export default function App() {
       }
     };
 
-    lenis.on('scroll', handleScroll);
+    lenis.on('scroll', () => {
+      handleScroll();
+      ScrollTrigger.update();
+    });
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleScroll, { passive: true });
 
@@ -319,6 +325,7 @@ export default function App() {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleScroll);
       gsap.ticker.remove(updateRaf);
+      ScrollTrigger.getAll().forEach((t) => t.kill());
       lenisRef.current = null;
     };
   }, []);
@@ -329,6 +336,7 @@ export default function App() {
       lenisRef.current?.stop();
     } else {
       lenisRef.current?.start();
+      ScrollTrigger.refresh();
     }
   }, [isPangilatanOpen, selectedWorld, isWishModalOpen, isPhotoManagerOpen, isLettersUniverseOpen, hasEntered]);
 
@@ -730,6 +738,7 @@ export default function App() {
             onSpeak={handleSpeakWorld}
             onOpenPangilatan={handleOpenPangilatan}
             previewedIds={previewedIds}
+            lenis={lenisRef.current}
           />
         </main>
       )}
