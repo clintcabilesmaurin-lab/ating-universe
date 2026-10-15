@@ -248,8 +248,8 @@ export const EncryptedPasswordGate: React.FC<EncryptedPasswordGateProps> = ({
           }`}
         >
           {isSuccess
-            ? 'Access granted, my Lovey. Maligayang pagdating sa ating kalangitan.'
-            : 'Ipasok ang ating lihim na password para mabuksan ang ating Universe 💖'}
+            ? 'Bukas na ang ating kalawakan, Lovey.'
+            : 'Ipasok ang password para makapasok.'}
         </p>
 
         {/* Password Form */}
@@ -347,7 +347,7 @@ export const EncryptedPasswordGate: React.FC<EncryptedPasswordGateProps> = ({
             {isVerifying ? (
               <>
                 <Sparkles className="w-4 h-4 animate-spin text-slate-950" />
-                <span>Chine-check ang password...</span>
+                <span>Sinusuri...</span>
               </>
             ) : isSuccess ? (
               <>
@@ -357,8 +357,7 @@ export const EncryptedPasswordGate: React.FC<EncryptedPasswordGateProps> = ({
             ) : (
               <>
                 <Sparkles className="w-4 h-4 text-slate-950" />
-                <span>I-unlock ang Universe ✨</span>
-                <Heart className="w-3.5 h-3.5 fill-rose-600 text-rose-600" />
+                <span>Buksan ✨</span>
               </>
             )}
           </motion.button>

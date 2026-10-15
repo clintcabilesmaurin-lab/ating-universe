@@ -6,26 +6,17 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
   WORLDS,
   PANGILATAN_LINES,
-  OUR_FIRST_YEAR_URL,
-  WORLD_OF_LETTERS_URL,
-  MUSIC_WORLD_URL,
 } from '../data/universeData';
 import { WorldStar } from '../types';
 import {
   Sparkles,
   Lock,
-  ExternalLink,
-  Globe,
-  Mail,
-  Music,
   ChevronDown,
   ChevronUp,
-  Navigation,
 } from 'lucide-react';
 import { World3DIcon } from './World3DIcon';
 import { audioEngine } from '../utils/audioEngine';
 import { isFirstYearAnniversaryUnlocked } from '../utils/timeHelper';
-import { openInParent } from '../utils/navigationHelper';
 
 // Ensure ScrollTrigger is registered with GSAP
 gsap.registerPlugin(ScrollTrigger);
@@ -298,9 +289,6 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
                   </svg>
                 </div>
               </div>
-              <span className="text-[9px] text-emerald-300/70 font-mono tracking-widest mt-1 mr-1">
-                SIDE MEMORY
-              </span>
             </div>
 
             {/* Spatial World Journey 3D Node Array */}
@@ -462,7 +450,7 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
 
                   {/* World Arrival Destination Card & Primary Visit Button */}
                   <div
-                    className={`mt-6 sm:mt-8 w-[92vw] max-w-md mx-auto text-center px-5 py-5 sm:px-7 sm:py-6 rounded-3xl glass-card backdrop-blur-2xl border transition-all duration-500 ${
+                    className={`mt-6 sm:mt-8 w-[92vw] max-w-sm mx-auto text-center px-5 py-5 sm:px-6 sm:py-6 rounded-3xl glass-card backdrop-blur-2xl border transition-all duration-500 ${
                       isArrived
                         ? 'opacity-100 translate-y-0 pointer-events-auto border-white/35 shadow-[0_20px_50px_rgba(0,0,0,0.65)]'
                         : 'opacity-0 translate-y-4 pointer-events-none border-transparent'
@@ -471,16 +459,11 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
                     {/* Specular top rim line */}
                     <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
 
-                    {/* World Tagline & Order */}
+                    {/* World Order Indicator */}
                     <div className="flex items-center justify-center gap-2 mb-1.5">
                       <span className="text-[10px] tracking-[0.25em] uppercase font-mono text-amber-300/80">
                         World {world.order} of {WORLDS.length}
                       </span>
-                      {hasBeenPreviewed && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">
-                          Explored
-                        </span>
-                      )}
                     </div>
 
                     {/* World Title */}
@@ -492,18 +475,17 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
                     </h2>
 
                     {/* Tagline */}
-                    <p className="text-xs sm:text-sm text-amber-100/90 font-sans tracking-wide mb-2.5">
+                    <p className="text-xs sm:text-sm text-amber-100/90 font-sans tracking-wide mb-2">
                       {world.tagline}
                     </p>
 
                     {/* Short Description */}
-                    <p className="text-xs text-slate-300/80 font-serif italic leading-relaxed line-clamp-2 max-w-sm mx-auto mb-4">
+                    <p className="text-xs text-slate-300/80 font-serif italic leading-relaxed max-w-xs mx-auto mb-4">
                       {world.description}
                     </p>
 
-                    {/* Primary Visit & Quick Action Links */}
-                    <div className="flex flex-wrap items-center justify-center gap-2.5 pt-1">
-                      {/* 1. Primary Visit Button */}
+                    {/* Primary Visit Button */}
+                    <div className="flex items-center justify-center pt-1">
                       {!world.active ? (
                         <button
                           id={`btn-visit-${world.id}`}
@@ -515,7 +497,7 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
                           className="glass-pill text-xs px-5 py-2.5 rounded-full font-sans tracking-wider text-rose-300/90 hover:text-rose-200 transition-all flex items-center gap-1.5 border border-rose-400/40 cursor-pointer shadow-md active:scale-95"
                         >
                           <Lock className="w-3.5 h-3.5 text-rose-400" />
-                          <span>Visit (Naka-lock &bull; Soon)</span>
+                          <span>Naka-lock</span>
                         </button>
                       ) : world.id === 'our-first-year' && !isFirstYearAnniversaryUnlocked(currentTime) ? (
                         <button
@@ -529,7 +511,7 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
                           className="glass-pill text-xs px-5 py-2.5 rounded-full font-sans tracking-wider text-amber-300/90 transition-all flex items-center gap-1.5 border border-amber-400/40 shadow-md cursor-pointer active:scale-95"
                         >
                           <Lock className="w-3.5 h-3.5 text-amber-400" />
-                          <span>Visit &bull; Naka-lock (Sept 22, 9PM)</span>
+                          <span>Naka-lock &bull; Sept 22</span>
                         </button>
                       ) : (
                         <button
@@ -539,7 +521,7 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
                             onSpeak(world.previewLine);
                             onSelectWorld(world);
                           }}
-                          className="px-6 py-2.5 rounded-full font-serif font-bold text-xs sm:text-sm tracking-wider uppercase text-slate-950 transition-all duration-300 flex items-center gap-2 shadow-[0_0_30px_rgba(251,191,36,0.6)] hover:shadow-[0_0_40px_rgba(251,191,36,0.85)] hover:scale-105 active:scale-95 cursor-pointer"
+                          className="px-7 py-2.5 rounded-full font-serif font-bold text-xs sm:text-sm tracking-wider uppercase text-slate-950 transition-all duration-300 flex items-center gap-2 shadow-[0_0_30px_rgba(251,191,36,0.6)] hover:shadow-[0_0_40px_rgba(251,191,36,0.85)] hover:scale-105 active:scale-95 cursor-pointer"
                           style={{
                             background: `linear-gradient(135deg, #ffffff 0%, ${world.starColor} 60%, #ffffff 100%)`,
                           }}
@@ -547,63 +529,6 @@ export const ConstellationLayer: React.FC<ConstellationLayerProps> = memo(({
                           <Sparkles className="w-4 h-4 fill-slate-950 text-slate-950" />
                           <span>Visit</span>
                         </button>
-                      )}
-
-                      {/* 2. Subworld Direct Links (Preserved from existing application) */}
-                      {world.id === 'memory-gallery' && (
-                        <a
-                          href={world.url}
-                          target="_parent"
-                          id="card-btn-gallery-walk"
-                          onClick={(e) => openInParent(world.url, e)}
-                          className="glass-pill text-xs px-3.5 py-2 rounded-full font-sans tracking-wider text-purple-200 hover:text-purple-100 transition-all flex items-center gap-1.5 shadow-sm hover:scale-105 border border-purple-400/40"
-                        >
-                          <Globe className="w-3 h-3 text-purple-300" />
-                          <span>3D Walk</span>
-                          <ExternalLink className="w-3 h-3 text-purple-300 ml-0.5" />
-                        </a>
-                      )}
-
-                      {world.id === 'letters' && (
-                        <a
-                          href={WORLD_OF_LETTERS_URL}
-                          target="_parent"
-                          id="card-btn-world-of-letters-direct"
-                          onClick={(e) => openInParent(WORLD_OF_LETTERS_URL, e)}
-                          className="glass-pill text-xs px-3.5 py-2 rounded-full font-sans tracking-wider transition-all flex items-center gap-1.5 text-rose-100 hover:text-white shadow-sm hover:scale-105 border border-rose-400/40"
-                        >
-                          <Mail className="w-3 h-3 text-rose-300 fill-rose-300/30" />
-                          <span>Liham Portal</span>
-                          <ExternalLink className="w-3 h-3 text-rose-300" />
-                        </a>
-                      )}
-
-                      {world.id === 'music-world' && (
-                        <a
-                          href={MUSIC_WORLD_URL}
-                          target="_parent"
-                          id="card-btn-music-world-direct"
-                          onClick={(e) => openInParent(MUSIC_WORLD_URL, e)}
-                          className="glass-pill text-xs px-3.5 py-2 rounded-full font-sans tracking-wider transition-all flex items-center gap-1.5 text-emerald-100 hover:text-white shadow-sm hover:scale-105 border border-emerald-400/40"
-                        >
-                          <Music className="w-3 h-3 text-emerald-300" />
-                          <span>Buksan ang Simulation</span>
-                          <ExternalLink className="w-3 h-3 text-emerald-300" />
-                        </a>
-                      )}
-
-                      {world.id === 'our-first-year' && isFirstYearAnniversaryUnlocked(currentTime) && (
-                        <a
-                          href={OUR_FIRST_YEAR_URL}
-                          target="_parent"
-                          id="card-btn-our-first-year-link"
-                          onClick={(e) => openInParent(OUR_FIRST_YEAR_URL, e)}
-                          className="glass-pill text-xs px-3.5 py-2 rounded-full font-sans tracking-wider text-amber-200 transition-all flex items-center gap-1 shadow-sm hover:scale-105 border border-amber-400/40"
-                        >
-                          <Sparkles className="w-3 h-3 text-amber-300" />
-                          <span>Portal</span>
-                          <ExternalLink className="w-3 h-3 text-amber-300 ml-0.5" />
-                        </a>
                       )}
                     </div>
                   </div>

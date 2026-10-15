@@ -25,7 +25,7 @@ export const WORLDS: WorldStar[] = [
     starColor: '#f4d58d',
     unlockedDate: '2026-09-22T21:00:00+08:00',
     tagline: 'Dito Nagsimula ang Lahat',
-    description: 'Ang patunay na ang pag-ibig ay lumalalim sa bawat araw — buksan ang Our First Year portal sa our-first-yearlovey.vercel.app kapag sumapit na ang 1st Anniversary sa Setyembre 22, 2026 (9:00 PM).',
+    description: 'Ang patunay na ang pag-ibig ay lumalalim sa bawat araw.',
     iconName: 'Sparkles',
   },
   {
@@ -39,7 +39,7 @@ export const WORLDS: WorldStar[] = [
     starColor: '#c9a7eb',
     unlockedDate: '2026-01-10',
     tagline: 'Mga Tagpong Hindi Malilimutan',
-    description: 'Mga larawan at alaala — mula sa malamig na hangin sa tuktok ng Pangilatan hanggang sa 3D interactive virtual gallery walk sa memory-gallary-walk.vercel.app.',
+    description: 'Mga larawan at alaalang sabay nating pinagsaluhan.',
     iconName: 'Image',
   },
   {
@@ -52,8 +52,8 @@ export const WORLDS: WorldStar[] = [
     acheLine: 'Kahit ilang kilometro man ang pagitan natin, ang bawat liham dito ay laging yayakap sa\'yo.',
     starColor: '#f7b2ad',
     unlockedDate: '2026-09-21',
-    tagline: 'Liham Mula sa Kabilang Ibayo • World of Letters',
-    description: 'Ang bukas at opisyal na Mundo ng mga Liham — tuklasin ang mga liham ng pagmamahal sa world-of-letters.vercel.app.',
+    tagline: 'Liham Mula sa Kabilang Ibayo',
+    description: 'Mga liham at mensahe ng pagmamahal sa kabila ng distansya.',
     iconName: 'Mail',
   },
   {
@@ -66,8 +66,8 @@ export const WORLDS: WorldStar[] = [
     acheLine: 'Kahit magkalayo tayo, sa bawat himig, nota, at simulation ng ating universe, magkasama pa rin ang mga puso natin.',
     starColor: '#34d399',
     unlockedDate: '2026-09-21',
-    tagline: 'Himig, Melodiya at 3D Cosmos • Ating Universe Simulation',
-    description: 'Ang opisyal na Ating Universe Simulation — pakinggan ang mga paborito nating kanta, himig, at melodiya sa 3D interactive cosmos sa ating-universe-simulation-five.vercel.app.',
+    tagline: 'Himig at Melodiya',
+    description: 'Ang ating sariling kalawakan ng mga paboritong himig at kanta.',
     iconName: 'Music',
   },
   {
@@ -80,7 +80,7 @@ export const WORLDS: WorldStar[] = [
     starColor: '#9ecae1',
     unlockedDate: null,
     tagline: 'Mga Landas na Ating Lalakbayin',
-    description: 'Mga lugar na sabay nating pupuntahan pagkatapos ng distansya. Step by step, mararating din natin \'to.',
+    description: 'Mga lugar na sabay nating pupuntahan balang araw.',
     iconName: 'Compass',
   },
 ];

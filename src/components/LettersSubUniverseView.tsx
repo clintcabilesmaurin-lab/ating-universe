@@ -59,8 +59,7 @@ export const LettersSubUniverseView: React.FC<LettersSubUniverseViewProps> = mem
             className="glass-pill flex items-center gap-1.5 text-xs px-3.5 py-1.5 rounded-full text-amber-200 hover:text-amber-100 transition-all border border-amber-400/40 shadow-sm cursor-pointer"
           >
             <ExternalLink className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Direktang Link:</span>
-            <span>world-of-letters.vercel.app</span>
+            <span>World of Letters</span>
           </a>
 
           <div className="flex items-center gap-1.5 text-rose-300">
@@ -79,7 +78,7 @@ export const LettersSubUniverseView: React.FC<LettersSubUniverseViewProps> = mem
         >
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-rose-500/15 border border-rose-400/50 text-rose-200 text-xs font-serif shadow-sm backdrop-blur-md">
             <Mail className="w-3.5 h-3.5 text-rose-300" />
-            <span className="font-sans font-bold tracking-wide uppercase text-[11px]">Bukas Na &bull; World of Letters</span>
+            <span className="font-sans font-bold tracking-wide uppercase text-[11px]">World of Letters</span>
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
           </div>
 
@@ -100,7 +99,7 @@ export const LettersSubUniverseView: React.FC<LettersSubUniverseViewProps> = mem
               className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-rose-400 via-pink-500 to-amber-300 text-slate-950 font-bold text-xs sm:text-sm flex items-center gap-2 shadow-[0_0_25px_rgba(244,63,94,0.4)] hover:scale-105 active:scale-95 transition-all border border-rose-300/60 cursor-pointer"
             >
               <Mail className="w-4 h-4 fill-slate-950" />
-              <span>Direktang Pumasok sa Link</span>
+              <span>Pumasok sa World of Letters</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
 
@@ -125,7 +124,7 @@ export const LettersSubUniverseView: React.FC<LettersSubUniverseViewProps> = mem
             <div className="p-3 bg-slate-900/95 border-b border-white/10 flex items-center justify-between text-xs text-rose-200/90 font-mono">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="font-semibold text-rose-100">world-of-letters.vercel.app</span>
+                <span className="font-semibold text-rose-100">World of Letters</span>
               </div>
               <a
                 href={WORLD_OF_LETTERS_URL}

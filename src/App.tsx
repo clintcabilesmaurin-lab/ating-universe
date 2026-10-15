@@ -37,14 +37,13 @@ import { DEFAULT_PERSONALITY_CONTEXT } from './data/personalityData';
 import { readState, recordVisitStart, resetVisitState } from './utils/storage';
 import { audioEngine } from './utils/audioEngine';
 import { lumiSync } from './utils/lumiSyncBus';
-import { Sparkles, RotateCcw, Heart, Image as ImageIcon, MessageCircle, Lock, ShieldCheck } from 'lucide-react';
+import { Sparkles, RotateCcw, Heart, Image as ImageIcon, MessageCircle, Lock } from 'lucide-react';
 import { EncryptedPasswordGate } from './components/EncryptedPasswordGate';
 import { isUniverseUnlocked, lockUniverse } from './utils/security';
 
 export default function App() {
   const [hasEntered, setHasEntered] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState<boolean>(() => isUniverseUnlocked());
-  const [isReturnVisit, setIsReturnVisit] = useState(false);
   const [currentLine, setCurrentLine] = useState<string | null>(null);
   const [isAcheLine, setIsAcheLine] = useState(false);
   const [selectedWorld, setSelectedWorld] = useState<WorldStar | null>(null);
@@ -347,7 +346,6 @@ export default function App() {
     const unlocked = isUniverseUnlocked();
 
     if (state.hasVisitedBefore && unlocked) {
-      setIsReturnVisit(true);
       setHasEntered(true);
       setIsUnlocked(true);
       setVisitCount(state.visitCount + 1);
@@ -358,7 +356,6 @@ export default function App() {
         speak("Uyy, nandito ka ulit, Lovey... heheh.");
       }, 1200);
     } else {
-      setIsReturnVisit(false);
       setHasEntered(false);
       setIsUnlocked(unlocked);
     }
@@ -396,7 +393,6 @@ export default function App() {
     lockUniverse();
     setIsUnlocked(false);
     setHasEntered(false);
-    setIsReturnVisit(false);
     setPreviewedIds(new Set());
     setCurrentLine(null);
     if (lenisRef.current) {
@@ -650,7 +646,7 @@ export default function App() {
 
           {/* Right Action Bar: Kausapin si Clint is prioritized FIRST so it's always accessible and visible on mobile */}
           <div className="flex items-center gap-1.5 sm:gap-2 pointer-events-auto max-w-[calc(100vw-130px)] sm:max-w-none overflow-x-auto no-scrollbar py-0.5">
-            {/* Primary Chat Button: Kausapin si Clint (AI Copy) */}
+            {/* Primary Chat Button: Kausapin si Clint */}
             <button
               id="btn-open-clint-chat"
               onClick={() => {
@@ -658,7 +654,7 @@ export default function App() {
                 setIsChatModalOpen(true);
                 lumiSync.notifyModal('chat', true);
               }}
-              title="Kausapin si Clint (AI Copy)"
+              title="Kausapin si Clint"
               className="glass-pill flex items-center gap-1.5 text-xs px-3 sm:px-3.5 py-1.5 rounded-full text-amber-100 font-serif font-semibold transition-all hover:scale-105 shrink-0 border border-amber-300/40 shadow-sm"
             >
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -698,12 +694,6 @@ export default function App() {
               <span className="hidden sm:inline">Mga Larawan</span>
             </button>
 
-            {isReturnVisit && (
-              <span className="hidden sm:inline-block text-[11px] text-amber-200/80 glass-pill px-3 py-1.5 rounded-full shrink-0">
-                Visit #{visitCount}
-              </span>
-            )}
-
             {/* Replay Intro Button */}
             <button
               id="btn-replay-opening"
@@ -715,11 +705,11 @@ export default function App() {
               <span className="hidden sm:inline">Panimula</span>
             </button>
 
-            {/* Lock Universe (SHA-256 Protected) */}
+            {/* Lock Universe */}
             <button
               id="btn-lock-universe"
               onClick={handleLockUniverse}
-              title="I-lock ang Kalawakan (SHA-256 Encrypted)"
+              title="I-lock ang Kalawakan"
               className="glass-pill flex items-center gap-1.5 text-xs px-2.5 sm:px-3.5 py-1.5 rounded-full text-rose-300 hover:text-rose-100 hover:border-rose-400/50 transition-all shrink-0 border border-rose-500/30 cursor-pointer"
             >
               <Lock className="w-3.5 h-3.5 text-rose-400" />

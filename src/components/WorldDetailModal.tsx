@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Sparkles, Heart, Mail, Calendar, Compass, ArrowLeft, CheckCircle2, Lock, BookOpen, Camera, ExternalLink, Globe, Mountain, ChevronRight, Music, Headphones, Disc } from 'lucide-react';
+import { X, Sparkles, Heart, Mail, Calendar, Compass, ArrowLeft, CheckCircle2, Lock, BookOpen, Camera, ExternalLink, Globe, Mountain, ChevronRight, Music, Headphones } from 'lucide-react';
 import { WorldStar, Letter } from '../types';
 import { TIMELINE_MILESTONES, MEMORIES, LETTERS, TRAVEL_DREAMS, MEMORY_GALLERY_WALK_URL, SECRET_LETTER_DAW_URL, OUR_FIRST_YEAR_URL, WORLD_OF_LETTERS_URL, MUSIC_WORLD_URL, WORLDS } from '../data/universeData';
 import { audioEngine } from '../utils/audioEngine';
@@ -120,85 +120,11 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
-              {world.id === 'our-first-year' && (
-                isAnniversaryUnlocked ? (
-                  <a
-                    href={OUR_FIRST_YEAR_URL}
-                    target="_parent"
-                    id="header-our-first-year-portal-btn"
-                    onClick={(e) => openInParent(OUR_FIRST_YEAR_URL, e)}
-                    className="glass-pill inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-amber-100 text-xs font-sans font-bold transition-all shadow-[0_0_20px_rgba(251,191,36,0.5)] hover:scale-105"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 fill-amber-300" />
-                    <span>Our First Year Website</span>
-                    <ExternalLink className="w-3 h-3 text-amber-300 ml-0.5" />
-                  </a>
-                ) : (
-                  <button
-                    type="button"
-                    id="header-our-first-year-locked-btn"
-                    onClick={() => {
-                      audioEngine.playLockedSound();
-                      onSpeak("Hindi pa ito ang tamang oras hanggang sa Setyembre 22, 2026 nang 9:00 PM... Sabay nating bubuksan sa ating 1st Anniversary, Lovey! 🔒✨");
-                    }}
-                    className="glass-pill inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-amber-200 text-xs font-sans font-medium transition-all shadow-md"
-                  >
-                    <Lock className="w-3.5 h-3.5 text-amber-400" />
-                    <span>Naka-lock (Sept 22, 9PM)</span>
-                  </button>
-                )
-              )}
-              {world.id === 'memory-gallery' && (
-                <a
-                  href={MEMORY_GALLERY_WALK_URL}
-                  target="_parent"
-                  id="header-gallery-walk-btn"
-                  onClick={(e) => openInParent(MEMORY_GALLERY_WALK_URL, e)}
-                  className="glass-pill hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-purple-100 text-xs font-sans font-medium transition-all shadow-md hover:scale-102"
-                >
-                  <Globe className="w-3.5 h-3.5 text-purple-300" />
-                  <span>3D Walk</span>
-                  <ExternalLink className="w-3 h-3 text-purple-300 ml-0.5" />
-                </a>
-              )}
-              {world.id === 'letters' && (
-                world.active ? (
-                  <a
-                    href={WORLD_OF_LETTERS_URL}
-                    target="_parent"
-                    id="header-world-of-letters-btn"
-                    onClick={(e) => openInParent(WORLD_OF_LETTERS_URL, e)}
-                    className="glass-pill hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-rose-100 text-xs font-sans font-medium transition-all shadow-md hover:scale-102 border border-rose-400/30"
-                  >
-                    <Mail className="w-3.5 h-3.5 text-rose-300" />
-                    <span>World of Letters</span>
-                    <ExternalLink className="w-3 h-3 text-rose-300 ml-0.5" />
-                  </a>
-                ) : (
-                  <span className="glass-pill hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-rose-300/80 text-xs font-sans border border-rose-400/20">
-                    <Lock className="w-3.5 h-3.5 text-rose-400" />
-                    <span>Naka-lock</span>
-                  </span>
-                )
-              )}
-              {world.id === 'music-world' && (
-                <a
-                  href={MUSIC_WORLD_URL}
-                  target="_parent"
-                  id="header-music-world-btn"
-                  onClick={(e) => openInParent(MUSIC_WORLD_URL, e)}
-                  className="glass-pill hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-emerald-100 text-xs font-sans font-medium transition-all shadow-md hover:scale-102 border border-emerald-400/30 cursor-pointer"
-                >
-                  <Music className="w-3.5 h-3.5 text-emerald-300" />
-                  <span>Ating Universe Simulation</span>
-                  <ExternalLink className="w-3 h-3 text-emerald-300 ml-0.5" />
-                </a>
-              )}
-
               <button
                 id="close-world-modal"
                 onClick={onClose}
-                className="w-9 h-9 rounded-full glass-pill text-white flex items-center justify-center transition-colors"
+                className="w-9 h-9 rounded-full glass-pill text-white flex items-center justify-center transition-colors hover:scale-105"
+                title="Isara"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -351,14 +277,14 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                   <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="space-y-1.5 max-w-lg">
                       <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-pill text-purple-200 text-xs font-sans font-medium">
-                        <Sparkles className="w-3.5 h-3.5 text-purple-300 animate-pulse" />
-                        <span>Interactive 3D Walkthrough Portal</span>
+                        <Sparkles className="w-3.5 h-3.5 text-purple-300" />
+                        <span>3D Gallery</span>
                       </div>
                       <h3 className="text-xl sm:text-2xl font-serif text-white font-medium flex items-center gap-2">
-                        Memory Gallery Walk 3D
+                        Memory Gallery
                       </h3>
                       <p className="text-xs sm:text-sm text-purple-200/80 font-serif leading-relaxed">
-                        Maglakad sa ating 3D virtual art gallery ng mga alaala sa <span className="text-amber-200 underline font-sans">memory-gallary-walk.vercel.app</span> — bawat likhang sining at litrato ay may kwento nating dalawa.
+                        Maglakad sa ating galeriya ng mga alaala kung saan bawat litrato ay may kwento nating dalawa.
                       </p>
                     </div>
 
@@ -471,7 +397,7 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
 
                     <div className="space-y-2">
                       <span className="text-[10px] uppercase tracking-widest font-sans text-rose-300/90 glass-pill px-3.5 py-1 rounded-full border border-rose-400/30">
-                        Bukas Na &bull; World of Letters
+                        World of Letters
                       </span>
                       <h3 className="text-2xl sm:text-3xl font-serif text-rose-100 font-medium">
                         Mundo ng mga Liham 💌
@@ -511,7 +437,7 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                       <div className="p-3 bg-slate-900/90 border-b border-white/10 flex items-center justify-between text-xs text-rose-200/90 font-mono">
                         <div className="flex items-center gap-2">
                           <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                          <span className="font-semibold text-rose-100">world-of-letters.vercel.app</span>
+                          <span className="font-semibold text-rose-100">World of Letters</span>
                         </div>
                         <a
                           href={WORLD_OF_LETTERS_URL}
@@ -542,16 +468,16 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
               <div className="space-y-6">
                 <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-emerald-950/70 via-teal-950/60 to-slate-950/90 border border-emerald-400/40 p-5 sm:p-7 shadow-[0_0_40px_rgba(52,211,153,0.18)] text-center max-w-2xl mx-auto space-y-4">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-mono">
-                    <Headphones className="w-3.5 h-3.5 animate-pulse text-emerald-300" />
-                    <span>Bukas Na • Ating Universe Simulation</span>
+                    <Headphones className="w-3.5 h-3.5 text-emerald-300" />
+                    <span>Ating Universe Simulation</span>
                   </div>
 
                   <h3 className="text-2xl sm:text-3xl font-serif text-emerald-100 font-medium tracking-wide">
-                    Ating Universe Simulation 🌌🎵
+                    Ating Universe Simulation
                   </h3>
 
                   <p className="text-xs sm:text-sm text-emerald-200/90 font-sans max-w-lg mx-auto leading-relaxed">
-                    Interactive 3D cosmos at shared listening simulation para sa ating dalawa. Pakinggan ang mga paborito nating kanta at damhin ang bawat sandali ng ating kalawakan.
+                    Ang ating sariling kalawakan ng mga paboritong himig at kanta para sa ating dalawa.
                   </p>
 
                   {/* Curated Song Badges / Sentiments */}
@@ -571,10 +497,6 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                     <span className="glass-pill px-3 py-1 rounded-full border border-emerald-400/30 flex items-center gap-1.5 bg-emerald-950/40">
                       <Music className="w-3 h-3 text-emerald-400" />
                       <span>Just The Way You Are</span>
-                    </span>
-                    <span className="glass-pill px-3 py-1 rounded-full border border-emerald-400/30 flex items-center gap-1.5 bg-emerald-950/40">
-                      <Disc className="w-3 h-3 text-emerald-400" />
-                      <span>3D Cosmos & Music Archive</span>
                     </span>
                   </div>
 
@@ -609,7 +531,7 @@ export const WorldDetailModal: React.FC<WorldDetailModalProps> = ({
                     <div className="p-3 bg-slate-900/90 border-b border-white/10 flex items-center justify-between text-xs text-emerald-200/90 font-mono">
                       <div className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                        <span className="font-semibold text-emerald-100">ating-universe-simulation-five.vercel.app</span>
+                        <span className="font-semibold text-emerald-100">Ating Universe Simulation</span>
                       </div>
                       <a
                         href={MUSIC_WORLD_URL}
